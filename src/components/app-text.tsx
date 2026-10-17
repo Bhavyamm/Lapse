@@ -1,6 +1,6 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
-import { colors, type, type TypeVariant } from '@/theme';
+import { colors, maxScale, type, type TypeVariant } from '@/theme';
 
 type Props = TextProps & {
   variant?: TypeVariant;
@@ -18,7 +18,9 @@ export function AppText({ variant = 'body', muted, onDark, style, ...rest }: Pro
     : muted
       ? colors.textSecondary
       : colors.ink;
-  return <Text style={[type[variant], styles.base, { color }, style]} {...rest} />;
+  return (
+    <Text maxFontSizeMultiplier={maxScale[variant]} style={[type[variant], styles.base, { color }, style]} {...rest} />
+  );
 }
 
 const styles = StyleSheet.create({

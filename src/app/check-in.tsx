@@ -1,6 +1,15 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/app-text';
@@ -8,7 +17,7 @@ import { BigAmount } from '@/components/big-amount';
 import { CharcoalCard, GlassCard } from '@/components/cards';
 import { Confetti } from '@/components/confetti';
 import { FadeFooter } from '@/components/fade-footer';
-import { CheckIcon, ClockIcon, CloseIcon } from '@/components/icons';
+import { ArrowUpRightIcon, CheckIcon, ClockIcon, CloseIcon } from '@/components/icons';
 import { Mascot } from '@/components/mascot';
 import { PressScale } from '@/components/press-scale';
 import { ScreenBackground } from '@/components/screen-background';
@@ -23,6 +32,7 @@ import type { CancelledSubscription, Subscription } from '@/features/subscriptio
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { formatMonthDay } from '@/utils/dates';
+import { tap } from '@/utils/haptics';
 
 type Outcome = 'kept' | 'later';
 /** Keep swipes the card off to the right, Next month to the left. */
@@ -61,6 +71,7 @@ export default function CheckInScreen() {
     if (!sub || swiping.current) return;
     const next = ids.find((id) => id !== sub.id && !outcomes[id] && byId.has(id));
     const nextSub = next ? byId.get(next) : undefined;
+    tap();
     AccessibilityInfo.announceForAccessibility(
       `${outcome === 'kept' ? 'Kept' : 'Next month for'} ${sub.name}. ${nextSub ? `Next: ${nextSub.name}` : 'All checked'}`,
     );
@@ -121,7 +132,7 @@ export default function CheckInScreen() {
                 hint={`Shows how to cancel ${sub.name}`}
                 size={76}
                 color={colors.ink}
-                icon={<CloseIcon size={26} color={colors.white} />}
+                icon={<ArrowUpRightIcon size={26} color={colors.white} />}
                 onPress={() => openDetail(sub.id)}
               />
               <RoundAction
@@ -219,26 +230,30 @@ function ReviewCard({ sub }: { sub: Subscription }) {
   const since = sub.reviewedOn
     ? `Last reviewed ${formatMonthDay(sub.reviewedOn)}`
     : `Added ${formatMonthDay(addedOn(sub))}`;
+  // At large text sizes the card's text can outgrow it, so it scrolls instead of spilling out.
+  const big = useWindowDimensions().fontScale > 1.3;
   return (
     <View style={styles.card} accessible aria-label={`${sub.name}, ${formatMoney(yearly)} a year. ${since}`}>
-      <View style={styles.cardTop}>
-        <ServiceLogo serviceId={sub.serviceId} name={sub.name} size={64} />
-        <View style={styles.since}>
-          <AppText variant="caption" style={styles.sinceText}>
-            {since}
+      <ScrollView scrollEnabled={big} showsVerticalScrollIndicator={big} contentContainerStyle={styles.cardContent}>
+        <View style={styles.cardTop}>
+          <ServiceLogo serviceId={sub.serviceId} name={sub.name} size={64} />
+          <View style={styles.since}>
+            <AppText variant="caption" style={styles.sinceText}>
+              {since}
+            </AppText>
+          </View>
+        </View>
+        <View>
+          <AppText variant="title">{sub.name}</AppText>
+          <BigAmount cents={yearly} suffix={sub.cycle === 'year' ? undefined : 'a year'} light style={styles.amount} />
+          <AppText variant="lede" style={styles.note}>
+            {sub.cycle === 'year' ? 'Billed once a year' : describePrice(sub.priceCents, sub.cycle)}.{' '}
+            {saved
+              ? `Cancelling would bring your savings to ${formatMoney(saved + yearly)} a year from now.`
+              : 'Cancelling would save you that every year.'}
           </AppText>
         </View>
-      </View>
-      <View>
-        <AppText variant="title">{sub.name}</AppText>
-        <BigAmount cents={yearly} suffix={sub.cycle === 'year' ? undefined : 'a year'} light style={styles.amount} />
-        <AppText variant="lede" style={styles.note}>
-          {sub.cycle === 'year' ? 'Billed once a year' : describePrice(sub.priceCents, sub.cycle)}.{' '}
-          {saved
-            ? `Cancelling would bring your savings to ${formatMoney(saved + yearly)} a year from now.`
-            : 'Cancelling would save you that every year.'}
-        </AppText>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -498,9 +513,13 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 34,
     backgroundColor: colors.white,
-    padding: 24,
-    justifyContent: 'space-between',
     boxShadow: '0 20px 40px rgba(20,20,20,0.12)',
+  },
+  cardContent: {
+    flexGrow: 1,
+    padding: 24,
+    gap: spacing.md,
+    justifyContent: 'space-between',
   },
   cardTop: {
     flexDirection: 'row',
@@ -607,7 +626,8 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     minWidth: 140,
-    height: 52,
+    minHeight: 52,
+    paddingVertical: spacing.sm,
     paddingHorizontal: 36,
     borderRadius: radii.pill,
     backgroundColor: colors.ink,

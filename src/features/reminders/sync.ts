@@ -46,7 +46,7 @@ function prepare(): Promise<void> {
     // Every button opens the app, so the choice is handled even if lapse wasn't running.
     await attempt(() =>
       Notifications.setNotificationCategoryAsync(TRIAL_CATEGORY, [
-        { identifier: TRIAL_ACTIONS.cancel, buttonTitle: 'Cancel the trial' },
+        { identifier: TRIAL_ACTIONS.cancel, buttonTitle: 'How to cancel' },
         { identifier: TRIAL_ACTIONS.tonight, buttonTitle: 'Remind me tonight' },
         { identifier: TRIAL_ACTIONS.keep, buttonTitle: 'I’ll keep it' },
       ]),

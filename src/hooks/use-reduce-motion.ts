@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
-/** True while the phone's Reduce Motion setting is on. Starts false until the phone answers. */
+import { prefersReducedMotion } from '@/utils/motion';
+
+/** True while the phone's Reduce Motion setting is on. Starts from the value read at launch. */
 export function useReduceMotion(): boolean {
-  const [reduce, setReduce] = useState(false);
+  const [reduce, setReduce] = useState(prefersReducedMotion);
   useEffect(() => {
     let active = true;
     AccessibilityInfo.isReduceMotionEnabled()

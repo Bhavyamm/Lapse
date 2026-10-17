@@ -159,14 +159,14 @@ describe('Turn on reminders screen', () => {
     expect(router.replace).toHaveBeenCalledTimes(1);
   });
 
-  it('ignores Skip while the permission prompt is open', async () => {
+  it('ignores Not now while the permission prompt is open', async () => {
     let resolve: (granted: boolean) => void = () => {};
     requestPermission.mockReturnValue(new Promise<boolean>((r) => (resolve = r)));
     await render(<RemindersScreen />);
 
     await act(async () => {
       tap(screen.getByRole('button', { name: /Turn on reminders/ }));
-      tap(screen.getByRole('button', { name: 'Skip' }));
+      tap(screen.getByRole('button', { name: 'Not now' }));
       resolve(true);
     });
 
@@ -174,19 +174,20 @@ describe('Turn on reminders screen', () => {
     expect(useSettings.getState().remindersEnabled).toBe(true);
   });
 
-  it.each(['Skip', 'Not now'])('"%s" finishes onboarding without asking for permission', async (label) => {
+  it('"Not now" finishes onboarding without asking for permission', async () => {
     await render(<RemindersScreen />);
 
-    await fireEvent.press(screen.getByRole('button', { name: label }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
 
     expect(requestPermission).not.toHaveBeenCalled();
     expect(useSettings.getState()).toMatchObject({ hasOnboarded: true, remindersEnabled: false });
     expect(router.replace).toHaveBeenCalledWith('/');
   });
 
-  it('labels the progress dots for screen readers', async () => {
+  it('offers one way to skip, under the main button', async () => {
     await render(<RemindersScreen />);
 
-    expect(screen.getByLabelText('Step 2 of 3')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
+    expect(screen.queryByLabelText(/^Step \d of \d$/)).toBeNull();
   });
 });

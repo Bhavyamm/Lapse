@@ -14,3 +14,12 @@ jest.mock('@/features/storage/app-storage', () => {
     },
   };
 });
+jest.mock('expo-haptics', () => ({
+  selectionAsync: jest.fn(() => Promise.resolve()),
+  impactAsync: jest.fn(() => Promise.resolve()),
+  notificationAsync: jest.fn(() => Promise.resolve()),
+  ImpactFeedbackStyle: { Light: 'light' },
+  NotificationFeedbackType: { Success: 'success', Error: 'error' },
+}));
+// Screens are rendered without a navigator in tests; these two hooks need one.
+jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn(), useScrollToTop: jest.fn() }));

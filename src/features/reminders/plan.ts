@@ -69,7 +69,7 @@ export function reminderContent(sub: Subscription, chargeOn: LocalDate, kind: Re
   }
   return {
     title: `${sub.name} renews ${when}`,
-    body: `${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}, renews ${formatMonthDay(chargeOn)}`,
+    body: `${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}, charged ${formatMonthDay(chargeOn)}.`,
   };
 }
 

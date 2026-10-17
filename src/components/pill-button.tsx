@@ -30,7 +30,7 @@ export function PillButton({ label, onPress, icon, tone = 'accent', disabled, st
         disabled && styles.disabled,
         style,
       ]}>
-      <AppText variant="button" style={{ color: dark ? colors.white : colors.ink }}>
+      <AppText variant="button" style={[styles.label, { color: dark ? colors.white : colors.ink }]}>
         {label}
       </AppText>
       <View style={[styles.knob, { backgroundColor: dark ? colors.accent : colors.ink }]}>{icon}</View>
@@ -43,13 +43,19 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   button: {
-    height: 60,
+    minHeight: 60,
+    paddingVertical: 7,
     borderRadius: radii.pill,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingLeft: 26,
     paddingRight: 7,
+  },
+  // Wraps beside the knob at large text sizes instead of running under it.
+  label: {
+    flexShrink: 1,
+    marginRight: 12,
   },
   knob: {
     width: 46,

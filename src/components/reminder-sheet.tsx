@@ -73,7 +73,7 @@ function Sheet({ onClose }: { onClose: () => void }) {
               : 'Notifications are off for lapse. Turn them on in Settings.'}
           </AppText>
           {Platform.OS === 'web' ? null : (
-            <Pressable role="link" onPress={() => Linking.openSettings()} hitSlop={8}>
+            <Pressable role="link" onPress={() => Linking.openSettings()} style={styles.settingsPress}>
               <AppText variant="label" style={styles.settingsLink}>
                 Open Settings
               </AppText>
@@ -139,6 +139,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.canvas,
     gap: spacing.xs,
+  },
+  settingsPress: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   settingsLink: {
     fontFamily: fonts.semibold,

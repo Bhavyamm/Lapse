@@ -3,6 +3,7 @@ import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { colors, fonts, radii } from '@/theme';
+import { selection } from '@/utils/haptics';
 import { animateLayout, prefersReducedMotion, SETTLE } from '@/utils/motion';
 
 type Props<T extends string> = {
@@ -51,6 +52,7 @@ export function Segmented<T extends string>({ label, options, value, onChange }:
             aria-checked={selected}
             onPress={() => {
               if (selected) return;
+              selection();
               // The list below reorders with the thumb instead of jumping.
               animateLayout();
               onChange(option.value);

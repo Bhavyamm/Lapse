@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { AccessibilityInfo, Animated } from 'react-native';
 
@@ -75,6 +76,7 @@ describe('Monthly check-in', () => {
     await render(<CheckInScreen />);
 
     await answer('Keep it');
+    expect(Haptics.impactAsync).toHaveBeenCalledTimes(1);
     expect(useSubscriptions.getState().subscriptions.find((s) => s.id === 'gpt')?.reviewedOn).toBe('2026-10-16');
     expect(screen.getByText('2 of 2')).toBeOnTheScreen();
     expect(screen.getByLabelText(/YouTube Premium, .* Last reviewed Sep 16/)).toBeOnTheScreen();

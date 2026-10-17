@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useScrollToTop } from 'expo-router/react-navigation';
+import { useRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,9 +9,13 @@ import { spacing, tabBar } from '@/theme';
 /** Scrollable page for a tab, on the blob background, clear of the floating nav. */
 export function TabScreen({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
+  // Tapping the open tab again scrolls back to the top, as on any iOS tab bar.
+  const scroll = useRef<ScrollView>(null);
+  useScrollToTop(scroll);
   return (
     <ScreenBackground>
       <ScrollView
+        ref={scroll}
         contentContainerStyle={[
           styles.content,
           {

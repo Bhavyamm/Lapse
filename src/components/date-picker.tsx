@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/app-text';
 import { BackIcon, ChevronIcon } from '@/components/icons';
 import { colors, fonts, radii } from '@/theme';
+import { selection } from '@/utils/haptics';
 import {
   formatMonthYear,
   formatShortDate,
@@ -68,7 +69,7 @@ export function DatePicker({ value, onChange, min, today }: Props) {
       {/* Each day's label already names its weekday. */}
       <View style={styles.row} aria-hidden>
         {weekdays.map((d, i) => (
-          <AppText key={i} variant="caption" muted style={styles.weekday}>
+          <AppText key={i} variant="caption" muted maxFontSizeMultiplier={1.3} style={styles.weekday}>
             {d}
           </AppText>
         ))}
@@ -87,11 +88,15 @@ export function DatePicker({ value, onChange, min, today }: Props) {
               aria-disabled={blocked}
               aria-label={formatShortDate(day)}
               disabled={blocked}
-              onPress={() => onChange(day)}
+              onPress={() => {
+                if (!isSelected) selection();
+                onChange(day);
+              }}
               style={styles.cell}>
               <View style={[styles.day, isToday && styles.today, isSelected && styles.selected]}>
                 <AppText
                   variant="label"
+                  maxFontSizeMultiplier={1.3}
                   style={[
                     styles.dayText,
                     blocked && { color: colors.hairline },
@@ -143,13 +148,13 @@ const styles = StyleSheet.create({
   },
   cell: {
     width: `${100 / 7}%`,
-    height: 44,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   day: {
-    width: 38,
-    height: 38,
+    minWidth: 38,
+    minHeight: 38,
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',

@@ -30,7 +30,7 @@ describe('planReminders', () => {
     expect(planned[0].at).toEqual(new Date(2026, 9, 18, 9, 0));
     expect(planned[0]).toMatchObject({
       title: 'Spotify renews tomorrow',
-      body: '$11.99 a month, renews Oct 19',
+      body: '$11.99 a month, charged Oct 19.',
       data: { subscriptionId: 's', kind: 'renewal', chargeOn: '2026-10-19' },
       category: undefined,
     });

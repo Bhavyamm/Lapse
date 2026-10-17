@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -24,6 +24,7 @@ import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { formatMonthDay, formatShortDate, fromLocalDate, toLocalDate, type LocalDate } from '@/utils/dates';
 import { openLink } from '@/utils/links';
+import { success } from '@/utils/haptics';
 import { confirm } from '@/utils/notify';
 
 const CYCLE_WORD: Record<BillingCycle, string> = { week: 'a week', month: 'a month', year: 'a year' };
@@ -91,9 +92,11 @@ function Detail({ sub }: { sub: Subscription }) {
       `Mark ${sub.name} as cancelled?`,
       'It leaves your list, and what you save starts counting on Profile.',
       'Mark cancelled',
+      { cancel: 'Keep tracking' },
     );
     confirming.current = false;
     if (!yes) return;
+    success();
     leave();
     cancel(sub.id, today);
   };
@@ -179,7 +182,7 @@ function Detail({ sub }: { sub: Subscription }) {
         style={[styles.actions, { paddingBottom: insets.bottom + spacing.sm }]}
         onLayout={(e) => setActionsHeight(e.nativeEvent.layout.height)}>
         <PressScale role="link" onPress={() => openLink(guide.url)} style={[styles.primary]}>
-          <AppText variant="button" onDark style={styles.primaryText} numberOfLines={1}>
+          <AppText variant="button" onDark style={styles.primaryText} numberOfLines={2}>
             {guide.action}
           </AppText>
           <View style={styles.primaryIcon}>
@@ -222,6 +225,8 @@ function Hero({ sub, pill, suffix, topInset }: { sub: Subscription; pill: string
   const service = findService(sub.serviceId);
   const logo = service ? logoFor(service) : undefined;
   const yearly = sub.cycle === 'year';
+  // At large text sizes the three facts stack, so none of them is cut off.
+  const stacked = useWindowDimensions().fontScale > 1.3;
   const facts = [
     yearly
       ? { label: 'Per month', value: formatMoney(monthlyCents(sub.priceCents, sub.cycle)) }
@@ -256,7 +261,7 @@ function Hero({ sub, pill, suffix, topInset }: { sub: Subscription; pill: string
         </AppText>
       </View>
       <BigAmount cents={sub.priceCents} suffix={suffix} />
-      <View style={styles.facts}>
+      <View style={[styles.facts, stacked && styles.factsStacked]}>
         {facts.map((fact) => (
           <View key={fact.label} style={styles.fact} accessible aria-label={`${fact.label}: ${fact.value}`}>
             <AppText variant="caption" onDark muted>
@@ -338,6 +343,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
+  factsStacked: {
+    flexDirection: 'column',
+  },
   fact: {
     flex: 1,
     backgroundColor: colors.onDarkPanel,
@@ -418,6 +426,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingLeft: 26,
     paddingRight: spacing.sm,
+    paddingVertical: spacing.sm,
     gap: spacing.md,
   },
   primaryText: {

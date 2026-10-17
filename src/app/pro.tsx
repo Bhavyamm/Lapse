@@ -14,6 +14,7 @@ import { formatMoney } from '@/features/subscriptions/billing';
 import { buildOverview } from '@/features/subscriptions/overview';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
+import { success } from '@/utils/haptics';
 import { notify } from '@/utils/notify';
 
 const FEATURES = [
@@ -34,6 +35,7 @@ function leave() {
 
 function explain(result: PurchaseResult, restoring: boolean) {
   if (result === 'unlocked') {
+    success();
     notify('Pro is unlocked', 'Thanks for supporting lapse.');
     leave();
   } else if (result === 'unavailable') {

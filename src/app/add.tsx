@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
+import { usePreventRemove } from 'expo-router/react-navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -35,7 +36,9 @@ import {
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing, type } from '@/theme';
 import { formatShortDate, today as getToday } from '@/utils/dates';
+import { selection, success } from '@/utils/haptics';
 import { animateLayout } from '@/utils/motion';
+import { confirm } from '@/utils/notify';
 
 /** Add from catalog: search, pick one or more services, adjust them, and save. */
 export default function AddScreen() {
@@ -63,6 +66,7 @@ export default function AddScreen() {
     const draft = picked.get(service.id);
     const count = drafts.length + (draft ? -1 : 1);
     AccessibilityInfo.announceForAccessibility(`${service.name} ${draft ? 'removed' : 'picked'}. ${count} picked.`);
+    selection();
     if (draft) unselect(draft.key);
     else setDrafts((list) => [...list, draftFromService(service, today)]);
   };
@@ -87,8 +91,41 @@ export default function AddScreen() {
     if (broken) return setEditing(broken);
     saving.current = true;
     add(drafts.map(toNewSubscription));
+    success();
     leave();
   };
+
+  // Picks aren't saved until the button below, so leaving with some asks first.
+  const asking = useRef(false);
+  const discarding = useRef(false);
+  const discardPicks = async (): Promise<boolean> => {
+    if (asking.current) return false;
+    asking.current = true;
+    const n = drafts.length;
+    const yes = await confirm(
+      n > 1 ? `Discard ${n} picks?` : 'Discard your pick?',
+      'They haven’t been added yet.',
+      'Discard',
+      { cancel: 'Keep editing', destructive: true },
+    );
+    asking.current = false;
+    return yes;
+  };
+  const goBack = async () => {
+    if (drafts.length > 0 && !(await discardPicks())) return;
+    discarding.current = true;
+    leave();
+  };
+  // The iOS edge swipe and Android's back button go through the same question.
+  const navigation = useNavigation();
+  usePreventRemove(drafts.length > 0, ({ data }) => {
+    if (saving.current || discarding.current) return navigation.dispatch(data.action);
+    void discardPicks().then((yes) => {
+      if (!yes) return;
+      discarding.current = true;
+      navigation.dispatch(data.action);
+    });
+  });
 
   const count = drafts.length;
   return (
@@ -96,10 +133,10 @@ export default function AddScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <View style={styles.top}>
           <View style={styles.topBar}>
-            <Pressable role="button" aria-label="Back" onPress={leave} style={styles.back}>
+            <Pressable role="button" aria-label="Back" onPress={goBack} style={styles.back}>
               <BackIcon color={colors.ink} />
             </Pressable>
-            <AppText variant="caption" muted style={styles.count}>
+            <AppText variant="caption" style={styles.count}>
               {CATALOG.length} services
             </AppText>
           </View>
@@ -309,7 +346,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    height: 52,
+    minHeight: 52,
+    paddingVertical: 12,
     borderRadius: radii.pill,
     backgroundColor: colors.white,
     paddingHorizontal: 18,
@@ -336,7 +374,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    height: 64,
+    minHeight: 64,
+    paddingVertical: 10,
   },
   divider: {
     borderTopWidth: 1,
@@ -357,7 +396,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    height: 54,
+    minHeight: 54,
+    paddingVertical: 10,
   },
   ownText: {
     color: colors.inkSoft,
@@ -407,9 +447,9 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   pickRemove: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.onAccentPanel,
     alignItems: 'center',
     justifyContent: 'center',

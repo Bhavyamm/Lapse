@@ -43,7 +43,7 @@ describe('syncReminders', () => {
     await syncReminders([spotify], on);
 
     expect(Notifications.setNotificationCategoryAsync).toHaveBeenCalledWith('trial', [
-      expect.objectContaining({ identifier: 'cancel', buttonTitle: 'Cancel the trial' }),
+      expect.objectContaining({ identifier: 'cancel', buttonTitle: 'How to cancel' }),
       expect.objectContaining({ identifier: 'tonight', buttonTitle: 'Remind me tonight' }),
       expect.objectContaining({ identifier: 'keep', buttonTitle: 'I’ll keep it' }),
     ]);
@@ -52,7 +52,7 @@ describe('syncReminders', () => {
       identifier: 's:2026-10-19',
       content: {
         title: 'Spotify renews tomorrow',
-        body: '$11.99 a month, renews Oct 19',
+        body: '$11.99 a month, charged Oct 19.',
         data: { subscriptionId: 's', kind: 'renewal', chargeOn: '2026-10-19' },
         categoryIdentifier: undefined,
       },

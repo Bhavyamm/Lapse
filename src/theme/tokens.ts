@@ -25,6 +25,8 @@ export const colors = {
   textOnDarkMuted: '#8A8A8A',
   divider: '#EDEDED',
   hairline: '#D6D6D6',
+  /** A switch's track when off: 3.3:1 on white, so the off state still reads. */
+  controlOff: '#8E8E93',
   /** Dims the screen behind a bottom sheet. */
   scrim: 'rgba(20,20,20,0.35)',
   /** Round button or pill on a charcoal card. */
@@ -37,7 +39,7 @@ export const colors = {
   sheetOnAccent: 'rgba(255,255,255,0.6)',
   /** Light panel inside an orange card. */
   onAccentPanel: 'rgba(255,255,255,0.45)',
-  danger: '#E23B4A',
+  danger: '#C62E3C',
   success: '#2FA36B',
 } as const;
 
@@ -85,6 +87,18 @@ export const type = {
 } as const;
 
 export type TypeVariant = keyof typeof type;
+
+/**
+ * Display sizes are already bigger than any text size setting, so they grow only a little with
+ * it; past that they would push the rest of the screen away without reading any better.
+ */
+export const maxScale: Partial<Record<TypeVariant, number>> = {
+  wordmark: 1.3,
+  display: 1.3,
+  hero: 1.3,
+  countdown: 1.3,
+  amountUnit: 1.3,
+};
 
 export const radii = {
   icon: 13,

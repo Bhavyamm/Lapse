@@ -3,6 +3,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { AppText } from '@/components/app-text';
 import { CheckIcon } from '@/components/icons';
 import { colors, fonts, radii } from '@/theme';
+import { selection } from '@/utils/haptics';
 
 type Props = {
   label: string;
@@ -18,7 +19,10 @@ export function Chip({ label, selected, onPress, onWhite }: Props) {
     <Pressable
       role="radio"
       aria-checked={selected}
-      onPress={onPress}
+      onPress={() => {
+        if (!selected) selection();
+        onPress();
+      }}
       hitSlop={{ top: 5, bottom: 5 }}
       style={[styles.chip, selected ? styles.selected : onWhite ? styles.idleOnWhite : styles.idle]}>
       {selected ? <CheckIcon color={colors.accent} /> : null}
@@ -31,7 +35,8 @@ export function Chip({ label, selected, onPress, onWhite }: Props) {
 
 const styles = StyleSheet.create({
   chip: {
-    height: 34,
+    minHeight: 34,
+    paddingVertical: 6,
     borderRadius: radii.pill,
     paddingHorizontal: 13,
     flexDirection: 'row',

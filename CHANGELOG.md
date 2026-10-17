@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Follows Apple's Human Interface Guidelines more closely (audited with the Apple HIG skills now in `.claude/skills`):
+  - Larger text no longer clips. Buttons, list rows, search and price fields, chips and calendar days grow with the text; the cancel button on a subscription wraps to two lines; the three facts on a subscription stack at large sizes; the check-in card scrolls when its text outgrows it; and the big amounts, countdown and wordmark grow only a little.
+  - Closing the subscription editor after changing something, or leaving Add with picks, asks "Discard changes?" or "Discard 2 picks?" first. This covers the Close button, the backdrop, swiping the sheet down, Back and the iOS edge swipe.
+  - Sheets have a grabber and close with a swipe down.
+  - Haptics: a light tick on switches, chips, the sort control and dates; a tap on each check-in answer; success when subscriptions are added, one is marked cancelled or Pro unlocks; an error buzz when Save is blocked.
+  - The tab bar shows the open tab's name in its orange capsule, and tapping the open tab scrolls back to the top.
+  - Easier to see: switches are a darker gray when off, the error red is darker, and the service count on Add is darker.
+  - Turn on reminders has one way to skip (Not now) and no longer shows "step 2 of 3".
+  - The trial reminder's button says How to cancel, since lapse shows the steps rather than cancelling. Renewal reminders read "$15.49 a month, charged Oct 25."
+  - Check-in's Cancel it uses the arrow icon (an X means close on iOS); confirming I already cancelled offers Keep tracking instead of Not now; Profile says Trials caught.
+  - Larger tap targets for removing a pick on Add and for Open Settings in the Reminders sheet.
 - Add a subscription: picked services stay where they are in the list with an orange check (tap again to unpick), and gather in a tray above the save button with the monthly total and a chip per pick to change or remove it. The list no longer grows as you pick.
 - Smoother motion everywhere: sheets slide up on a spring over a fading backdrop and slide away when closed, buttons ease down when pressed, toggles and the sort control slide, tabs cross-fade, and calendar months slide in from the side you moved to. Reduce Motion turns it off.
 - Monthly check-in: Done is a small pill instead of a full-width button.

@@ -107,7 +107,7 @@ function SavingsCard() {
   const stats = [
     { value: tracked, label: 'Tracked' },
     { value: savings.cancelled, label: 'Cancelled' },
-    { value: savings.trialsCaught, label: 'Trial caught' },
+    { value: savings.trialsCaught, label: savings.trialsCaught === 1 ? 'Trial caught' : 'Trials caught' },
   ];
   return (
     <CharcoalCard contentStyle={styles.savings}>

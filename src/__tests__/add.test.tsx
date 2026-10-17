@@ -1,5 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
+import { Alert } from 'react-native';
 
 import { useSubscriptions } from '@/stores/subscriptions';
 
@@ -7,6 +9,7 @@ import AddScreen from '@/app/add';
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), replace: jest.fn(), canGoBack: jest.fn(() => true) },
+  useNavigation: () => ({ dispatch: jest.fn() }),
 }));
 
 const initial = useSubscriptions.getState();
@@ -99,15 +102,75 @@ describe('Add a subscription', () => {
     expect(screen.getByRole('button', { name: /^Add Netflix/ })).toBeOnTheScreen();
   });
 
-  it('opens the editor fresh after closing it with unsaved changes', async () => {
+  it('asks before discarding edits, then opens the editor fresh', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[1].onPress?.());
     await render(<AddScreen />);
     await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
     await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
     await fireEvent.changeText(screen.getByLabelText('Price'), '99');
     await fireEvent.press(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
-    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
 
+    expect(alert).toHaveBeenCalledWith(
+      'Discard changes?',
+      expect.any(String),
+      [
+        expect.objectContaining({ text: 'Keep editing', style: 'cancel' }),
+        expect.objectContaining({ text: 'Discard changes', style: 'destructive' }),
+      ],
+      expect.anything(),
+    );
+    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
     expect(screen.getAllByLabelText('Price').at(-1)).toHaveDisplayValue('7.99');
+    alert.mockRestore();
+  });
+
+  it('keeps the edits when the person picks Keep editing', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[0].onPress?.());
+    await render(<AddScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+    await fireEvent.changeText(screen.getByLabelText('Price'), '99');
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
+
+    expect(screen.getByLabelText('Price')).toHaveDisplayValue('99');
+    alert.mockRestore();
+  });
+
+  it('closes an unchanged editor without asking', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    await render(<AddScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
+
+    expect(alert).not.toHaveBeenCalled();
+    alert.mockRestore();
+  });
+
+  it('asks before Back throws away picks', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[0].onPress?.());
+    await render(<AddScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Add Spotify/ }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+
+    expect(alert).toHaveBeenCalledWith('Discard 2 picks?', expect.any(String), expect.any(Array), expect.anything());
+    expect(router.back).not.toHaveBeenCalled();
+
+    alert.mockImplementation((_t, _m, buttons) => buttons?.[1].onPress?.());
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(router.back).toHaveBeenCalledTimes(1);
+    alert.mockRestore();
+  });
+
+  it('leaves straight away when nothing is picked', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    await render(<AddScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+
+    expect(alert).not.toHaveBeenCalled();
+    expect(router.back).toHaveBeenCalledTimes(1);
+    alert.mockRestore();
   });
 
   it('saves the price, how often and trial chosen in the editor', async () => {
@@ -145,12 +208,14 @@ describe('Add a subscription', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Add a price, like 9.99.');
+    expect(Haptics.notificationAsync).toHaveBeenCalledWith('error');
 
     await fireEvent.changeText(screen.getByLabelText('Price'), '40');
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Add and remind me' }));
 
     expect(saved()[0]).toMatchObject({ serviceId: null, name: 'Gym', priceCents: 4000, cycle: 'month' });
+    expect(Haptics.notificationAsync).toHaveBeenLastCalledWith('success');
   });
 
   it('moves the default date with the cycle until a date is picked', async () => {

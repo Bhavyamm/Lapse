@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,6 +15,8 @@ import { draftProblem, type Draft } from '@/features/subscriptions/draft';
 import type { BillingCycle } from '@/features/subscriptions/types';
 import { colors, fonts, radii, spacing, type } from '@/theme';
 import { useLock } from '@/stores/lock';
+import { error } from '@/utils/haptics';
+import { confirm } from '@/utils/notify';
 import type { LocalDate } from '@/utils/dates';
 
 const CYCLES: { value: BillingCycle; label: string }[] = [
@@ -47,14 +49,36 @@ export function SubscriptionEditor({ draft, today, onSave, onClose }: Props) {
       setOpening((n) => n + 1);
     }
   }
+  // The open sheet decides whether the backdrop, a swipe or Android's back may close it.
+  const requestClose = useRef<() => boolean>(() => {
+    onClose();
+    return true;
+  });
   return (
-    <BottomSheet visible={!!draft} hideNow={locked} onClose={onClose}>
-      {shown ? <EditorSheet key={opening} initial={shown} today={today} onSave={onSave} onClose={onClose} /> : null}
+    <BottomSheet visible={!!draft} hideNow={locked} onClose={() => requestClose.current()}>
+      {shown ? (
+        <EditorSheet
+          key={opening}
+          initial={shown}
+          today={today}
+          onSave={onSave}
+          onClose={onClose}
+          onCloseRequests={(handler) => {
+            requestClose.current = handler;
+          }}
+        />
+      ) : null}
     </BottomSheet>
   );
 }
 
-function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> & { initial: Draft }) {
+type SheetProps = Omit<Props, 'draft'> & {
+  initial: Draft;
+  /** Hands the parent what to do when something other than Close asks to close. */
+  onCloseRequests: (handler: () => boolean) => void;
+};
+
+function EditorSheet({ initial, today, onSave, onClose, onCloseRequests }: SheetProps) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const [draft, setDraft] = useState(initial);
@@ -75,9 +99,33 @@ function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> &
 
   const save = () => {
     const issue = draftProblem(draft);
-    if (issue) setProblem(issue);
-    else onSave({ ...draft, name: draft.name.trim() });
+    if (issue) {
+      error();
+      setProblem(issue);
+    } else onSave({ ...draft, name: draft.name.trim() });
   };
+
+  // Edits aren't thrown away on a stray tap: closing a changed draft asks first.
+  const changed = JSON.stringify(draft) !== JSON.stringify(initial);
+  const asking = useRef(false);
+  const requestClose = (): boolean => {
+    if (!changed) {
+      onClose();
+      return true;
+    }
+    if (!asking.current) {
+      asking.current = true;
+      void confirm('Discard changes?', 'What you changed here won’t be kept.', 'Discard changes', {
+        cancel: 'Keep editing',
+        destructive: true,
+      }).then((discard) => {
+        asking.current = false;
+        if (discard) onClose();
+      });
+    }
+    return false;
+  };
+  useEffect(() => onCloseRequests(requestClose));
 
   return (
     <View style={[styles.sheet, { maxHeight: height * 0.92, paddingBottom: insets.bottom + spacing.lg }]}>
@@ -98,7 +146,7 @@ function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> &
             {draft.name}
           </AppText>
         )}
-        <Pressable role="button" aria-label="Close" onPress={onClose} style={styles.close} hitSlop={8}>
+        <Pressable role="button" aria-label="Close" onPress={requestClose} style={styles.close} hitSlop={8}>
           <CloseIcon size={16} color={colors.ink} />
         </Pressable>
       </View>
@@ -217,7 +265,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 52,
+    minHeight: 52,
+    paddingVertical: 12,
     borderRadius: radii.pill,
     backgroundColor: colors.canvas,
     paddingHorizontal: 18,

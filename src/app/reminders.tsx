@@ -10,7 +10,6 @@ import { Chip } from '@/components/chip';
 import { BellIcon } from '@/components/icons';
 import { Mascot } from '@/components/mascot';
 import { NotificationPreview } from '@/components/notification-preview';
-import { PageDots } from '@/components/page-dots';
 import { PillButton } from '@/components/pill-button';
 import { ScreenBackground } from '@/components/screen-background';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
@@ -50,15 +49,6 @@ export default function RemindersScreen() {
     <ScreenBackground
       style={[styles.root, { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg }]}>
       <StatusBar style="dark" />
-      <View style={styles.topBar}>
-        <PageDots count={3} current={1} />
-        <Pressable role="button" onPress={skip} hitSlop={12}>
-          <AppText variant="link" muted>
-            Skip
-          </AppText>
-        </Pressable>
-      </View>
-
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -111,13 +101,6 @@ export default function RemindersScreen() {
 const styles = StyleSheet.create({
   root: {
     paddingHorizontal: spacing.lg,
-  },
-  topBar: {
-    height: 44,
-    paddingHorizontal: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   scroll: {
     flex: 1,
