@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Monthly check-in: answering a card swipes it away (right for Keep it, left for Next month) while the next card rises from the stack. The finished screen now celebrates with the mascot and confetti, shows what you'll save from cancelling (or what the ones you kept cost a year), a Kept / Cancelled / Next month tally, and each subscription with its result.
+- Subscription detail: the cancel button and I already cancelled sit on a soft fade, so content no longer runs into them, and the screen is tighter so it fits on a phone.
+- Reminders on Android show the lapse. icon in orange (development and store builds; Expo Go always shows its own icon).
 - The splash keeps a light status bar, waits for a tap when a screen reader is on, and skips the fade with Reduce Motion.
 - Spending totals on Home leave out free trials that haven't charged yet, matching the design.
 - The lapse. splash now shows each time the app opens and fades into Home (or into Turn on reminders the first time) after a moment; tap it to skip. It is no longer an onboarding step.
