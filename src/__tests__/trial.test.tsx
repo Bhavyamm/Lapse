@@ -73,7 +73,9 @@ describe('Trial screen', () => {
     await render(<TrialScreen />);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Cancel before Sunday' }));
-    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/subscription/[id]', params: { id: 'd' } });
+    // Replaces the trial screen, so leaving the detail never lands back on a stale trial.
+    expect(mockRouter.replace).toHaveBeenCalledWith({ pathname: '/subscription/[id]', params: { id: 'd' } });
+    expect(mockRouter.push).not.toHaveBeenCalled();
 
     await fireEvent.press(screen.getByRole('button', { name: 'I’ll keep it' }));
     expect(mockRouter.back).toHaveBeenCalled();
@@ -89,6 +91,48 @@ describe('Trial screen', () => {
 
   it('hands over to the detail screen once the trial is over', async () => {
     useSubscriptions.setState({ subscriptions: [{ ...duo, chargeOn: '2026-10-10' }] });
+    await render(<TrialScreen />);
+
+    expect(screen.getByText('redirect /subscription/[id]')).toBeOnTheScreen();
+  });
+
+  it('names the date for a trial a week or more away', async () => {
+    useSubscriptions.setState({ subscriptions: [{ ...duo, chargeOn: '2026-10-25' }] });
+    await render(<TrialScreen />);
+
+    expect(screen.getByRole('button', { name: 'Cancel before Sun, Oct 25' })).toBeOnTheScreen();
+    expect(screen.getByText(/trial ends on Sun, Oct 25\./)).toBeOnTheScreen();
+  });
+
+  it('says today’s reminder has passed once its time is gone', async () => {
+    jest.setSystemTime(new Date(2026, 9, 17, 14, 0));
+    try {
+      await render(<TrialScreen />);
+      expect(screen.getByText('That time has passed')).toBeOnTheScreen();
+    } finally {
+      jest.setSystemTime(new Date(2026, 9, 16, 8, 0));
+    }
+  });
+
+  it('turns a trial’s reminder back on when a time is picked', async () => {
+    useSubscriptions.setState({ subscriptions: [{ ...duo, remind: false }] });
+    await render(<TrialScreen />);
+    expect(screen.getByText('Off for this trial. Pick a time to turn it on.')).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Morning of' }));
+
+    expect(useSubscriptions.getState().subscriptions[0]).toMatchObject({ remind: true, lead: 'morningOf' });
+  });
+
+  it('hides the timing choices while reminders are off', async () => {
+    useSettings.setState({ remindersEnabled: false });
+    await render(<TrialScreen />);
+
+    expect(screen.queryByRole('radio', { name: 'Morning of' })).not.toBeOnTheScreen();
+  });
+
+  it('hands over to the detail screen when the subscription is gone', async () => {
+    useSubscriptions.setState({ subscriptions: [] });
     await render(<TrialScreen />);
 
     expect(screen.getByText('redirect /subscription/[id]')).toBeOnTheScreen();

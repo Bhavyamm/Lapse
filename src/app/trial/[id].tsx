@@ -1,4 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,9 +10,8 @@ import { PillButton } from '@/components/pill-button';
 import { ServiceLogo } from '@/components/service-logo';
 import { useToday } from '@/hooks/use-today';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
-import { formatReminder, reminderAt, reminderDay } from '@/features/reminders/when';
+import { formatReminder, reminderAt } from '@/features/reminders/when';
 import { formatMoney, nextChargeDate } from '@/features/subscriptions/billing';
-import { openDetail } from '@/features/subscriptions/open';
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
 import { useSettings } from '@/stores/settings';
 import { useSubscriptions } from '@/stores/subscriptions';
@@ -49,6 +49,8 @@ function Trial({ sub, today }: { sub: Subscription; today: LocalDate }) {
   const remindersOn = useSettings((s) => s.remindersEnabled);
   const globalLead = useSettings((s) => s.reminderLead);
   const lead = sub.lead ?? globalLead;
+  // Read once when the screen opens; enough to tell whether today's reminder has gone out.
+  const [now] = useState(Date.now);
 
   const days = daysBetween(today, sub.chargeOn);
   const ends = endsWord(sub.chargeOn, days);
@@ -57,11 +59,13 @@ function Trial({ sub, today }: { sub: Subscription; today: LocalDate }) {
   const reminderText = !remindersOn
     ? 'Reminders are off'
     : sub.remind === false
-      ? 'Off for this trial'
-      : reminderDay(sub.chargeOn, lead) < today
+      ? 'Off for this trial. Pick a time to turn it on.'
+      : at.getTime() <= now
         ? 'That time has passed'
         : formatReminder(at);
-  const cancelBy = days < 2 ? 'Cancel it now' : `Cancel before ${ends}`;
+  const cancelBy = days < 2 ? 'Cancel it now' : `Cancel before ${days < 7 ? ends : formatShortDate(sub.chargeOn)}`;
+  // Replace this screen so leaving the detail (after cancelling or editing) doesn't come back to a stale trial.
+  const openCancel = () => router.replace({ pathname: '/subscription/[id]', params: { id: sub.id } });
 
   return (
     <View style={styles.screen}>
@@ -120,17 +124,20 @@ function Trial({ sub, today }: { sub: Subscription; today: LocalDate }) {
                 <AppText variant="bodyStrong">{reminderText}</AppText>
               </View>
             </View>
-            <View style={styles.chips} role="radiogroup" aria-label="Reminder timing">
-              {REMINDER_LEADS.map((option) => (
-                <Chip
-                  key={option.value}
-                  label={option.label}
-                  selected={option.value === lead}
-                  onPress={() => update(sub.id, { lead: option.value })}
-                  onWhite
-                />
-              ))}
-            </View>
+            {remindersOn && (
+              <View style={styles.chips} role="radiogroup" aria-label="Reminder timing">
+                {REMINDER_LEADS.map((option) => (
+                  <Chip
+                    key={option.value}
+                    label={option.label}
+                    selected={option.value === lead}
+                    // Picking a time also turns this trial's reminder back on.
+                    onPress={() => update(sub.id, { lead: option.value, remind: true })}
+                    onWhite
+                  />
+                ))}
+              </View>
+            )}
           </View>
           <AppText variant="caption" muted style={styles.tip}>
             Cancelling early is safe: most apps let you keep the trial until {formatShortDate(sub.chargeOn)}.
@@ -141,7 +148,7 @@ function Trial({ sub, today }: { sub: Subscription; today: LocalDate }) {
               label={cancelBy}
               tone="dark"
               icon={<ArrowUpRightIcon color={colors.ink} />}
-              onPress={() => openDetail(sub.id)}
+              onPress={openCancel}
             />
             <Pressable
               role="button"

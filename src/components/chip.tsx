@@ -19,6 +19,7 @@ export function Chip({ label, selected, onPress, onWhite }: Props) {
       role="radio"
       aria-checked={selected}
       onPress={onPress}
+      hitSlop={{ top: 5, bottom: 5 }}
       style={[styles.chip, selected ? styles.selected : onWhite ? styles.idleOnWhite : styles.idle]}>
       {selected ? <CheckIcon color={colors.accent} /> : null}
       <AppText variant="caption" style={[styles.label, { color: selected ? colors.white : colors.ink }]}>

@@ -77,3 +77,20 @@ describe('cancel', () => {
     expect(useSubscriptions.getState().cancelled).toEqual([]);
   });
 });
+
+describe('update', () => {
+  beforeEach(() => useSubscriptions.setState(initial, true));
+
+  it('merges changes and keeps the per-subscription reminder settings', () => {
+    const [added] = useSubscriptions.getState().add([netflix]);
+    useSubscriptions.getState().update(added.id, { lead: 'morningOf', remind: false });
+    useSubscriptions.getState().update(added.id, { priceCents: 1799 });
+
+    expect(useSubscriptions.getState().subscriptions[0]).toMatchObject({
+      priceCents: 1799,
+      lead: 'morningOf',
+      remind: false,
+      name: 'Netflix',
+    });
+  });
+});
