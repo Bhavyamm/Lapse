@@ -14,7 +14,7 @@ jest.mock('@/features/lock/biometrics', () => ({ getBiometrics: jest.fn(), unloc
 jest.mock('@/features/reminders/permissions', () => ({ requestReminderPermission: jest.fn() }));
 jest.mock('@/features/subscriptions/export', () => ({ shareCsv: jest.fn() }));
 jest.mock('@/features/reminders/sync', () => ({ sendTestReminder: jest.fn() }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn(), navigate: jest.fn() } }));
 
 const initialSettings = useSettings.getState();
 const initialSubs = useSubscriptions.getState();
@@ -76,9 +76,9 @@ describe('Profile screen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Unlock Pro, $14.99 once' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Import a statement' }));
 
-    const push = jest.requireMock('expo-router').router.push;
-    expect(push).toHaveBeenCalledTimes(2);
-    expect(push).toHaveBeenCalledWith('/pro');
+    const navigate = jest.requireMock('expo-router').router.navigate;
+    expect(navigate).toHaveBeenCalledTimes(2);
+    expect(navigate).toHaveBeenCalledWith('/pro');
   });
 
   it('turns reminders on from the sheet once the phone allows them', async () => {

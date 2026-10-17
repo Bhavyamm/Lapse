@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useId, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
@@ -22,7 +22,14 @@ const FEATURES = [
   { title: 'Stays on device', detail: 'Nothing uploaded', Icon: LockIcon },
 ];
 
-const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+let leaving = false;
+/** Closes Pro once, even after a double tap or a purchase finishing as it closes. */
+function leave() {
+  if (leaving) return;
+  leaving = true;
+  if (router.canGoBack()) router.back();
+  else router.replace('/');
+}
 
 function explain(result: PurchaseResult, restoring: boolean) {
   if (result === 'unlocked') {
@@ -43,6 +50,9 @@ export default function ProScreen() {
   const subscriptions = useSubscriptions((s) => s.subscriptions);
   const yearly = useMemo(() => buildOverview(subscriptions, today).yearlyCents, [subscriptions, today]);
   const busy = useRef(false);
+  useEffect(() => {
+    leaving = false;
+  }, []);
 
   const run = async (restoring: boolean) => {
     if (busy.current) return;
@@ -56,8 +66,11 @@ export default function ProScreen() {
     }
   };
 
+  // Whole dollars like Home's "$894 a year", unless that would round a small total away.
+  const tracked =
+    yearly >= 100 ? formatMoney(Math.round(yearly / 100) * 100).replace(/\.00$/, '') : formatMoney(yearly);
   const lede = yearly
-    ? `You’re tracking ${formatMoney(Math.round(yearly / 100) * 100).slice(0, -3)} a year. Pro pays for itself the first time it catches a forgotten charge.`
+    ? `You’re tracking ${tracked} a year. Pro pays for itself the first time it catches a forgotten charge.`
     : 'Pro pays for itself the first time it catches a forgotten charge.';
 
   return (
@@ -69,7 +82,7 @@ export default function ProScreen() {
           styles.scroll,
           { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + 24 },
         ]}
-        showsVerticalScrollIndicator={false}>
+        style={styles.flex}>
         <View style={styles.top}>
           <View style={styles.tag}>
             <AppText variant="caption" style={styles.tagText}>
@@ -97,32 +110,31 @@ export default function ProScreen() {
             <Feature key={title} title={title} detail={detail} icon={<Icon size={26} color={colors.accent} />} />
           ))}
         </View>
-
-        <View style={styles.bottom}>
-          <Pressable
-            role="button"
-            aria-label={`Unlock Pro, ${PRO_PRICE}. One-time. No renewal, ever.`}
-            onPress={() => run(false)}
-            style={({ pressed }) => [styles.buy, pressed && { opacity: 0.85 }]}>
-            <View>
-              <AppText variant="button" style={styles.buyText}>
-                Unlock Pro · {PRO_PRICE}
-              </AppText>
-              <AppText variant="caption" style={styles.buyNote}>
-                One-time. No renewal, ever.
-              </AppText>
-            </View>
-            <View style={styles.buyArrow}>
-              <ArrowRightIcon color={colors.white} />
-            </View>
-          </Pressable>
-          <Pressable role="button" onPress={() => run(true)} hitSlop={12} style={styles.restore}>
-            <AppText variant="caption" onDark muted>
-              Restore purchase
-            </AppText>
-          </Pressable>
-        </View>
       </ScrollView>
+      <View style={[styles.bottom, { paddingBottom: insets.bottom + 12 }]}>
+        <Pressable
+          role="button"
+          aria-label={`Unlock Pro · ${PRO_PRICE}. One-time. No renewal, ever.`}
+          onPress={() => run(false)}
+          style={({ pressed }) => [styles.buy, pressed && { opacity: 0.85 }]}>
+          <View>
+            <AppText variant="button" style={styles.buyText}>
+              Unlock Pro · {PRO_PRICE}
+            </AppText>
+            <AppText variant="caption" style={styles.buyNote}>
+              One-time. No renewal, ever.
+            </AppText>
+          </View>
+          <View style={styles.buyArrow}>
+            <ArrowRightIcon color={colors.white} />
+          </View>
+        </Pressable>
+        <Pressable role="button" onPress={() => run(true)} hitSlop={12} style={styles.restore}>
+          <AppText variant="caption" onDark muted>
+            Restore purchase
+          </AppText>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -174,8 +186,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.charcoal,
   },
   scroll: {
-    flexGrow: 1,
     paddingHorizontal: 20,
+    paddingBottom: 8,
     gap: 20,
   },
   top: {
@@ -224,9 +236,13 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.onDarkButton,
   },
+  flex: {
+    flex: 1,
+  },
   bottom: {
-    marginTop: 'auto',
-    gap: 14,
+    paddingTop: 14,
+    paddingHorizontal: 20,
+    gap: 6,
   },
   buy: {
     minHeight: 64,

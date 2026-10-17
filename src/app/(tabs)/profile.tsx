@@ -95,7 +95,8 @@ async function testReminder() {
   }
 }
 
-const openPro = () => router.push('/pro');
+// Navigate, not push, so a double tap can't stack two Pro screens.
+const openPro = () => router.navigate('/pro');
 
 function SavingsCard() {
   const today = useToday();

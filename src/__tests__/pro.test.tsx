@@ -49,7 +49,7 @@ describe('Pro screen', () => {
     jest.mocked(purchasePro).mockResolvedValue('unavailable');
     await render(<ProScreen />);
 
-    await fireEvent.press(screen.getByRole('button', { name: /^Unlock Pro, \$14\.99/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Unlock Pro · \$14\.99/ }));
 
     expect(jest.mocked(Alert.alert).mock.calls[0][0]).toBe('Pro isn’t on sale yet');
   });
@@ -66,6 +66,25 @@ describe('Pro screen', () => {
     await fireEvent.press(screen.getByRole('button', { name: /^Unlock Pro/ }));
     expect(jest.mocked(Alert.alert).mock.calls[0][0]).toBe('Pro is unlocked');
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('closes once, even on a double tap', async () => {
+    const router = jest.requireMock('expo-router').router;
+    await render(<ProScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+
+    expect(router.back).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows cents for a total under a dollar a year', async () => {
+    useSubscriptions.setState({
+      subscriptions: [{ ...base, id: 'a', name: 'Tiny', priceCents: 50, cycle: 'year', chargeOn: '2026-10-22' }],
+    });
+    await render(<ProScreen />);
+
+    expect(screen.getByText(/^You’re tracking \$0\.50 a year\./)).toBeOnTheScreen();
   });
 
   it('restores, and explains a store error', async () => {

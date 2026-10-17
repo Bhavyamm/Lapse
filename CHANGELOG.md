@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved to Expo SDK 57 so the app opens in the Expo Go version on the App Store.
 
 ### Added
+- Pro unlock: Unlock Pro on Profile (and statement import) opens the Pro screen with the one-time $14.99 offer, what Pro adds and Restore purchase. Buying opens with the App Store release; until then the button says Pro isn't on sale yet.
 - Monthly check-in: once a month lapse walks you through your paid subscriptions, one card at a time with its yearly cost. Keep it, cancel it (opens the cancel steps) or put it off to next month. Home shows a Monthly check-in row while any are waiting, Profile opens it any time, and a reminder comes at 9 AM on the 1st.
 - Reminders: lapse now schedules real reminders on the phone at 9 AM before each renewal and before a free trial ends, at the timing you picked (or the next morning if that has passed). Trial reminders have Cancel the trial, Remind me tonight (8 PM) and I'll keep it buttons; tapping a reminder opens the trial or the subscription. Turning reminders off on Profile, or a subscription's alert off, removes them.
 - Trial reminder: tap a free trial on Home or All subscriptions to see how many days are left, when the first charge comes and what keeping it costs a year. Pick when this trial's reminder comes (3 days before, 1 day before or the morning of), then tap Cancel before to get the cancel steps, or I'll keep it.
