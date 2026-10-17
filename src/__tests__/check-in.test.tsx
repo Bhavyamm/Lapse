@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, Animated } from 'react-native';
 
 import { useSubscriptions } from '@/stores/subscriptions';
 
@@ -27,6 +27,12 @@ const yt = {
   reviewedOn: '2026-09-16',
 };
 const router = () => jest.requireMock('expo-router').router;
+
+/** Answers the card on screen and waits for its swipe to finish. */
+async function answer(name: 'Keep it' | 'Next month') {
+  await fireEvent.press(screen.getByRole('button', { name }));
+  await waitFor(() => expect(screen.queryByTestId('leaving-card', { includeHiddenElements: true })).toBeNull());
+}
 
 beforeAll(() => jest.useFakeTimers({ now: new Date(2026, 9, 16, 9, 0), advanceTimers: true }));
 afterAll(() => jest.useRealTimers());
@@ -68,12 +74,12 @@ describe('Monthly check-in', () => {
   it('keeps one, leaves one for next month, then sums up', async () => {
     await render(<CheckInScreen />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+    await answer('Keep it');
     expect(useSubscriptions.getState().subscriptions.find((s) => s.id === 'gpt')?.reviewedOn).toBe('2026-10-16');
     expect(screen.getByText('2 of 2')).toBeOnTheScreen();
     expect(screen.getByLabelText(/YouTube Premium, .* Last reviewed Sep 16/)).toBeOnTheScreen();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Next month' }));
+    await answer('Next month');
     expect(useSubscriptions.getState().subscriptions.find((s) => s.id === 'yt')).toMatchObject({
       reviewedOn: '2026-09-16',
       skippedOn: '2026-10-16',
@@ -95,7 +101,7 @@ describe('Monthly check-in', () => {
     await view.rerender(<CheckInScreen />);
 
     expect(screen.getByText('2 of 2')).toBeOnTheScreen();
-    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+    await answer('Keep it');
     expect(await screen.findByText('You kept 1 and cancelled 1. See you next month.')).toBeOnTheScreen();
     expect(screen.getByText('You’ll save')).toBeOnTheScreen();
     expect(screen.getByLabelText('$240.00 a year')).toBeOnTheScreen();
@@ -107,7 +113,7 @@ describe('Monthly check-in', () => {
     const view = await render(<CheckInScreen />);
     useSubscriptions.getState().remove('gpt');
     await view.rerender(<CheckInScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+    await answer('Keep it');
 
     expect(await screen.findByText('You kept 1. See you next month.')).toBeOnTheScreen();
     expect(screen.queryByLabelText(/^ChatGPT/)).toBeNull();
@@ -115,7 +121,7 @@ describe('Monthly check-in', () => {
 
   it('swipes the answered card away while the next one comes in', async () => {
     await render(<CheckInScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+    await answer('Keep it');
 
     expect(screen.queryByLabelText(/ChatGPT/)).toBeNull();
     expect(screen.getByLabelText(/YouTube Premium/)).toBeOnTheScreen();
@@ -124,8 +130,8 @@ describe('Monthly check-in', () => {
 
   it('shows what was kept, with a total, once all are checked', async () => {
     await render(<CheckInScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+    await answer('Keep it');
+    await answer('Keep it');
 
     expect(await screen.findByText('Still worth it')).toBeOnTheScreen();
     expect(screen.getByText('On the 2 you kept')).toBeOnTheScreen();
@@ -134,11 +140,38 @@ describe('Monthly check-in', () => {
   });
 
   it('skips the swipe with Reduce Motion on', async () => {
-    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValueOnce(true);
     await render(<CheckInScreen />);
     await act(async () => {});
-    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+    await answer('Keep it');
     expect(screen.queryByLabelText(/ChatGPT/, { includeHiddenElements: true })).toBeNull();
+  });
+
+  it('lists one put off with its result', async () => {
+    await render(<CheckInScreen />);
+    await answer('Next month');
+    await answer('Keep it');
+
+    expect(screen.getByLabelText('ChatGPT, $240.00 a year. Next month')).toBeOnTheScreen();
+    expect(screen.getByLabelText('1 Next month')).toBeOnTheScreen();
+  });
+
+  it('ignores a second tap while the card is still swiping away', async () => {
+    // A swipe that never finishes.
+    jest.spyOn(Animated, 'timing').mockReturnValue({ start: jest.fn(), stop: jest.fn(), reset: jest.fn() });
+    await render(<CheckInScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+
+    expect(useSubscriptions.getState().subscriptions.find((s) => s.id === 'yt')?.reviewedOn).toBe('2026-09-16');
+  });
+
+  it('says there’s nothing to check when every one was deleted', async () => {
+    const view = await render(<CheckInScreen />);
+    useSubscriptions.setState({ subscriptions: [] });
+    await view.rerender(<CheckInScreen />);
+
+    expect(await screen.findByRole('heading', { name: 'Nothing to check' })).toBeOnTheScreen();
   });
 
   it('says there’s nothing to check with no subscriptions', async () => {

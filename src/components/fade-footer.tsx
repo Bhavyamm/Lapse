@@ -9,7 +9,7 @@ import { colors } from '@/theme';
  */
 export function FadeFooter({ style, children, ...rest }: ViewProps) {
   return (
-    <View style={[styles.footer, style]} {...rest}>
+    <View style={[styles.footer, style]} pointerEvents="box-none" {...rest}>
       <LinearGradient
         colors={[colors.canvasClear, colors.canvas, colors.canvas]}
         locations={[0, 0.3, 1]}

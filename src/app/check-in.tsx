@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/app-text';
@@ -46,6 +46,8 @@ export default function CheckInScreen() {
   const [ids] = useState(() => checkInQueue(useSubscriptions.getState().subscriptions, today).map((s) => s.id));
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
   const [leaving, setLeaving] = useState<Leaving | null>(null);
+  // Set at once on a tap, so a second tap in the same frame sees it too.
+  const swiping = useRef(false);
   const reduceMotion = useReduceMotion();
 
   const byId = useMemo(() => new Map(subscriptions.map((s) => [s.id, s])), [subscriptions]);
@@ -55,9 +57,18 @@ export default function CheckInScreen() {
   const sub = current ? byId.get(current) : undefined;
 
   const answer = (outcome: Outcome) => {
-    if (!sub) return;
+    // A tap while a card is still swiping away waits for it, so each answer gets its own swipe.
+    if (!sub || swiping.current) return;
+    const next = ids.find((id) => id !== sub.id && !outcomes[id] && byId.has(id));
+    const nextSub = next ? byId.get(next) : undefined;
+    AccessibilityInfo.announceForAccessibility(
+      `${outcome === 'kept' ? 'Kept' : 'Next month for'} ${sub.name}. ${nextSub ? `Next: ${nextSub.name}` : 'All checked'}`,
+    );
     // The card that swipes away shows the subscription as it was, before this answer.
-    if (!reduceMotion) setLeaving((l) => ({ sub, outcome, key: (l?.key ?? 0) + 1 }));
+    if (!reduceMotion) {
+      swiping.current = true;
+      setLeaving((l) => ({ sub, outcome, key: (l?.key ?? 0) + 1 }));
+    }
     update(sub.id, outcome === 'kept' ? { reviewedOn: today } : { skippedOn: today });
     setOutcomes((o) => ({ ...o, [sub.id]: outcome }));
   };
@@ -95,7 +106,10 @@ export default function CheckInScreen() {
               <SwipingCard
                 key={leaving.key}
                 outcome={leaving.outcome}
-                onDone={() => setLeaving((l) => (l?.key === leaving.key ? null : l))}>
+                onDone={() => {
+                  swiping.current = false;
+                  setLeaving((l) => (l?.key === leaving.key ? null : l));
+                }}>
                 <ReviewCard sub={leaving.sub} />
               </SwipingCard>
             ) : null}
@@ -144,8 +158,10 @@ export default function CheckInScreen() {
 function RisingCard({ animate, children }: { animate: boolean; children: ReactNode }) {
   const [progress] = useState(() => new Animated.Value(animate ? 0 : 1));
   useEffect(() => {
+    // Reduce Motion can answer after the first card mounted; it then jumps into place.
+    if (!animate) return progress.setValue(1);
     Animated.spring(progress, { toValue: 1, delay: 90, speed: 14, bounciness: 6, useNativeDriver: true }).start();
-  }, [progress]);
+  }, [progress, animate]);
   const style = {
     opacity: progress.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] }),
     transform: [
@@ -164,12 +180,14 @@ function SwipingCard({ outcome, onDone, children }: { outcome: Outcome; onDone: 
     done.current = onDone;
   });
   useEffect(() => {
-    Animated.timing(progress, {
+    const swipe = Animated.timing(progress, {
       toValue: 1,
       duration: SWIPE_MS,
       easing: Easing.in(Easing.cubic),
       useNativeDriver: true,
-    }).start(() => done.current());
+    });
+    swipe.start(() => done.current());
+    return () => swipe.stop();
   }, [progress]);
   const side = outcome === 'kept' ? 1 : -1;
   const style = {
@@ -182,6 +200,7 @@ function SwipingCard({ outcome, onDone, children }: { outcome: Outcome; onDone: 
   };
   return (
     <Animated.View
+      testID="leaving-card"
       style={[styles.cardSlot, style]}
       pointerEvents="none"
       aria-hidden
@@ -300,9 +319,9 @@ function Finished({ ids, outcomes, subscriptions, cancelled, animate }: Finished
       <ScrollView
         contentContainerStyle={[styles.doneContent, { paddingBottom: bottom + DONE_ROOM }]}
         showsVerticalScrollIndicator={false}>
-        <Celebrate animate={animate && rows.length > 0} />
-        <AppText variant="hero" role="heading" style={styles.center}>
-          {ids.length ? 'All checked' : 'Nothing to check'}
+        {rows.length ? <Celebrate animate={animate} /> : <Mascot size={118} />}
+        <AppText variant="hero" role="heading" style={[styles.center, !rows.length && styles.quietTitle]}>
+          {rows.length ? 'All checked' : 'Nothing to check'}
         </AppText>
         <AppText variant="lede" muted style={[styles.center, styles.doneText]}>
           {summary} See you next month.
@@ -382,7 +401,13 @@ function Tally({ value, label, accent }: { value: number; label: string; accent?
       <AppText variant="title" onDark={!(accent && value > 0)}>
         {value}
       </AppText>
-      <AppText variant="caption" onDark={!(accent && value > 0)} muted={!(accent && value > 0)}>
+      <AppText
+        variant="caption"
+        onDark={!(accent && value > 0)}
+        muted={!(accent && value > 0)}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}>
         {label}
       </AppText>
     </View>
@@ -393,8 +418,9 @@ function Tally({ value, label, accent }: { value: number; label: string; accent?
 function Celebrate({ animate }: { animate: boolean }) {
   const [pop] = useState(() => new Animated.Value(animate ? 0 : 1));
   useEffect(() => {
+    if (!animate) return pop.setValue(1);
     Animated.spring(pop, { toValue: 1, speed: 10, bounciness: 12, useNativeDriver: true }).start();
-  }, [pop]);
+  }, [pop, animate]);
   const style = {
     opacity: pop.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1] }),
     transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
@@ -435,14 +461,18 @@ const styles = StyleSheet.create({
   bold: {
     fontFamily: fonts.semibold,
   },
+  // Up to the designed 380 pt, shrinking on short phones so the buttons stay on screen.
   stack: {
-    height: 380,
+    flexGrow: 1,
+    flexShrink: 1,
+    maxHeight: 380,
+    minHeight: 300,
     marginTop: 6,
   },
   behind: {
     position: 'absolute',
     top: 8,
-    height: 340,
+    bottom: 32,
     borderRadius: 34,
   },
   behindDark: {
@@ -463,7 +493,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 18,
-    height: 350,
+    bottom: 12,
   },
   card: {
     flex: 1,
@@ -521,6 +551,9 @@ const styles = StyleSheet.create({
   },
   center: {
     textAlign: 'center',
+  },
+  quietTitle: {
+    marginTop: spacing.md,
   },
   doneText: {
     alignSelf: 'center',
