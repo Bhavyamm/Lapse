@@ -23,6 +23,7 @@ import { TabScreen } from '@/components/tab-screen';
 import { useToday } from '@/hooks/use-today';
 import { getBiometrics, unlock, type Biometrics } from '@/features/lock/biometrics';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
+import { sendTestReminder } from '@/features/reminders/sync';
 import { toCsv } from '@/features/subscriptions/csv';
 import { shareCsv } from '@/features/subscriptions/export';
 import { summarizeSavings } from '@/features/subscriptions/savings';
@@ -50,17 +51,38 @@ export default function ProfileScreen() {
       <SettingsCard />
       <DataCard />
       {__DEV__ && (
-        // Development builds only: onboarding shows once, so this brings it back for testing.
-        // Clearing hasOnboarded flips the Stack.Protected guards and the root layout opens reminders.
-        <PillButton
-          label="Show onboarding again"
-          tone="dark"
-          icon={<ChevronIcon color={colors.ink} />}
-          onPress={resetOnboarding}
-          style={{ marginTop: spacing.md }}
-        />
+        <>
+          {Platform.OS === 'web' ? null : (
+            // Development builds only: shows the next reminder in 5 seconds, to try it on the lock screen.
+            <PillButton
+              label="Send a test reminder"
+              tone="dark"
+              icon={<BellIcon size={18} color={colors.ink} />}
+              onPress={testReminder}
+              style={{ marginTop: spacing.md }}
+            />
+          )}
+          {/* Development builds only: onboarding shows once, so this brings it back for testing.
+              Clearing hasOnboarded flips the Stack.Protected guards and the root layout opens reminders. */}
+          <PillButton
+            label="Show onboarding again"
+            tone="dark"
+            icon={<ChevronIcon color={colors.ink} />}
+            onPress={resetOnboarding}
+            style={{ marginTop: spacing.md }}
+          />
+        </>
       )}
     </TabScreen>
+  );
+}
+
+async function testReminder() {
+  const { subscriptions } = useSubscriptions.getState();
+  const sent = await sendTestReminder(subscriptions, useSettings.getState().reminderLead);
+  notify(
+    sent ? 'Test reminder in 5 seconds' : 'Nothing to remind about',
+    sent ? 'Lock your phone to see it on the lock screen.' : 'Add a subscription first.',
   );
 }
 

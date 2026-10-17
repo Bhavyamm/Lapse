@@ -23,6 +23,10 @@ export type Subscription = {
   remind?: boolean;
   /** How early this one's reminder comes. Missing means the setting on Profile. */
   lead?: ReminderLead;
+  /** Set from the trial reminder's "I'll keep it": no more reminders about this trial ending. */
+  trialKept?: boolean;
+  /** "Remind me tonight" from a trial reminder: when the extra reminder fires, in ms since 1970. */
+  snoozeUntil?: number;
   createdAt: string;
 };
 

@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 
 import { getBiometrics, unlock } from '@/features/lock/biometrics';
 import { requestReminderPermission } from '@/features/reminders/permissions';
+import { sendTestReminder } from '@/features/reminders/sync';
 import { shareCsv } from '@/features/subscriptions/export';
 import { useSettings } from '@/stores/settings';
 import { useSubscriptions } from '@/stores/subscriptions';
@@ -12,6 +13,7 @@ import ProfileScreen from '@/app/(tabs)/profile';
 jest.mock('@/features/lock/biometrics', () => ({ getBiometrics: jest.fn(), unlock: jest.fn() }));
 jest.mock('@/features/reminders/permissions', () => ({ requestReminderPermission: jest.fn() }));
 jest.mock('@/features/subscriptions/export', () => ({ shareCsv: jest.fn() }));
+jest.mock('@/features/reminders/sync', () => ({ sendTestReminder: jest.fn() }));
 
 const initialSettings = useSettings.getState();
 const initialSubs = useSubscriptions.getState();
@@ -158,11 +160,24 @@ describe('Profile screen', () => {
     expect(useSettings.getState()).toMatchObject({ hasOnboarded: false, remindersEnabled: false });
   });
 
+  it('in development, sends a test reminder', async () => {
+    setDev(true);
+    jest.mocked(sendTestReminder).mockResolvedValue(true);
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await render(<ProfileScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Send a test reminder' }));
+
+    expect(sendTestReminder).toHaveBeenCalledWith([], 'oneDay');
+    expect(alert.mock.calls[0][0]).toBe('Test reminder in 5 seconds');
+  });
+
   it('hides "Show onboarding again" in release builds', async () => {
     setDev(false);
     await render(<ProfileScreen />);
     await act(async () => {});
 
     expect(screen.queryByRole('button', { name: 'Show onboarding again' })).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Send a test reminder' })).not.toBeOnTheScreen();
   });
 });

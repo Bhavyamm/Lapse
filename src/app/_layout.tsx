@@ -13,6 +13,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppLock } from '@/components/app-lock';
 import { LaunchSplash } from '@/components/launch-splash';
+import { Reminders } from '@/components/reminders';
 import { useLock } from '@/stores/lock';
 import { useSettings, useSettingsHydrated } from '@/stores/settings';
 import { useSubscriptionsHydrated } from '@/stores/subscriptions';
@@ -73,6 +74,7 @@ export default function RootLayout() {
         importantForAccessibility={splashing ? 'no-hide-descendants' : 'auto'}>
         <AppLock canPrompt={!splashing} />
       </View>
+      <Reminders />
       {splashing ? <LaunchSplash onDone={endSplash} /> : null}
     </>
   );
