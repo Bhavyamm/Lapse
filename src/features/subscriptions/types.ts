@@ -1,3 +1,4 @@
+import type { ReminderLead } from '@/features/reminders/lead-time';
 import type { LocalDate } from '@/utils/dates';
 
 export type BillingCycle = 'week' | 'month' | 'year';
@@ -20,6 +21,8 @@ export type Subscription = {
   trial: boolean;
   /** The renewal alert for this one. Missing means on, so older saves keep their alerts. */
   remind?: boolean;
+  /** How early this one's reminder comes. Missing means the setting on Profile. */
+  lead?: ReminderLead;
   createdAt: string;
 };
 

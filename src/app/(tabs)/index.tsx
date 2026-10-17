@@ -91,7 +91,7 @@ function TrialCard({ alert, today }: { alert: TrialAlert; today: LocalDate }) {
     <Pressable
       role="button"
       aria-label={`${sub.name} trial ends ${inDays(daysLeft)}, then ${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}`}
-      onPress={() => openSubscription(sub.id)}
+      onPress={() => openSubscription(sub.id, true)}
       style={({ pressed }) => [styles.trial, pressed && styles.pressed]}>
       <ServiceLogo serviceId={sub.serviceId} name={sub.name} size={44} />
       <View style={styles.rowText}>
@@ -131,7 +131,7 @@ function ComingUp({ rows }: { rows: Upcoming[] }) {
           sub={sub}
           date={formatShortDate(next)}
           trialEnding={trialEnding}
-          onPress={() => openSubscription(sub.id)}
+          onPress={() => openSubscription(sub.id, trialEnding)}
         />
       ))}
     </GlassCard>

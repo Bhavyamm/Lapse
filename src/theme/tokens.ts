@@ -29,6 +29,10 @@ export const colors = {
   onDarkButton: 'rgba(255,255,255,0.12)',
   /** Raised tile inside a charcoal card. */
   onDarkPanel: 'rgba(255,255,255,0.08)',
+  /** Round button on an orange screen. */
+  inkWash: 'rgba(20,20,20,0.08)',
+  /** The light sheet over an orange screen. */
+  sheetOnAccent: 'rgba(255,255,255,0.6)',
   /** Light panel inside an orange card. */
   onAccentPanel: 'rgba(255,255,255,0.45)',
   danger: '#E23B4A',
@@ -72,6 +76,8 @@ export const type = {
   section: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 20 },
   button: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 22 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
+  /** The days-left number on the Trial screen. */
+  countdown: { fontFamily: fonts.medium, fontSize: 114, letterSpacing: -4.5, lineHeight: 104 },
   /** The "$" and cents beside a display-size amount. */
   amountUnit: { fontFamily: fonts.medium, fontSize: 26, letterSpacing: -1.1, lineHeight: 30 },
 } as const;

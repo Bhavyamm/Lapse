@@ -52,4 +52,10 @@ describe('cancelGuide', () => {
     const guide = cancelGuide(sub({ serviceId: 'duolingo-max', name: 'Duolingo Max' }), 'x', 'web');
     expect(guide.action).toBe('Search how to cancel Duolingo Max');
   });
+
+  it('words the steps for a trial that is still running', () => {
+    const guide = cancelGuide(sub({ serviceId: 'duolingo-max', name: 'Duolingo Max' }), 'Sun, Oct 18', 'ios', true);
+    expect(guide.steps[1]).toBe('Tap Duolingo Max, then Cancel Free Trial.');
+    expect(guide.steps[2]).toContain('keep the trial until Sun, Oct 18 and won’t be charged');
+  });
 });

@@ -177,7 +177,7 @@ function MonthList({ plan, name, empty }: { plan: MonthPlan; name: string; empty
           trialEnding={c.trialEnding}
           divider={i > 0}
           compact
-          onPress={() => openSubscription(c.sub.id)}
+          onPress={() => openSubscription(c.sub.id, c.trialEnding)}
         />
       ))}
       {plan.charges.length > rows.length ? (

@@ -13,7 +13,7 @@ type Props = {
 };
 
 /** Relative luminance of a #RRGGBB color, 0 (black) to 1 (white). */
-function luminance(hex: string): number {
+export function luminance(hex: string): number {
   const [r, g, b] = [1, 3, 5].map((i) => {
     const c = parseInt(hex.slice(i, i + 2), 16) / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;

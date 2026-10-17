@@ -16,29 +16,41 @@ export type CancelGuide = {
   storeUrl?: string;
 };
 
-const STORE: Record<'ios' | 'android', { name: string; url: string; button: string }> = {
-  ios: { name: 'App Store', url: 'https://apps.apple.com/account/subscriptions', button: 'Cancel Subscription' },
+const STORE: Record<'ios' | 'android', { name: string; url: string; button: string; trialButton: string }> = {
+  ios: {
+    name: 'App Store',
+    url: 'https://apps.apple.com/account/subscriptions',
+    button: 'Cancel Subscription',
+    trialButton: 'Cancel Free Trial',
+  },
   android: {
     name: 'Google Play',
     url: 'https://play.google.com/store/account/subscriptions',
     button: 'Cancel subscription',
+    trialButton: 'Cancel subscription',
   },
 };
 
 /**
  * How to cancel `sub`: the service's own steps when the catalog knows them, store steps for
  * App Store or Google Play billing, and general steps with a web search otherwise.
- * `until` is the formatted date access lasts to.
+ * `until` is the formatted date access lasts to; `trial` is true while the free trial runs.
  */
-export function cancelGuide(sub: Subscription, until: string, platform: PlatformOSType): CancelGuide {
+export function cancelGuide(sub: Subscription, until: string, platform: PlatformOSType, trial = false): CancelGuide {
   const cancel = findService(sub.serviceId)?.cancel;
-  const last = `You keep access until ${until}. Then come back and tap I already cancelled.`;
+  const last = trial
+    ? `You keep the trial until ${until} and won’t be charged. Then come back and tap I already cancelled.`
+    : `You keep access until ${until}. Then come back and tap I already cancelled.`;
   // Apple's own services are always billed by Apple; "store" means whichever store this phone uses.
   const store = cancel === 'apple' || platform !== 'android' ? STORE.ios : STORE.android;
 
   if (cancel === 'apple' || (cancel === 'store' && platform !== 'web')) {
     return {
-      steps: [`Open your ${store.name} subscriptions.`, `Tap ${sub.name}, then ${store.button}.`, last],
+      steps: [
+        `Open your ${store.name} subscriptions.`,
+        `Tap ${sub.name}, then ${trial ? store.trialButton : store.button}.`,
+        last,
+      ],
       url: store.url,
       action: `Open ${store.name} subscriptions`,
       time: 'About 1 min',

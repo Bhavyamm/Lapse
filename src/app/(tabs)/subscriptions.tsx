@@ -89,7 +89,7 @@ function TrialRow({ item }: { item: Upcoming }) {
     <Pressable
       role="button"
       aria-label={`${sub.name}, free trial ends ${formatMonthDay(next)}, then ${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}`}
-      onPress={() => openSubscription(sub.id)}
+      onPress={() => openSubscription(sub.id, true)}
       style={({ pressed }) => [styles.trial, pressed && styles.pressed]}>
       <View style={styles.trialText}>
         <AppText variant="bodyStrong" style={styles.bold} numberOfLines={1}>

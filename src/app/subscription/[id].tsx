@@ -9,7 +9,7 @@ import { BigAmount } from '@/components/big-amount';
 import { CharcoalCard, GlassCard } from '@/components/cards';
 import { ArrowUpRightIcon, BackIcon, PencilIcon } from '@/components/icons';
 import { ScreenBackground } from '@/components/screen-background';
-import { ServiceLogo } from '@/components/service-logo';
+import { luminance, ServiceLogo } from '@/components/service-logo';
 import { SubscriptionEditor } from '@/components/subscription-editor';
 import { Toggle } from '@/components/toggle';
 import { useToday } from '@/hooks/use-today';
@@ -20,7 +20,7 @@ import { draftFromSubscription, toNewSubscription, type Draft } from '@/features
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
-import { formatMonthDay, formatShortDate, toLocalDate } from '@/utils/dates';
+import { formatMonthDay, formatShortDate, fromLocalDate, toLocalDate, type LocalDate } from '@/utils/dates';
 import { openLink } from '@/utils/links';
 import { confirm } from '@/utils/notify';
 
@@ -80,7 +80,7 @@ function Detail({ sub }: { sub: Subscription }) {
   const next = nextChargeDate(sub, today);
   const trialEnding = sub.trial && next === sub.chargeOn;
   const until = formatShortDate(next);
-  const guide = cancelGuide(sub, until, Platform.OS);
+  const guide = cancelGuide(sub, until, Platform.OS, trialEnding);
   const remind = sub.remind !== false;
 
   const markCancelled = async () => {
@@ -107,7 +107,12 @@ function Detail({ sub }: { sub: Subscription }) {
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + actionsHeight + spacing.xl }]}
         showsVerticalScrollIndicator={false}>
-        <Hero sub={sub} pill={`${trialEnding ? 'Trial ends' : 'Renews'} ${until}`} topInset={insets.top} />
+        <Hero
+          sub={sub}
+          pill={`${trialEnding ? 'Trial ends' : 'Renews'} ${until}`}
+          suffix={trialEnding ? `${CYCLE_WORD[sub.cycle]} from ${weekday(next)}` : CYCLE_WORD[sub.cycle]}
+          topInset={insets.top}
+        />
 
         <GlassCard radius={radii.hero} contentStyle={styles.guide}>
           <View style={styles.guideTitle}>
@@ -195,6 +200,16 @@ function Detail({ sub }: { sub: Subscription }) {
   );
 }
 
+/** The brand color, unless it is too dark to show on charcoal; then the logo's own glyph color. */
+function watermarkColor(brand: string, glyph?: string): string {
+  return luminance(brand) > 0.04 ? brand : (glyph ?? colors.white);
+}
+
+/** "Sat". */
+function weekday(date: LocalDate): string {
+  return fromLocalDate(date).toLocaleDateString(undefined, { weekday: 'short' });
+}
+
 /** "Oct 1", or "Oct 2025" for an earlier year. */
 function trackedSince(createdAt: string): string {
   const date = new Date(createdAt);
@@ -205,7 +220,7 @@ function trackedSince(createdAt: string): string {
 }
 
 /** The charcoal top: brand watermark, back, renewal date, name, price and three facts. */
-function Hero({ sub, pill, topInset }: { sub: Subscription; pill: string; topInset: number }) {
+function Hero({ sub, pill, suffix, topInset }: { sub: Subscription; pill: string; suffix: string; topInset: number }) {
   const service = findService(sub.serviceId);
   const logo = service ? logoFor(service) : undefined;
   const yearly = sub.cycle === 'year';
@@ -224,7 +239,7 @@ function Hero({ sub, pill, topInset }: { sub: Subscription; pill: string; topIns
       {logo ? (
         <View style={styles.watermarkClip} pointerEvents="none" aria-hidden>
           <Svg width={260} height={260} viewBox="0 0 24 24" style={styles.watermark}>
-            <Path d={logo.path} fill={service?.glyph ?? logo.hex} />
+            <Path d={logo.path} fill={watermarkColor(logo.hex, service?.glyph)} />
           </Svg>
         </View>
       ) : null}
@@ -242,7 +257,7 @@ function Hero({ sub, pill, topInset }: { sub: Subscription; pill: string; topIns
           {sub.name}
         </AppText>
       </View>
-      <BigAmount cents={sub.priceCents} suffix={CYCLE_WORD[sub.cycle]} />
+      <BigAmount cents={sub.priceCents} suffix={suffix} />
       <View style={styles.facts}>
         {facts.map((fact) => (
           <View key={fact.label} style={styles.fact} accessible aria-label={`${fact.label}: ${fact.value}`}>
