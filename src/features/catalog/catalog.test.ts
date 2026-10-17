@@ -46,6 +46,10 @@ describe('catalog', () => {
     expect(searchCatalog('youtubepremium')[0].name).toBe('YouTube Premium');
   });
 
+  it('does not match two letters across a word break', () => {
+    expect(searchCatalog('yp').map((s) => s.name)).not.toContain('Disney+');
+  });
+
   it('returns nothing for gibberish', () => {
     expect(searchCatalog('zzqx')).toEqual([]);
   });

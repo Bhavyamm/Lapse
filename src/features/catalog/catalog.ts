@@ -62,7 +62,8 @@ function score(service: CatalogService, query: string): number | null {
     let s: number | null = null;
     if (name.startsWith(query) || squash(name).startsWith(squash(query))) s = 0;
     else if (name.split(' ').some((word) => word.startsWith(query))) s = 2;
-    else if (squash(name).includes(squash(query))) s = 4;
+    // Matching inside a word only from 3 letters, so "yp" doesn't find Disne(y P)lus.
+    else if (query.length >= 3 && squash(name).includes(squash(query))) s = 4;
     if (s !== null && (best === null || s + alias < best)) best = s + alias;
   });
   return best;

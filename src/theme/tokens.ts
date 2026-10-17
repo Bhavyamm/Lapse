@@ -23,6 +23,10 @@ export const colors = {
   textOnDarkMuted: '#8A8A8A',
   divider: '#EDEDED',
   hairline: '#D6D6D6',
+  /** Dims the screen behind a bottom sheet. */
+  scrim: 'rgba(20,20,20,0.35)',
+  /** Light panel inside an orange card. */
+  onAccentPanel: 'rgba(255,255,255,0.45)',
   danger: '#E23B4A',
   success: '#2FA36B',
 } as const;

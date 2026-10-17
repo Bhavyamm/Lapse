@@ -50,13 +50,16 @@ export function describePrice(priceCents: number, cycle: BillingCycle, from = fa
   return `${from ? 'From ' : ''}${formatMoney(priceCents)} ${CYCLE_WORD[cycle]}`;
 }
 
+/** Anything above this is a typo, not a subscription. */
+export const MAX_PRICE_CENTS = 9_999_999;
+
 /**
  * Parses what someone typed in a price field ("11.99", "$11", "11,99") into cents.
  * Returns null for anything that isn't a positive amount.
  */
 export function parsePrice(text: string): number | null {
   const cleaned = text.replace(/[$\s]/g, '').replace(',', '.');
-  if (!/^\d+(\.\d{0,2})?$/.test(cleaned)) return null;
+  if (!/^(\d+(\.\d{0,2})?|\.\d{1,2})$/.test(cleaned)) return null;
   const cents = Math.round(Number(cleaned) * 100);
-  return cents > 0 ? cents : null;
+  return cents > 0 && cents <= MAX_PRICE_CENTS ? cents : null;
 }

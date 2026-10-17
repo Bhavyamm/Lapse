@@ -82,8 +82,8 @@ describe('Add a subscription', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
     await fireEvent.changeText(screen.getByLabelText('Price'), '15.49');
-    await fireEvent.press(screen.getByRole('radio', { name: 'Yearly' }));
     await fireEvent.press(screen.getByRole('switch', { name: 'Free trial' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Yearly' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Previous month' }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Sat, Oct 31' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
@@ -117,6 +117,42 @@ describe('Add a subscription', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Add and remind me' }));
 
     expect(saved()[0]).toMatchObject({ serviceId: null, name: 'Gym', priceCents: 4000, cycle: 'month' });
+  });
+
+  it('moves the default date with the cycle until a date is picked', async () => {
+    await render(<AddScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Add Spotify/ }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Change Spotify' }));
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Weekly' }));
+    expect(screen.getByRole('radio', { name: 'Sat, Oct 24' })).toBeChecked();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Thu, Oct 29' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Yearly' }));
+    expect(screen.getByRole('radio', { name: 'Thu, Oct 29' })).toBeChecked();
+  });
+
+  it('marks services that are already saved', async () => {
+    useSubscriptions.getState().add([
+      {
+        serviceId: 'netflix',
+        name: 'Netflix',
+        priceCents: 799,
+        cycle: 'month',
+        chargeOn: '2026-11-17',
+        trial: false,
+      },
+    ]);
+    await render(<AddScreen />);
+
+    expect(screen.getByRole('button', { name: /^Add Netflix, already added/ })).toBeOnTheScreen();
+  });
+
+  it('shows Popular, not Results, for a query of only symbols', async () => {
+    await render(<AddScreen />);
+
+    await search('!!');
+
+    expect(screen.getByText('Popular')).toBeOnTheScreen();
   });
 
   it('saves once even if the button is pressed twice', async () => {

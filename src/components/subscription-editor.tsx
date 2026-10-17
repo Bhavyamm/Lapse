@@ -17,6 +17,7 @@ import { DatePicker } from '@/components/date-picker';
 import { CheckIcon, CloseIcon } from '@/components/icons';
 import { PillButton } from '@/components/pill-button';
 import { ServiceLogo } from '@/components/service-logo';
+import { addCycles } from '@/features/subscriptions/billing';
 import { draftProblem, type Draft } from '@/features/subscriptions/draft';
 import type { BillingCycle } from '@/features/subscriptions/types';
 import { colors, fonts, radii, spacing, type } from '@/theme';
@@ -51,9 +52,17 @@ function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> &
   const [draft, setDraft] = useState(initial);
   const [problem, setProblem] = useState<string | null>(null);
   const custom = initial.serviceId === null;
+  // Until the person picks a date, it follows the cycle: one week, month or year from today.
+  const [datePicked, setDatePicked] = useState(false);
   const update = (patch: Partial<Draft>) => {
     setDraft((d) => ({ ...d, ...patch }));
     setProblem(null);
+  };
+  const setCycle = (cycle: BillingCycle) =>
+    update(datePicked || draft.trial ? { cycle } : { cycle, chargeOn: addCycles(today, cycle, 1) });
+  const pickDate = (chargeOn: LocalDate) => {
+    setDatePicked(true);
+    update({ chargeOn });
   };
 
   const save = () => {
@@ -63,8 +72,9 @@ function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> &
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} aria-label="Close" role="button" />
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.backdrop}>
+      {/* Tapping outside closes too; hidden from screen readers, which use the Close button. */}
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} aria-hidden accessible={false} />
       <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
         <View style={styles.header}>
           <ServiceLogo serviceId={draft.serviceId} name={draft.name} size={40} />
@@ -122,7 +132,7 @@ function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> &
                 onWhite
                 label={c.label}
                 selected={draft.cycle === c.value}
-                onPress={() => update({ cycle: c.value })}
+                onPress={() => setCycle(c.value)}
               />
             ))}
           </View>
@@ -149,7 +159,7 @@ function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> &
           <AppText variant="section" style={styles.label}>
             {draft.trial ? 'Trial ends' : 'Next charge'}
           </AppText>
-          <DatePicker value={draft.chargeOn} onChange={(chargeOn) => update({ chargeOn })} min={today} today={today} />
+          <DatePicker value={draft.chargeOn} onChange={pickDate} min={today} today={today} />
         </ScrollView>
 
         {problem ? (
@@ -173,7 +183,7 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(20,20,20,0.35)',
+    backgroundColor: colors.scrim,
   },
   sheet: {
     maxHeight: '92%',

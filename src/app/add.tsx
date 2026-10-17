@@ -10,7 +10,7 @@ import { PillButton } from '@/components/pill-button';
 import { ScreenBackground } from '@/components/screen-background';
 import { ServiceLogo } from '@/components/service-logo';
 import { SubscriptionEditor } from '@/components/subscription-editor';
-import { CATALOG, searchCatalog, type CatalogService } from '@/features/catalog/catalog';
+import { CATALOG, normalize, searchCatalog, type CatalogService } from '@/features/catalog/catalog';
 import { describePrice } from '@/features/subscriptions/billing';
 import {
   blankDraft,
@@ -28,6 +28,8 @@ import { formatShortDate, today as getToday } from '@/utils/dates';
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
   const add = useSubscriptions((s) => s.add);
+  const saved = useSubscriptions((s) => s.subscriptions);
+  const savedIds = useMemo(() => new Set(saved.map((sub) => sub.serviceId)), [saved]);
   const [today] = useState(getToday);
   const [query, setQuery] = useState('');
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -36,9 +38,11 @@ export default function AddScreen() {
   const saving = useRef(false);
 
   const selectedIds = new Set(drafts.map((d) => d.serviceId));
-  const results = useMemo(() => searchCatalog(query), [query]);
-  const visible = results.filter((s) => !selectedIds.has(s.id));
+  // Ask for extra results so picked ones, which are hidden here, don't shorten the list.
+  const results = useMemo(() => searchCatalog(query, 30 + drafts.length), [query, drafts.length]);
+  const visible = results.filter((s) => !selectedIds.has(s.id)).slice(0, 30);
   const typed = query.trim();
+  const searching = normalize(query) !== '';
 
   const select = (service: CatalogService) => setDrafts((list) => [...list, draftFromService(service, today)]);
   const unselect = (key: string) => setDrafts((list) => list.filter((d) => d.key !== key));
@@ -64,7 +68,7 @@ export default function AddScreen() {
   const count = drafts.length;
   return (
     <ScreenBackground style={{ paddingTop: insets.top + spacing.sm }}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <View style={styles.top}>
           <View style={styles.topBar}>
             <Pressable role="button" aria-label="Back" onPress={leave} style={styles.back}>
@@ -110,14 +114,14 @@ export default function AddScreen() {
           ))}
 
           <AppText variant="section" style={styles.section}>
-            {typed ? (visible.length ? 'Results' : `No match for “${typed}”`) : 'Popular'}
+            {searching ? (visible.length ? 'Results' : `No match for “${typed}”`) : 'Popular'}
           </AppText>
           <GlassCard contentStyle={styles.card}>
             {visible.map((service, i) => (
               <Pressable
                 key={service.id}
                 role="button"
-                aria-label={`Add ${service.name}, ${describePrice(service.price, service.cycle, service.from)}`}
+                aria-label={`Add ${service.name}, ${savedIds.has(service.id) ? 'already added, ' : ''}${describePrice(service.price, service.cycle, service.from)}`}
                 onPress={() => select(service)}
                 style={[styles.row, i > 0 && styles.divider]}>
                 <ServiceLogo serviceId={service.id} name={service.name} />
@@ -126,6 +130,7 @@ export default function AddScreen() {
                     {service.name}
                   </AppText>
                   <AppText variant="caption" muted>
+                    {savedIds.has(service.id) ? 'Already added · ' : ''}
                     {describePrice(service.price, service.cycle, service.from)}
                   </AppText>
                 </View>
@@ -175,7 +180,12 @@ function SelectedCard({ draft, onUnselect, onEdit }: { draft: Draft; onUnselect:
             {describeDraft(draft)}
           </AppText>
         </View>
-        <Pressable role="button" aria-label={`Remove ${draft.name}`} onPress={onUnselect} style={styles.check}>
+        <Pressable
+          role="button"
+          aria-label={`Remove ${draft.name}`}
+          onPress={onUnselect}
+          hitSlop={6}
+          style={styles.check}>
           <CheckIcon size={16} color={colors.white} />
         </Pressable>
       </View>
@@ -313,7 +323,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: colors.onAccentPanel,
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,

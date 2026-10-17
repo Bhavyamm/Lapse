@@ -13,7 +13,8 @@ import { formatMoney, nextChargeDate } from '@/features/subscriptions/billing';
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, radii, spacing } from '@/theme';
-import { formatShortDate, formatToday, today as getToday } from '@/utils/dates';
+import { useToday } from '@/hooks/use-today';
+import { formatShortDate, formatToday } from '@/utils/dates';
 
 /** Home: the empty state until something is added, then what's coming up. */
 export default function HomeScreen() {
@@ -45,7 +46,7 @@ const CYCLE_LABEL: Record<BillingCycle, string> = { week: 'Weekly', month: 'Mont
 
 /** Every subscription, soonest charge first. The spend card and alerts join it in the next step. */
 function ComingUp({ subscriptions }: { subscriptions: Subscription[] }) {
-  const today = getToday();
+  const today = useToday();
   const rows = subscriptions
     .map((sub) => ({ sub, next: nextChargeDate(sub, today) }))
     .sort((a, b) => a.next.localeCompare(b.next) || a.sub.name.localeCompare(b.sub.name));

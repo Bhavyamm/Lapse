@@ -46,11 +46,12 @@ describe('billing', () => {
     ['11,5', 1150],
     [' 0.29 ', 29],
     ['15.', 1500],
+    ['.99', 99],
   ])('reads "%s" as %i cents', (text, cents) => {
     expect(parsePrice(text)).toBe(cents);
   });
 
-  it.each(['', 'abc', '0', '1.999', '-3', '1.2.3'])('rejects "%s"', (text) => {
+  it.each(['', 'abc', '0', '1.999', '-3', '1.2.3', '100000'])('rejects "%s"', (text) => {
     expect(parsePrice(text)).toBeNull();
   });
 });

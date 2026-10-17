@@ -18,6 +18,13 @@ type Props = {
 export function DatePicker({ value, onChange, min, today }: Props) {
   const selected = fromLocalDate(value);
   const [month, setMonth] = useState({ year: selected.getFullYear(), month: selected.getMonth() });
+  // Follow the value when it moves to another month from outside, such as a new billing cycle.
+  const valueMonth = value.slice(0, 7);
+  const [shownFor, setShownFor] = useState(valueMonth);
+  if (shownFor !== valueMonth) {
+    setShownFor(valueMonth);
+    setMonth({ year: selected.getFullYear(), month: selected.getMonth() });
+  }
 
   const first = new Date(month.year, month.month, 1);
   const daysInMonth = new Date(month.year, month.month + 1, 0).getDate();
@@ -48,15 +55,17 @@ export function DatePicker({ value, onChange, min, today }: Props) {
             aria-disabled={!canGoBack}
             disabled={!canGoBack}
             onPress={() => shift(-1)}
+            hitSlop={6}
             style={[styles.arrow, !canGoBack && styles.disabled]}>
             <BackIcon size={14} color={colors.ink} />
           </Pressable>
-          <Pressable role="button" aria-label="Next month" onPress={() => shift(1)} style={styles.arrow}>
+          <Pressable role="button" aria-label="Next month" onPress={() => shift(1)} hitSlop={6} style={styles.arrow}>
             <ChevronIcon color={colors.ink} />
           </Pressable>
         </View>
       </View>
-      <View style={styles.row}>
+      {/* Each day's label already names its weekday. */}
+      <View style={styles.row} aria-hidden>
         {weekdays.map((d, i) => (
           <AppText key={i} variant="caption" muted style={styles.weekday}>
             {d}
