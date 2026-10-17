@@ -133,3 +133,30 @@ export function ArrowRightIcon({ size = 18, color }: IconProps) {
     </Svg>
   );
 }
+
+export function CurrencyIcon({ size = 18, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)}>
+      <Circle cx={12} cy={12} r={9} />
+      <Path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .9-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v2M12 16v2" />
+    </Svg>
+  );
+}
+
+export function DocumentIcon({ size = 18, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)}>
+      <Path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+      <Path d="M14 3v6h6M8 13h8M8 17h5" />
+    </Svg>
+  );
+}
+
+export function ShareIcon({ size = 18, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)}>
+      <Path d="M12 3v12M7 8l5-5 5 5" />
+      <Path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+    </Svg>
+  );
+}

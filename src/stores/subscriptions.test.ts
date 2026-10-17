@@ -41,7 +41,7 @@ describe('subscriptions store', () => {
     await Promise.resolve();
 
     const saved = JSON.parse((await AsyncStorage.getItem('lapse.subscriptions'))!);
-    expect(Object.keys(saved.state)).toEqual(['subscriptions']);
+    expect(Object.keys(saved.state)).toEqual(['subscriptions', 'cancelled']);
     expect(saved.state.subscriptions[0].name).toBe('Netflix');
   });
 

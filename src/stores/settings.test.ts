@@ -59,7 +59,7 @@ describe('settings store', () => {
 
     const saved = JSON.parse((await AsyncStorage.getItem(STORAGE_KEY)) ?? 'null');
     expect(saved).toEqual({
-      state: { hasOnboarded: true, remindersEnabled: true, reminderLead: 'morningOf' },
+      state: { hasOnboarded: true, remindersEnabled: true, reminderLead: 'morningOf', appLock: false },
       version: 1,
     });
   });

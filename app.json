@@ -36,7 +36,13 @@
           "imageWidth": 116
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "lapse. uses Face ID to keep your subscriptions private."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

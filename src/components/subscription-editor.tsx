@@ -17,6 +17,7 @@ import { DatePicker } from '@/components/date-picker';
 import { CheckIcon, CloseIcon } from '@/components/icons';
 import { PillButton } from '@/components/pill-button';
 import { ServiceLogo } from '@/components/service-logo';
+import { Toggle } from '@/components/toggle';
 import { addCycles } from '@/features/subscriptions/billing';
 import { draftProblem, type Draft } from '@/features/subscriptions/draft';
 import type { BillingCycle } from '@/features/subscriptions/types';
@@ -149,11 +150,7 @@ function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> &
                 We’ll remind you before the first charge.
               </AppText>
             </View>
-            <View style={[styles.track, draft.trial && styles.trackOn]}>
-              <View style={[styles.knob, draft.trial && styles.knobOn]}>
-                {draft.trial ? <CheckIcon size={10} color={colors.ink} /> : null}
-              </View>
-            </View>
+            <Toggle on={draft.trial} />
           </Pressable>
 
           <AppText variant="section" style={styles.label}>
@@ -249,28 +246,6 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     flex: 1,
-  },
-  track: {
-    width: 46,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.hairline,
-    padding: 3,
-  },
-  trackOn: {
-    backgroundColor: colors.ink,
-  },
-  knob: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  knobOn: {
-    backgroundColor: colors.accent,
-    transform: [{ translateX: 18 }],
   },
   problem: {
     color: colors.danger,

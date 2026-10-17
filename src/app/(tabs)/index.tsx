@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AddButton } from '@/components/add-button';
 import { AppText } from '@/components/app-text';
+import { BigAmount } from '@/components/big-amount';
 import { CharcoalCard, GlassCard } from '@/components/cards';
 import { ChevronIcon, PlusIcon } from '@/components/icons';
 import { Mascot } from '@/components/mascot';
@@ -63,7 +64,6 @@ function Dashboard({ subscriptions }: { subscriptions: Subscription[] }) {
 
 /** Charcoal card with the monthly total, as "$74.46" with a big dollar figure. */
 function SpendCard({ monthlyCents, yearlyCents, count }: { monthlyCents: number; yearlyCents: number; count: number }) {
-  const [dollars, cents] = formatMoney(monthlyCents).slice(1).split('.');
   const yearly = formatMoney(Math.round(yearlyCents / 100) * 100).slice(0, -3);
   const across =
     count === 0
@@ -74,17 +74,7 @@ function SpendCard({ monthlyCents, yearlyCents, count }: { monthlyCents: number;
       <AppText variant="label" onDark muted>
         Spending this month
       </AppText>
-      <View style={styles.amount} accessible aria-label={`$${dollars}.${cents}`}>
-        <AppText variant="amountUnit" onDark muted style={styles.symbol}>
-          $
-        </AppText>
-        <AppText variant="display" onDark>
-          {dollars}
-        </AppText>
-        <AppText variant="amountUnit" onDark muted>
-          .{cents}
-        </AppText>
-      </View>
+      <BigAmount cents={monthlyCents} style={styles.amount} />
       <AppText variant="label" onDark muted>
         {across}
       </AppText>
@@ -172,13 +162,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   amount: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
-  },
-  symbol: {
-    marginRight: 3,
   },
   section: {
     gap: spacing.sm,

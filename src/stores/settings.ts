@@ -13,10 +13,14 @@ export type SettingsState = {
   hydrated: boolean;
   /** True once the person has passed the Turn on reminders screen. */
   hasOnboarded: boolean;
-  /** True when the OS allowed notifications during onboarding. */
+  /** True when the person wants reminders and the OS allowed notifications. */
   remindersEnabled: boolean;
   reminderLead: ReminderLead;
   setReminderLead: (lead: ReminderLead) => void;
+  setRemindersEnabled: (on: boolean) => void;
+  /** Ask for Face ID (or the phone's biometrics) when the app opens. */
+  appLock: boolean;
+  setAppLock: (on: boolean) => void;
   completeOnboarding: (remindersEnabled: boolean) => void;
   /** Puts onboarding back to a fresh-install state. Development builds only. */
   resetOnboarding: () => void;
@@ -30,6 +34,9 @@ export const useSettings = create<SettingsState>()(
       remindersEnabled: false,
       reminderLead: DEFAULT_REMINDER_LEAD,
       setReminderLead: (reminderLead) => set({ reminderLead }),
+      setRemindersEnabled: (remindersEnabled) => set({ remindersEnabled }),
+      appLock: false,
+      setAppLock: (appLock) => set({ appLock }),
       completeOnboarding: (remindersEnabled) => set({ hasOnboarded: true, remindersEnabled }),
       resetOnboarding: () => set({ hasOnboarded: false, remindersEnabled: false, reminderLead: DEFAULT_REMINDER_LEAD }),
     }),
@@ -38,10 +45,11 @@ export const useSettings = create<SettingsState>()(
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => () => useSettings.setState({ hydrated: true }),
-      partialize: ({ hasOnboarded, remindersEnabled, reminderLead }) => ({
+      partialize: ({ hasOnboarded, remindersEnabled, reminderLead, appLock }) => ({
         hasOnboarded,
         remindersEnabled,
         reminderLead,
+        appLock,
       }),
     },
   ),

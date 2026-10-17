@@ -9,8 +9,9 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { AppLock } from '@/components/app-lock';
 import { LaunchSplash } from '@/components/launch-splash';
 import { useSettings, useSettingsHydrated } from '@/stores/settings';
 import { useSubscriptionsHydrated } from '@/stores/subscriptions';
@@ -34,6 +35,9 @@ export default function RootLayout() {
   // The lapse. splash plays once per launch, over whichever screen the app opens on.
   const [splashing, setSplashing] = useState(true);
   const endSplash = useCallback(() => setSplashing(false), []);
+  // True while the Face ID lock covers the app.
+  const [locked, setLocked] = useState(false);
+  const covered = splashing || locked;
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
@@ -44,11 +48,11 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="dark" />
-      {/* Hidden from screen readers while the splash covers it. */}
+      {/* Hidden from screen readers while the splash or the lock covers it. */}
       <View
         style={{ flex: 1 }}
-        aria-hidden={splashing}
-        importantForAccessibility={splashing ? 'no-hide-descendants' : 'auto'}>
+        aria-hidden={covered}
+        importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }}>
           <Stack.Protected guard={!hasOnboarded}>
             <Stack.Screen name="reminders" />
@@ -58,6 +62,14 @@ export default function RootLayout() {
             <Stack.Screen name="add" />
           </Stack.Protected>
         </Stack>
+      </View>
+      {/* Under the splash, so a locked app shows the lock as the splash fades. */}
+      <View
+        style={StyleSheet.absoluteFill}
+        pointerEvents="box-none"
+        aria-hidden={splashing}
+        importantForAccessibility={splashing ? 'no-hide-descendants' : 'auto'}>
+        <AppLock canPrompt={!splashing} onLockedChange={setLocked} />
       </View>
       {splashing ? <LaunchSplash onDone={endSplash} /> : null}
     </>

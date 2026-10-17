@@ -2,7 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import type { NewSubscription, Subscription } from '@/features/subscriptions/types';
+import { toCancelled } from '@/features/subscriptions/savings';
+import type { CancelledSubscription, NewSubscription, Subscription } from '@/features/subscriptions/types';
+import type { LocalDate } from '@/utils/dates';
 
 export type SubscriptionsState = {
   /** True once saved subscriptions were read, or reading failed. Not persisted. */
@@ -11,6 +13,10 @@ export type SubscriptionsState = {
   /** Saves new subscriptions and returns them with their ids. */
   add: (items: NewSubscription[]) => Subscription[];
   remove: (id: string) => void;
+  /** Subscriptions cancelled through the app, for the money-saved total on Profile. */
+  cancelled: CancelledSubscription[];
+  /** Stops tracking a subscription and remembers it as cancelled on `today`. */
+  cancel: (id: string, today: LocalDate) => void;
 };
 
 let counter = 0;
@@ -36,13 +42,24 @@ export const useSubscriptions = create<SubscriptionsState>()(
         return added;
       },
       remove: (id) => set((s) => ({ subscriptions: s.subscriptions.filter((sub) => sub.id !== id) })),
+      cancelled: [],
+      cancel: (id, today) =>
+        set((s) => {
+          const sub = s.subscriptions.find((x) => x.id === id);
+          if (!sub) return s;
+          return {
+            subscriptions: s.subscriptions.filter((x) => x.id !== id),
+            cancelled: [...s.cancelled, toCancelled(sub, today)],
+          };
+        }),
     }),
     {
       name: 'lapse.subscriptions',
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => () => useSubscriptions.setState({ hydrated: true }),
-      partialize: ({ subscriptions }) => ({ subscriptions }),
+      // Saves from before `cancelled` existed load with the empty default.
+      partialize: ({ subscriptions, cancelled }) => ({ subscriptions, cancelled }),
     },
   ),
 );

@@ -23,3 +23,9 @@ export type Subscription = {
 
 /** What the Add screen hands to the store; the store fills in id and createdAt. */
 export type NewSubscription = Omit<Subscription, 'id' | 'createdAt' | 'currency'>;
+
+/**
+ * A subscription the person cancelled through lapse., kept for the money-saved total.
+ * `chargeOn` is the next charge it would have made, so savings count from there.
+ */
+export type CancelledSubscription = Omit<Subscription, 'createdAt'> & { cancelledOn: LocalDate };
