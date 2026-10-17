@@ -45,6 +45,7 @@ Docs: https://docs.expo.dev/eas/index.md
 - Product: lapse., an on-device subscription tracker. No backend in the MVP; data lives in an encrypted SQLite database on the phone.
 - Use the tokens in `src/theme` and the shared components in `src/components`; don't hard-code new colors or font sizes.
 - Every screen must keep working in Expo Go until a feature truly needs a development build (SQLCipher, RevenueCat).
+- The app is pinned to Expo SDK 57 because App Store Expo Go is 57. Move to a newer SDK only once the store's Expo Go supports it.
 
 ## Checks and workflow
 

@@ -4,7 +4,7 @@ A subscription and free-trial tracker that reminds you before every charge. Ever
 
 ## Try it on your phone
 
-1. Install **Expo Go** from the App Store or Google Play.
+1. Install **Expo Go** from the App Store or Google Play. The app targets Expo SDK 57, the version the store's Expo Go runs.
 2. On your computer, with Node 20 or newer:
 
    ```bash

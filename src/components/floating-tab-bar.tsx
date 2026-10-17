@@ -14,7 +14,7 @@ const icons: Record<string, ComponentType<{ color: string }>> = {
 };
 
 /** The floating charcoal pill nav from the designs: four round icon buttons. */
-export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, insets }: BottomTabBarProps) {
+export function FloatingTabBar({ state, descriptors, navigation, insets }: BottomTabBarProps) {
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: Math.max(insets.bottom, tabBar.bottomGap) }]}>
       <CharcoalCard radius={tabBar.height / 2} style={styles.bar} contentStyle={styles.row}>
@@ -23,8 +23,8 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
           const Icon = icons[route.name] ?? HomeIcon;
           const { options } = descriptors[route.key];
           const onPress = () => {
-            const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!focused && !event.defaultPrevented) navigateToTab(route.key);
+            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
           };
           return (
             <Pressable

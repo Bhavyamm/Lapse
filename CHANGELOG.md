@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Moved to Expo SDK 57 so the app opens in the Expo Go version on the App Store.
+
 ### Added
 - Welcome screen with the lapse. logo, the tagline and the promise that your data stays on the phone. Tap anywhere to continue.
 - Turn on reminders screen: sample reminders, a choice of when to be reminded (3 days before, 1 day before, or the morning of), and a button that asks your phone for permission to send notifications. Skip and Not now finish onboarding with reminders off.
