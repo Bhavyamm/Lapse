@@ -76,7 +76,7 @@ describe('Subscription detail', () => {
   it('edits the price', async () => {
     await render(<SubscriptionScreen />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Edit Netflix' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit details for Netflix' }));
     await fireEvent.changeText(screen.getByLabelText('Price'), '17.99');
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
 
@@ -101,5 +101,38 @@ describe('Subscription detail', () => {
 
     expect(screen.getByText('Trial ends Sun, Oct 18')).toBeOnTheScreen();
     expect(screen.getByRole('link', { name: 'Open App Store subscriptions' })).toBeOnTheScreen();
+  });
+});
+
+describe('Subscription detail editing', () => {
+  beforeEach(() => useSubscriptions.setState({ ...initial, subscriptions: [netflix], cancelled: [] }, true));
+
+  it('keeps the renewal date when the cycle changes', async () => {
+    await render(<SubscriptionScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit details for Netflix' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Yearly' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+
+    expect(useSubscriptions.getState().subscriptions[0]).toMatchObject({ cycle: 'year', chargeOn: '2026-10-22' });
+  });
+
+  it('keeps showing the subscription while leaving after a cancel', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[1].onPress?.());
+    await render(<SubscriptionScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'I already cancelled' }));
+
+    expect(screen.queryByText('Not tracked any more')).not.toBeOnTheScreen();
+  });
+
+  it('says when a link can’t open', async () => {
+    jest.spyOn(Linking, 'openURL').mockRejectedValue(new Error('no handler'));
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await render(<SubscriptionScreen />);
+
+    await fireEvent.press(screen.getByRole('link', { name: 'Open Netflix cancel page' }));
+
+    expect(alert).toHaveBeenCalledWith('Couldn’t open the link', expect.any(String));
   });
 });

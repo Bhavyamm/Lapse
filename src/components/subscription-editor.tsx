@@ -57,7 +57,7 @@ function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> &
   const [problem, setProblem] = useState<string | null>(null);
   const custom = initial.serviceId === null;
   // Until the person picks a date, it follows the cycle: one week, month or year from today.
-  const [datePicked, setDatePicked] = useState(false);
+  const [datePicked, setDatePicked] = useState(!!initial.dateChosen);
   const update = (patch: Partial<Draft>) => {
     setDraft((d) => ({ ...d, ...patch }));
     setProblem(null);

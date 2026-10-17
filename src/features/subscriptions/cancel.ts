@@ -1,3 +1,5 @@
+import type { PlatformOSType } from 'react-native';
+
 import { findService } from '@/features/catalog/catalog';
 
 import type { Subscription } from './types';
@@ -14,8 +16,6 @@ export type CancelGuide = {
   storeUrl?: string;
 };
 
-type Platform = 'ios' | 'android' | 'web' | string;
-
 const STORE: Record<'ios' | 'android', { name: string; url: string; button: string }> = {
   ios: { name: 'App Store', url: 'https://apps.apple.com/account/subscriptions', button: 'Cancel Subscription' },
   android: {
@@ -30,12 +30,13 @@ const STORE: Record<'ios' | 'android', { name: string; url: string; button: stri
  * App Store or Google Play billing, and general steps with a web search otherwise.
  * `until` is the formatted date access lasts to.
  */
-export function cancelGuide(sub: Subscription, until: string, platform: Platform): CancelGuide {
+export function cancelGuide(sub: Subscription, until: string, platform: PlatformOSType): CancelGuide {
   const cancel = findService(sub.serviceId)?.cancel;
-  const store = platform === 'android' ? STORE.android : STORE.ios;
   const last = `You keep access until ${until}. Then come back and tap I already cancelled.`;
+  // Apple's own services are always billed by Apple; "store" means whichever store this phone uses.
+  const store = cancel === 'apple' || platform !== 'android' ? STORE.ios : STORE.android;
 
-  if (cancel === 'store') {
+  if (cancel === 'apple' || (cancel === 'store' && platform !== 'web')) {
     return {
       steps: [`Open your ${store.name} subscriptions.`, `Tap ${sub.name}, then ${store.button}.`, last],
       url: store.url,
@@ -43,7 +44,7 @@ export function cancelGuide(sub: Subscription, until: string, platform: Platform
       time: 'About 1 min',
     };
   }
-  if (cancel) {
+  if (cancel && typeof cancel === 'object') {
     return {
       steps: [...cancel.steps, last],
       url: cancel.url,
@@ -65,6 +66,6 @@ export function cancelGuide(sub: Subscription, until: string, platform: Platform
 }
 
 /** The store's name for the "bought it in an app?" link. */
-export function storeName(platform: Platform): string {
+export function storeName(platform: PlatformOSType): string {
   return platform === 'android' ? STORE.android.name : STORE.ios.name;
 }

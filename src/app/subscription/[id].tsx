@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -21,6 +21,7 @@ import type { BillingCycle, Subscription } from '@/features/subscriptions/types'
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { formatMonthDay, formatShortDate, toLocalDate } from '@/utils/dates';
+import { openLink } from '@/utils/links';
 import { confirm } from '@/utils/notify';
 
 const CYCLE_WORD: Record<BillingCycle, string> = { week: 'a week', month: 'a month', year: 'a year' };
@@ -31,7 +32,11 @@ const PER_YEAR: Record<BillingCycle, number> = { week: 52, month: 12, year: 1 };
 export default function SubscriptionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const sub = useSubscriptions((s) => s.subscriptions.find((x) => x.id === id));
-  return sub ? <Detail sub={sub} /> : <Missing />;
+  // Keep showing the last version while the screen slides away after "I already cancelled".
+  const [kept, setKept] = useState(sub);
+  if (sub && sub !== kept) setKept(sub);
+  const shown = sub ?? kept;
+  return shown ? <Detail sub={shown} /> : <Missing />;
 }
 
 const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
@@ -54,7 +59,9 @@ function Missing() {
   return (
     <ScreenBackground style={[styles.missing, { paddingTop: insets.top + spacing.sm }]}>
       <BackButton />
-      <AppText variant="headline">Not tracked any more</AppText>
+      <AppText variant="headline" role="heading">
+        Not tracked any more
+      </AppText>
       <AppText muted>This subscription was cancelled or removed.</AppText>
     </ScreenBackground>
   );
@@ -66,6 +73,9 @@ function Detail({ sub }: { sub: Subscription }) {
   const update = useSubscriptions((s) => s.update);
   const cancel = useSubscriptions((s) => s.cancel);
   const [editing, setEditing] = useState<Draft | null>(null);
+  // Room under the content for the pinned buttons, which grow with larger text.
+  const [actionsHeight, setActionsHeight] = useState(130);
+  const confirming = useRef(false);
 
   const next = nextChargeDate(sub, today);
   const trialEnding = sub.trial && next === sub.chargeOn;
@@ -74,11 +84,14 @@ function Detail({ sub }: { sub: Subscription }) {
   const remind = sub.remind !== false;
 
   const markCancelled = async () => {
+    if (confirming.current) return;
+    confirming.current = true;
     const yes = await confirm(
       `Mark ${sub.name} as cancelled?`,
       'It leaves your list, and what you save starts counting on Profile.',
       'Mark cancelled',
     );
+    confirming.current = false;
     if (!yes) return;
     leave();
     cancel(sub.id, today);
@@ -92,7 +105,7 @@ function Detail({ sub }: { sub: Subscription }) {
   return (
     <ScreenBackground>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 150 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + actionsHeight + spacing.xl }]}
         showsVerticalScrollIndicator={false}>
         <Hero sub={sub} pill={`${trialEnding ? 'Trial ends' : 'Renews'} ${until}`} topInset={insets.top} />
 
@@ -116,7 +129,7 @@ function Detail({ sub }: { sub: Subscription }) {
             </View>
           ))}
           {guide.storeUrl ? (
-            <Pressable role="link" onPress={() => Linking.openURL(guide.storeUrl!)} hitSlop={8}>
+            <Pressable role="link" onPress={() => openLink(guide.storeUrl!)} style={styles.storeLink}>
               <AppText variant="label" muted>
                 Bought it in an app?{' '}
                 <AppText variant="label" style={styles.link}>
@@ -143,8 +156,8 @@ function Detail({ sub }: { sub: Subscription }) {
           </Pressable>
           <Pressable
             role="button"
-            aria-label={`Edit ${sub.name}`}
-            onPress={() => setEditing(draftFromSubscription(sub))}
+            aria-label={`Edit details for ${sub.name}`}
+            onPress={() => setEditing(draftFromSubscription(sub, today))}
             style={styles.tilePress}>
             <GlassCard radius={radii.row} contentStyle={styles.tile}>
               <AppText variant="label" style={styles.tileLabel}>
@@ -156,10 +169,12 @@ function Detail({ sub }: { sub: Subscription }) {
         </View>
       </ScrollView>
 
-      <View style={[styles.actions, { bottom: insets.bottom + spacing.md }]}>
+      <View
+        style={[styles.actions, { bottom: insets.bottom + spacing.md }]}
+        onLayout={(e) => setActionsHeight(e.nativeEvent.layout.height)}>
         <Pressable
           role="link"
-          onPress={() => Linking.openURL(guide.url)}
+          onPress={() => openLink(guide.url)}
           style={({ pressed }) => [styles.primary, pressed && { opacity: 0.9 }]}>
           <AppText variant="button" onDark style={styles.primaryText} numberOfLines={1}>
             {guide.action}
@@ -180,6 +195,15 @@ function Detail({ sub }: { sub: Subscription }) {
   );
 }
 
+/** "Oct 1", or "Oct 2025" for an earlier year. */
+function trackedSince(createdAt: string): string {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.getFullYear() === new Date().getFullYear()
+    ? formatMonthDay(toLocalDate(date))
+    : date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+}
+
 /** The charcoal top: brand watermark, back, renewal date, name, price and three facts. */
 function Hero({ sub, pill, topInset }: { sub: Subscription; pill: string; topInset: number }) {
   const service = findService(sub.serviceId);
@@ -190,7 +214,7 @@ function Hero({ sub, pill, topInset }: { sub: Subscription; pill: string; topIns
       ? { label: 'Per month', value: formatMoney(monthlyCents(sub.priceCents, sub.cycle)) }
       : { label: 'Per year', value: formatMoney(sub.priceCents * PER_YEAR[sub.cycle]) },
     { label: 'Billed', value: CYCLE_LABEL[sub.cycle] },
-    { label: 'Tracked since', value: formatMonthDay(toLocalDate(new Date(sub.createdAt))) },
+    { label: 'Tracked since', value: trackedSince(sub.createdAt) },
   ];
   return (
     <CharcoalCard
@@ -339,6 +363,10 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontFamily: fonts.bold,
+  },
+  storeLink: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   link: {
     fontFamily: fonts.semibold,

@@ -1,7 +1,7 @@
 import type { CatalogService } from '@/features/catalog/catalog';
 import { addDays, type LocalDate } from '@/utils/dates';
 
-import { addCycles, describePrice, parsePrice } from './billing';
+import { addCycles, describePrice, nextChargeDate, parsePrice } from './billing';
 import type { BillingCycle, NewSubscription, Subscription } from './types';
 
 /** A subscription being set up on the Add screen, before it is saved. */
@@ -17,6 +17,8 @@ export type Draft = {
   chargeOn: LocalDate;
   /** True while the price is still the catalog's "from" price. */
   from: boolean;
+  /** The date was chosen already, so changing the cycle leaves it alone. Set for saved subscriptions. */
+  dateChosen?: boolean;
 };
 
 export function draftFromService(service: CatalogService, today: LocalDate): Draft {
@@ -33,17 +35,20 @@ export function draftFromService(service: CatalogService, today: LocalDate): Dra
   };
 }
 
-/** A saved subscription opened in the editor to change it. */
-export function draftFromSubscription(sub: Subscription): Draft {
+/** A saved subscription opened in the editor, with its next charge as the date to change. */
+export function draftFromSubscription(sub: Subscription, today: LocalDate): Draft {
+  const next = nextChargeDate(sub, today);
   return {
     key: sub.id,
     serviceId: sub.serviceId,
     name: sub.name,
     priceText: (sub.priceCents / 100).toFixed(2),
     cycle: sub.cycle,
-    trial: sub.trial,
-    chargeOn: sub.chargeOn,
+    // A trial whose end date has passed is a normal renewal now.
+    trial: sub.trial && next === sub.chargeOn,
+    chargeOn: next,
     from: false,
+    dateChosen: true,
   };
 }
 

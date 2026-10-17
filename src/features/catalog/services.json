@@ -145,7 +145,7 @@
     "price": 1099,
     "cycle": "month",
     "category": "Music",
-    "cancel": "store"
+    "cancel": "apple"
   },
   {
     "id": "apple-tv",
@@ -156,7 +156,7 @@
     "category": "Video",
     "tile": "#141414",
     "glyph": "#FFFFFF",
-    "cancel": "store"
+    "cancel": "apple"
   },
   {
     "id": "apple-one",
@@ -168,7 +168,7 @@
     "category": "Bundle",
     "tile": "#141414",
     "glyph": "#FFFFFF",
-    "cancel": "store"
+    "cancel": "apple"
   },
   {
     "id": "paramount-plus",
@@ -959,7 +959,7 @@
     "category": "Games",
     "tile": "#141414",
     "glyph": "#FFFFFF",
-    "cancel": "store"
+    "cancel": "apple"
   },
   {
     "id": "discord-nitro",

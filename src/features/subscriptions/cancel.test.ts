@@ -42,4 +42,14 @@ describe('cancelGuide', () => {
     expect(guide.storeUrl).toBe('https://apps.apple.com/account/subscriptions');
     expect(cancelGuide(sub({}), 'x', 'web').storeUrl).toBeUndefined();
   });
+
+  it('always sends Apple’s own services to Apple, even on Android', () => {
+    const guide = cancelGuide(sub({ serviceId: 'apple-music', name: 'Apple Music' }), 'x', 'android');
+    expect(guide.url).toBe('https://apps.apple.com/account/subscriptions');
+  });
+
+  it('uses general steps on web for store-billed services', () => {
+    const guide = cancelGuide(sub({ serviceId: 'duolingo-max', name: 'Duolingo Max' }), 'x', 'web');
+    expect(guide.action).toBe('Search how to cancel Duolingo Max');
+  });
 });
