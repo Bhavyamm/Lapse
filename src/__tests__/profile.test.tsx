@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 describe('Profile screen', () => {
-  it('in development, "Show onboarding again" clears onboarding so the welcome screen comes back', async () => {
+  it('in development, "Show onboarding again" clears onboarding so onboarding comes back', async () => {
     setDev(true);
     useSettings.getState().completeOnboarding(true);
     await render(<ProfileScreen />);

@@ -11,7 +11,7 @@ export type SettingsState = {
    * storage throws, which would hold the splash screen forever.
    */
   hydrated: boolean;
-  /** True once the person has passed the welcome and reminders screens. */
+  /** True once the person has passed the Turn on reminders screen. */
   hasOnboarded: boolean;
   /** True when the OS allowed notifications during onboarding. */
   remindersEnabled: boolean;

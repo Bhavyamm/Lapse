@@ -5,7 +5,7 @@ import { requestReminderPermission } from '@/features/reminders/permissions';
 import { useSettings } from '@/stores/settings';
 
 import RemindersScreen from '@/app/reminders';
-import WelcomeScreen from '@/app/welcome';
+import { LaunchSplash, SPLASH_MS } from '@/components/launch-splash';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), replace: jest.fn() } }));
 jest.mock('@/features/reminders/permissions', () => ({ requestReminderPermission: jest.fn() }));
@@ -26,26 +26,38 @@ beforeEach(() => {
   useSettings.setState(initial, true);
 });
 
-describe('Welcome screen', () => {
+describe('Launch splash', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
   it('shows the tagline and the privacy promise', async () => {
-    await render(<WelcomeScreen />);
+    await render(<LaunchSplash onDone={jest.fn()} />);
 
     expect(screen.getByText('Catch every charge before it lands.')).toBeOnTheScreen();
     expect(screen.getByText('Your data stays on this phone')).toBeOnTheScreen();
   });
 
-  it('exposes one continue button whose name includes the privacy promise for screen readers', async () => {
-    await render(<WelcomeScreen />);
+  it('fades out by itself after a moment', async () => {
+    const onDone = jest.fn();
+    await render(<LaunchSplash onDone={onDone} />);
 
-    expect(screen.getByRole('button', { name: /Your data stays on this phone\. Continue/ })).toBeOnTheScreen();
+    await act(() => jest.advanceTimersByTime(SPLASH_MS - 100));
+    expect(onDone).not.toHaveBeenCalled();
+    await act(() => jest.advanceTimersByTime(100));
+    // The fade starts once the timer has fired.
+    await act(() => jest.advanceTimersByTime(400));
+    expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it('goes to the reminders screen when tapped', async () => {
-    await render(<WelcomeScreen />);
+  it('can be tapped away straight away, and finishes only once', async () => {
+    const onDone = jest.fn();
+    await render(<LaunchSplash onDone={onDone} />);
 
-    await fireEvent.press(screen.getByRole('button', { name: /Continue/ }));
-
-    expect(router.push).toHaveBeenCalledWith('/reminders');
+    await fireEvent.press(screen.getByRole('button', { name: /Your data stays on this phone\. Continue/ }));
+    await act(() => jest.advanceTimersByTime(400));
+    expect(onDone).toHaveBeenCalledTimes(1);
+    await act(() => jest.advanceTimersByTime(SPLASH_MS * 2));
+    expect(onDone).toHaveBeenCalledTimes(1);
   });
 });
 

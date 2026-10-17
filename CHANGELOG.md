@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- The lapse. splash now shows each time the app opens and fades into Home (or into Turn on reminders the first time) after a moment; tap it to skip. It is no longer an onboarding step.
 - Calmer background: one warm glow at the top right and a faint gray one at the bottom left, and it now fills the whole screen on iPhone (it was cut off at the right and bottom).
 - Turn on reminders shows a single sample reminder and a shorter line of text, so the screen is less busy.
 - Moved to Expo SDK 57 so the app opens in the Expo Go version on the App Store.

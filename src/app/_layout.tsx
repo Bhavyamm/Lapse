@@ -8,8 +8,9 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
+import { LaunchSplash } from '@/components/launch-splash';
 import { useSettings, useSettingsHydrated } from '@/stores/settings';
 import { useSubscriptionsHydrated } from '@/stores/subscriptions';
 import { colors } from '@/theme';
@@ -29,6 +30,8 @@ export default function RootLayout() {
   const hydrated = settingsHydrated && subscriptionsHydrated;
   const hasOnboarded = useSettings((s) => s.hasOnboarded);
   const ready = (loaded || !!error) && hydrated;
+  // The lapse. splash plays once per launch, over whichever screen the app opens on.
+  const [splashing, setSplashing] = useState(true);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
@@ -38,10 +41,9 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={splashing ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }}>
         <Stack.Protected guard={!hasOnboarded}>
-          <Stack.Screen name="welcome" options={{ contentStyle: { backgroundColor: colors.night } }} />
           <Stack.Screen name="reminders" />
         </Stack.Protected>
         <Stack.Protected guard={hasOnboarded}>
@@ -49,6 +51,7 @@ export default function RootLayout() {
           <Stack.Screen name="add" />
         </Stack.Protected>
       </Stack>
+      {splashing ? <LaunchSplash onDone={() => setSplashing(false)} /> : null}
     </>
   );
 }

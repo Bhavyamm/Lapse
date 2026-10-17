@@ -8,7 +8,7 @@ export const colors = {
   canvas: '#E6E5E7',
   ink: '#141414',
   charcoal: '#232323',
-  /** Darkest backdrop, used behind the welcome screen. */
+  /** Darkest backdrop, used behind the launch splash. */
   night: '#161616',
   nightRaised: '#2A2A2A',
   /** Strong text that is not quite ink, such as quiet buttons. */

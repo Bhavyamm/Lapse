@@ -14,7 +14,7 @@ export default function ProfileScreen() {
       <ComingSoon text="Money saved, reminder settings, Face ID and Pro." />
       {__DEV__ && (
         // Development builds only: onboarding shows once, so this brings it back for testing.
-        // Clearing hasOnboarded flips the Stack.Protected guards and the root layout opens welcome.
+        // Clearing hasOnboarded flips the Stack.Protected guards and the root layout opens reminders.
         <PillButton
           label="Show onboarding again"
           tone="dark"
