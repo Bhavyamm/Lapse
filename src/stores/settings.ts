@@ -1,8 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { DEFAULT_REMINDER_LEAD, type ReminderLead } from '@/features/reminders/lead-time';
+import { appStorage } from '@/features/storage/app-storage';
 
 export type SettingsState = {
   /**
@@ -43,7 +43,7 @@ export const useSettings = create<SettingsState>()(
     {
       name: 'lapse.settings',
       version: 1,
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => appStorage),
       onRehydrateStorage: () => () => useSettings.setState({ hydrated: true }),
       partialize: ({ hasOnboarded, remindersEnabled, reminderLead, appLock }) => ({
         hasOnboarded,

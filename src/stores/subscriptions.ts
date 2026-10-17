@@ -1,7 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { appStorage } from '@/features/storage/app-storage';
 import { toCancelled } from '@/features/subscriptions/savings';
 import type {
   CancelledSubscription,
@@ -33,8 +33,7 @@ function newId(): string {
 }
 
 /**
- * Subscriptions saved on the phone. AsyncStorage for now so it runs in Expo Go;
- * the encrypted SQLite store replaces it when the app moves to a development build.
+ * Subscriptions saved on the phone, in the encrypted database (AsyncStorage in Expo Go).
  */
 export const useSubscriptions = create<SubscriptionsState>()(
   persist(
@@ -75,7 +74,7 @@ export const useSubscriptions = create<SubscriptionsState>()(
     {
       name: 'lapse.subscriptions',
       version: 1,
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => appStorage),
       onRehydrateStorage: () => () => useSubscriptions.setState({ hydrated: true }),
       // Saves from before `cancelled` existed load with the empty default.
       partialize: ({ subscriptions, cancelled }) => ({ subscriptions, cancelled }),

@@ -42,6 +42,12 @@
         {
           "faceIDPermission": "lapse. uses Face ID to keep your subscriptions private."
         }
+      ],
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
       ]
     ],
     "experiments": {
