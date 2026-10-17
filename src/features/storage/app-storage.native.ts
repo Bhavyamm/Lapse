@@ -6,8 +6,8 @@ import type { StateStorage } from 'zustand/middleware';
 
 const DB_NAME = 'lapse.db';
 const KEY_NAME = 'lapse.db-key';
-/** Keys the stores saved in AsyncStorage before the encrypted database existed. */
-const LEGACY_PREFIX = 'lapse.';
+/** What the stores saved in AsyncStorage before the encrypted database existed. */
+const LEGACY_KEYS = ['lapse.settings', 'lapse.subscriptions'];
 
 type Backend = {
   getItem: (name: string) => Promise<string | null>;
@@ -40,12 +40,17 @@ function toHex(bytes: Uint8Array): string {
  * The database key: 32 random bytes kept in the iOS Keychain or Android Keystore. A read that
  * fails throws rather than making a new key, so a locked phone never loses the saved data.
  */
-async function databaseKey(): Promise<string> {
+async function databaseKey(): Promise<{ key: string; created: boolean }> {
   const saved = await SecureStore.getItemAsync(KEY_NAME);
-  if (saved) return saved;
+  if (saved) return { key: saved, created: false };
   const key = toHex(await getRandomBytesAsync(32));
   await SecureStore.setItemAsync(KEY_NAME, key, { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK });
-  return key;
+  return { key, created: true };
+}
+
+/** SQLCipher's answer when a key doesn't open the file. */
+function isWrongKey(error: unknown): boolean {
+  return /not a database/i.test(String(error));
 }
 
 async function openWithKey(key: string): Promise<SQLite.SQLiteDatabase> {
@@ -62,13 +67,14 @@ async function openWithKey(key: string): Promise<SQLite.SQLiteDatabase> {
 }
 
 async function openEncrypted(): Promise<SQLite.SQLiteDatabase> {
-  const key = await databaseKey();
+  const { key, created } = await databaseKey();
   let db: SQLite.SQLiteDatabase;
   try {
     db = await openWithKey(key);
-  } catch {
-    // The file was made with a key this phone no longer has (a restored backup or a cleared
-    // keychain), so it can never be read. Start a new one.
+  } catch (error) {
+    // Only a file left from a key this phone no longer has (a restored backup or a cleared
+    // keychain) is replaced: nothing can read it. Any other failure keeps the file for next launch.
+    if (!created || !isWrongKey(error)) throw error;
     await SQLite.deleteDatabaseAsync(DB_NAME);
     db = await openWithKey(key);
   }
@@ -78,15 +84,16 @@ async function openEncrypted(): Promise<SQLite.SQLiteDatabase> {
 
 /** Moves anything saved in AsyncStorage by earlier versions into the database, once. */
 async function moveLegacyData(db: SQLite.SQLiteDatabase): Promise<void> {
-  const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(LEGACY_PREFIX));
-  if (keys.length === 0) return;
-  const pairs = await AsyncStorage.multiGet(keys);
+  const pairs = (await AsyncStorage.multiGet(LEGACY_KEYS)).filter((pair): pair is [string, string] => pair[1] !== null);
+  if (pairs.length === 0) return;
+  // A row already in the database is newer than the AsyncStorage copy, so it stays.
   await db.withTransactionAsync(async () => {
     for (const [key, value] of pairs) {
-      if (value !== null) await db.runAsync('INSERT OR IGNORE INTO kv (key, value) VALUES (?, ?)', key, value);
+      await db.runAsync('INSERT OR IGNORE INTO kv (key, value) VALUES (?, ?)', key, value);
     }
   });
-  await AsyncStorage.multiRemove(keys);
+  // The copy is safe in the database now; if clearing fails, the next launch tries again.
+  await AsyncStorage.multiRemove(pairs.map(([key]) => key)).catch(() => {});
 }
 
 function databaseBackend(db: SQLite.SQLiteDatabase): Backend {
@@ -120,7 +127,9 @@ async function openBackend(): Promise<Backend> {
 let backend: Promise<Backend> | null = null;
 /**
  * Opened once per launch. If opening fails, every read and save fails for the rest of the launch
- * instead of saving empty state over data that couldn't be read.
+ * instead of saving empty state over data that couldn't be read; the stores then start empty
+ * and the data is back on the next launch. Opening only fails when the keychain or the file
+ * can't be read, which a phone the person just unlocked doesn't do.
  */
 function getBackend(): Promise<Backend> {
   backend ??= openBackend();

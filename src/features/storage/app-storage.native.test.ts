@@ -8,12 +8,13 @@ type FakeFile = { key: string | null; rows: Map<string, string> };
 /** Database files that outlive a launch, and whether this build has SQLCipher. */
 const mockFiles = new Map<string, FakeFile>();
 const mockKeychain = new Map<string, string>();
-const mockSqlite = { cipher: true, failKeychain: false, seed: 0 };
+const mockSqlite = { cipher: true, failKeychain: false, failOpen: false, seed: 0 };
 
 jest.mock('expo-sqlite', () => {
   function connection(name: string) {
     let givenKey: string | null = null;
     const file = () => {
+      if (mockSqlite.failOpen) throw new Error('database is locked');
       let f = mockFiles.get(name);
       if (!f) mockFiles.set(name, (f = { key: givenKey, rows: new Map() }));
       if (f.key !== givenKey) throw new Error('file is not a database');
@@ -74,6 +75,7 @@ beforeEach(() => {
   mockKeychain.clear();
   mockSqlite.cipher = true;
   mockSqlite.failKeychain = false;
+  mockSqlite.failOpen = false;
 });
 
 describe('appStorage on a development build', () => {
@@ -101,11 +103,11 @@ describe('appStorage on a development build', () => {
   it('moves data saved in AsyncStorage by earlier versions into the database', async () => {
     const { appStorage, AsyncStorage } = launch();
     await AsyncStorage.setItem('lapse.subscriptions', '{"subs":[]}');
-    await AsyncStorage.setItem('other', 'x');
+    await AsyncStorage.setItem('lapse.other', 'x');
 
     expect(await appStorage.getItem('lapse.subscriptions')).toBe('{"subs":[]}');
     expect(await AsyncStorage.getItem('lapse.subscriptions')).toBeNull();
-    expect(await AsyncStorage.getItem('other')).toBe('x');
+    expect(await AsyncStorage.getItem('lapse.other')).toBe('x');
   });
 
   it('keeps the database copy when AsyncStorage still has an older one', async () => {
@@ -113,6 +115,22 @@ describe('appStorage on a development build', () => {
     const { appStorage, AsyncStorage } = launch();
     await AsyncStorage.setItem('lapse.settings', 'old');
     expect(await appStorage.getItem('lapse.settings')).toBe('new');
+  });
+
+  it('still opens when clearing the moved AsyncStorage copy fails', async () => {
+    const { appStorage, AsyncStorage } = launch();
+    await AsyncStorage.setItem('lapse.settings', 'old');
+    jest.mocked(AsyncStorage.multiRemove).mockRejectedValueOnce(new Error('disk full'));
+    expect(await appStorage.getItem('lapse.settings')).toBe('old');
+    expect(mockFiles.get('lapse.db')?.rows.get('lapse.settings')).toBe('old');
+  });
+
+  it('keeps the file when it fails to open for another reason', async () => {
+    await launch().appStorage.setItem('lapse.settings', 'saved');
+    mockSqlite.failOpen = true;
+    const { appStorage } = launch();
+    await expect(appStorage.getItem('lapse.settings')).rejects.toThrow('locked');
+    expect(mockFiles.get('lapse.db')?.rows.get('lapse.settings')).toBe('saved');
   });
 
   it('starts a new database when the keychain lost the key', async () => {
