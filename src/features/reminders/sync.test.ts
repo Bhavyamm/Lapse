@@ -2,11 +2,12 @@ import * as Notifications from 'expo-notifications';
 
 import type { Subscription } from '@/features/subscriptions/types';
 
-import { syncReminders } from './sync';
+import { requestReminderPermission } from './permissions';
+import { sendTestReminder, syncReminders } from './sync';
 
 jest.mock('expo-notifications', () => ({
   AndroidImportance: { HIGH: 4 },
-  SchedulableTriggerInputTypes: { DATE: 'date' },
+  SchedulableTriggerInputTypes: { DATE: 'date', TIME_INTERVAL: 'timeInterval' },
   setNotificationHandler: jest.fn(),
   setNotificationChannelAsync: jest.fn(),
   setNotificationCategoryAsync: jest.fn(),
@@ -14,6 +15,7 @@ jest.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: jest.fn(),
   scheduleNotificationAsync: jest.fn(),
 }));
+jest.mock('./permissions', () => ({ REMINDER_CHANNEL_ID: 'reminders', requestReminderPermission: jest.fn() }));
 
 const spotify: Subscription = {
   id: 's',
@@ -99,11 +101,12 @@ describe('syncReminders', () => {
     expect(order).toEqual(['read', 's:2026-10-19', 's:2026-11-19', 's:2026-12-19', 'read']);
   });
 
-  it('never throws, and schedules nothing until the buttons are registered', async () => {
+  it('never throws when the phone refuses', async () => {
     jest.mocked(Notifications.getAllScheduledNotificationsAsync).mockRejectedValueOnce(new Error('nope'));
     await expect(syncReminders([spotify], on)).resolves.toBeUndefined();
+  });
 
-    // A fresh launch whose button registration fails.
+  it('still schedules when the buttons can’t be registered, and retries them next time', async () => {
     let fresh: typeof syncReminders = syncReminders;
     let api: typeof Notifications = Notifications;
     jest.isolateModules(() => {
@@ -112,8 +115,39 @@ describe('syncReminders', () => {
     });
     jest.mocked(api.getAllScheduledNotificationsAsync).mockResolvedValue([] as never);
     jest.mocked(api.setNotificationCategoryAsync).mockRejectedValueOnce(new Error('nope'));
-    await expect(fresh([spotify], on)).resolves.toBeUndefined();
-    expect(api.setNotificationCategoryAsync).toHaveBeenCalled();
-    expect(api.scheduleNotificationAsync).not.toHaveBeenCalled();
+
+    await fresh([spotify], on);
+    expect(api.scheduleNotificationAsync).toHaveBeenCalledTimes(3);
+
+    await fresh([spotify], on);
+    expect(api.setNotificationCategoryAsync).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('sendTestReminder', () => {
+  const duo = { ...spotify, id: 'd', name: 'Duolingo Max', trial: true, chargeOn: '2026-10-18' };
+
+  it('shows the next trial reminder in 5 seconds, marked as a test', async () => {
+    jest.mocked(requestReminderPermission).mockResolvedValue(true);
+
+    await expect(sendTestReminder([spotify, duo], 'oneDay')).resolves.toBe('sent');
+
+    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith({
+      content: expect.objectContaining({
+        title: 'Duolingo Max trial ends tomorrow',
+        categoryIdentifier: 'trial',
+        data: expect.objectContaining({ subscriptionId: 'd', test: true }),
+      }),
+      trigger: { type: 'timeInterval', seconds: 5, channelId: 'reminders' },
+    });
+  });
+
+  it('says when notifications aren’t allowed or there’s nothing to remind about', async () => {
+    jest.mocked(requestReminderPermission).mockResolvedValue(false);
+    await expect(sendTestReminder([spotify], 'oneDay')).resolves.toBe('blocked');
+
+    jest.mocked(requestReminderPermission).mockResolvedValue(true);
+    await expect(sendTestReminder([], 'oneDay')).resolves.toBe('nothing');
+    expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
   });
 });

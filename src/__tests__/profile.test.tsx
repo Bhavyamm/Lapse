@@ -162,7 +162,7 @@ describe('Profile screen', () => {
 
   it('in development, sends a test reminder', async () => {
     setDev(true);
-    jest.mocked(sendTestReminder).mockResolvedValue(true);
+    jest.mocked(sendTestReminder).mockResolvedValue('sent');
     const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     await render(<ProfileScreen />);
 

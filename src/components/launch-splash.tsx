@@ -148,8 +148,8 @@ const styles = StyleSheet.create({
   privacyText: {
     color: colors.textOnDarkMuted,
   },
-  // Matches the design: the mascot peeks in from the bottom-left corner,
-  // with its speech bubble starting just right of the screen edge.
+  // The mascot peeks in from the bottom-left corner with most of its face showing (the design's
+  // offsets hid half of it on a phone), and its speech bubble sits just above its head.
   mascotArea: {
     position: 'absolute',
     left: 17,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   bubble: {
     position: 'absolute',
-    bottom: 196,
+    bottom: 212,
     left: 4,
     backgroundColor: colors.white,
     borderRadius: 20,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   mascot: {
     position: 'absolute',
-    bottom: -64,
-    left: -150,
+    bottom: -34,
+    left: -95,
   },
 });

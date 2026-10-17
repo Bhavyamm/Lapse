@@ -77,13 +77,21 @@ export default function ProfileScreen() {
   );
 }
 
+const TEST_REMINDER_MESSAGES = {
+  sent: ['Test reminder in 5 seconds', 'Lock your phone now to see it on the lock screen.'],
+  nothing: ['Nothing to remind about', 'Add a subscription first.'],
+  blocked: ['Notifications are off', 'Allow notifications for Expo Go (or lapse) in Settings, then try again.'],
+} as const;
+
 async function testReminder() {
   const { subscriptions } = useSubscriptions.getState();
-  const sent = await sendTestReminder(subscriptions, useSettings.getState().reminderLead);
-  notify(
-    sent ? 'Test reminder in 5 seconds' : 'Nothing to remind about',
-    sent ? 'Lock your phone to see it on the lock screen.' : 'Add a subscription first.',
-  );
+  try {
+    const result = await sendTestReminder(subscriptions, useSettings.getState().reminderLead);
+    const [title, message] = TEST_REMINDER_MESSAGES[result];
+    notify(title, message);
+  } catch (error) {
+    notify('Couldn’t send a test reminder', error instanceof Error ? error.message : String(error));
+  }
 }
 
 /** Pro arrives in a later step; until then its entry points say so. */

@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import type { Subscription } from '@/features/subscriptions/types';
 
 import type { ReminderLead } from './lead-time';
-import { REMINDER_CHANNEL_ID } from './permissions';
+import { REMINDER_CHANNEL_ID, requestReminderPermission } from './permissions';
 import { planReminders, TRIAL_CATEGORY } from './plan';
 
 /** Buttons on a trial reminder. */
@@ -12,15 +12,13 @@ export const TRIAL_ACTIONS = { cancel: 'cancel', tonight: 'tonight', keep: 'keep
 
 let prepared: Promise<void> | null = null;
 
-/** Shows reminders that arrive while lapse is open, and registers the trial reminder's buttons. Once per launch. */
+/**
+ * Shows reminders that arrive while lapse is open, and sets up the Android channel and the trial
+ * reminder's buttons. Each step is best effort: a phone (or Expo Go) that refuses one still gets
+ * reminders, and a failed step is tried again on the next sync.
+ */
 function prepare(): Promise<void> {
   prepared ??= (async () => {
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
-        name: 'Reminders',
-        importance: Notifications.AndroidImportance.HIGH,
-      });
-    }
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowBanner: true,
@@ -29,17 +27,32 @@ function prepare(): Promise<void> {
         shouldSetBadge: false,
       }),
     });
+    let complete = true;
+    const attempt = async (step: () => Promise<unknown>) => {
+      try {
+        await step();
+      } catch {
+        complete = false;
+      }
+    };
+    if (Platform.OS === 'android') {
+      await attempt(() =>
+        Notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
+          name: 'Reminders',
+          importance: Notifications.AndroidImportance.HIGH,
+        }),
+      );
+    }
     // Every button opens the app, so the choice is handled even if lapse wasn't running.
-    await Notifications.setNotificationCategoryAsync(TRIAL_CATEGORY, [
-      { identifier: TRIAL_ACTIONS.cancel, buttonTitle: 'Cancel the trial' },
-      { identifier: TRIAL_ACTIONS.tonight, buttonTitle: 'Remind me tonight' },
-      { identifier: TRIAL_ACTIONS.keep, buttonTitle: 'I’ll keep it' },
-    ]);
-  })().catch((error) => {
-    // Try again on the next sync rather than scheduling without the buttons or the channel.
-    prepared = null;
-    throw error;
-  });
+    await attempt(() =>
+      Notifications.setNotificationCategoryAsync(TRIAL_CATEGORY, [
+        { identifier: TRIAL_ACTIONS.cancel, buttonTitle: 'Cancel the trial' },
+        { identifier: TRIAL_ACTIONS.tonight, buttonTitle: 'Remind me tonight' },
+        { identifier: TRIAL_ACTIONS.keep, buttonTitle: 'I’ll keep it' },
+      ]),
+    );
+    if (!complete) prepared = null;
+  })();
   return prepared;
 }
 
@@ -87,24 +100,36 @@ export function syncReminders(
   return next;
 }
 
+export type TestReminderResult = 'sent' | 'nothing' | 'blocked';
+
 /**
  * Development builds only: shows the next real reminder (a trial's first) a few seconds from now,
- * so the lock-screen reminder and its buttons can be tried without waiting. False when there is
- * nothing to remind about.
+ * so the lock-screen reminder and its buttons can be tried without waiting. Asks for permission
+ * if it hasn't been given. Throws if the phone refuses to schedule it.
  */
-export async function sendTestReminder(subscriptions: Subscription[], reminderLead: ReminderLead): Promise<boolean> {
-  if (Platform.OS === 'web') return false;
+export async function sendTestReminder(
+  subscriptions: Subscription[],
+  reminderLead: ReminderLead,
+): Promise<TestReminderResult> {
+  if (Platform.OS === 'web') return 'blocked';
+  if (!(await requestReminderPermission())) return 'blocked';
   await prepare();
   const planned = planReminders(subscriptions, { remindersEnabled: true, reminderLead }, new Date());
   const pick = planned.find((r) => r.data.kind === 'trial') ?? planned[0];
-  if (!pick) return false;
+  if (!pick) return 'nothing';
   await Notifications.scheduleNotificationAsync({
-    content: { title: pick.title, body: pick.body, data: pick.data, categoryIdentifier: pick.category },
+    // Marked as a test, so its buttons don't change the real subscription.
+    content: {
+      title: pick.title,
+      body: pick.body,
+      data: { ...pick.data, test: true },
+      categoryIdentifier: pick.category,
+    },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
       seconds: 5,
       channelId: REMINDER_CHANNEL_ID,
     },
   });
-  return true;
+  return 'sent';
 }
