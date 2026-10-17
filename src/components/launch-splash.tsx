@@ -1,5 +1,6 @@
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
@@ -15,7 +16,8 @@ const FADE_MS = 250;
 
 /**
  * The lapse. splash, shown over the app each time it opens. It fades out on its own,
- * or straight away when tapped, and then calls onDone.
+ * or straight away when tapped, and then calls onDone. With a screen reader on it waits
+ * for a tap, so the label can be read in full; with Reduce Motion it skips the fade.
  */
 export function LaunchSplash({ onDone }: { onDone: () => void }) {
   const insets = useSafeAreaInsets();
@@ -23,19 +25,41 @@ export function LaunchSplash({ onDone }: { onDone: () => void }) {
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLeaving(true), SPLASH_MS);
-    return () => clearTimeout(timer);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+    // react-native-web always answers true here, so the browser keeps the timer.
+    (Platform.OS === 'web' ? Promise.resolve(false) : AccessibilityInfo.isScreenReaderEnabled())
+      .catch(() => false)
+      .then((reader) => {
+        if (!cancelled && !reader) timer = setTimeout(() => setLeaving(true), SPLASH_MS);
+      });
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
     if (!leaving) return;
-    Animated.timing(opacity, { toValue: 0, duration: FADE_MS, useNativeDriver: true }).start(({ finished }) => {
-      if (finished) onDone();
-    });
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then((reduce) => {
+        if (cancelled) return;
+        if (reduce) return onDone();
+        Animated.timing(opacity, { toValue: 0, duration: FADE_MS, useNativeDriver: true }).start(({ finished }) => {
+          if (finished && !cancelled) onDone();
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [leaving, opacity, onDone]);
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, { opacity }]}>
+    <Animated.View style={[StyleSheet.absoluteFill, { opacity }]} aria-modal>
+      {/* Mounted after the screens, so it wins over their dark status bar until it closes. */}
+      <StatusBar style="light" />
       <Pressable
         role="button"
         aria-label="lapse. Catch every charge before it lands. Your data stays on this phone. Continue"

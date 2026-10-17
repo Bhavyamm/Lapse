@@ -18,15 +18,20 @@ import type { BillingCycle, Subscription } from '@/features/subscriptions/types'
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { useToday } from '@/hooks/use-today';
-import { formatShortDate, formatToday, type LocalDate } from '@/utils/dates';
+import { formatShortDate, formatToday, fromLocalDate, type LocalDate } from '@/utils/dates';
 
 /** Home: the empty state until something is added, then spending, alerts and what's next. */
 export default function HomeScreen() {
   const subscriptions = useSubscriptions((s) => s.subscriptions);
+  const today = useToday();
   const empty = subscriptions.length === 0;
   return (
     <TabScreen>
-      <ScreenHeader eyebrow={formatToday()} title="Your subscriptions" right={empty ? null : <AddButton />} />
+      <ScreenHeader
+        eyebrow={formatToday(fromLocalDate(today))}
+        title="Your subscriptions"
+        right={empty ? null : <AddButton />}
+      />
       {empty ? <EmptyHome /> : <Dashboard subscriptions={subscriptions} />}
     </TabScreen>
   );
@@ -60,7 +65,10 @@ function Dashboard({ subscriptions }: { subscriptions: Subscription[] }) {
 function SpendCard({ monthlyCents, yearlyCents, count }: { monthlyCents: number; yearlyCents: number; count: number }) {
   const [dollars, cents] = formatMoney(monthlyCents).slice(1).split('.');
   const yearly = formatMoney(Math.round(yearlyCents / 100) * 100).slice(0, -3);
-  const across = `${yearly} a year across ${count} ${count === 1 ? 'subscription' : 'subscriptions'}`;
+  const across =
+    count === 0
+      ? 'Nothing charged yet, only free trials'
+      : `${yearly} a year across ${count} ${count === 1 ? 'subscription' : 'subscriptions'}`;
   return (
     <CharcoalCard contentStyle={styles.spend}>
       <AppText variant="label" onDark muted>
@@ -112,7 +120,11 @@ function ComingUp({ rows }: { rows: Upcoming[] }) {
     <GlassCard contentStyle={styles.list}>
       <View style={styles.listHeader}>
         <AppText variant="section">Coming up</AppText>
-        <Pressable role="link" onPress={() => router.navigate('/subscriptions')} hitSlop={10}>
+        <Pressable
+          role="link"
+          aria-label="See all subscriptions"
+          onPress={() => router.navigate('/subscriptions')}
+          hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}>
           <AppText variant="caption" muted style={styles.seeAll}>
             See all
           </AppText>

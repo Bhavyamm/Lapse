@@ -43,7 +43,28 @@ describe('Home', () => {
     expect(screen.getByText('$186 a year across 1 subscription')).toBeOnTheScreen();
     expect(screen.getByText('Duolingo Max trial ends in 2 days')).toBeOnTheScreen();
     expect(screen.getByText('Then $29.99 a month from Mon')).toBeOnTheScreen();
-    expect(screen.getByRole('link', { name: 'See all' })).toBeOnTheScreen();
+    expect(screen.getByRole('link', { name: 'See all subscriptions' })).toBeOnTheScreen();
+  });
+
+  it('says nothing is charged yet when only free trials are tracked', async () => {
+    useSubscriptions.setState({
+      subscriptions: [
+        {
+          ...base,
+          id: 'b',
+          serviceId: 'duolingo-max',
+          name: 'Duolingo Max',
+          priceCents: 2999,
+          chargeOn: '2026-10-17',
+          trial: true,
+        },
+      ],
+    });
+    await render(<HomeScreen />);
+
+    expect(screen.getByText('Nothing charged yet, only free trials')).toBeOnTheScreen();
+    expect(screen.getByText('Duolingo Max trial ends today')).toBeOnTheScreen();
+    expect(screen.getByText('Then $29.99 a month from today')).toBeOnTheScreen();
   });
 
   it('lists subscriptions soonest first, rolling past dates forward', async () => {

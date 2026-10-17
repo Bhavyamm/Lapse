@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- The splash keeps a light status bar, waits for a tap when a screen reader is on, and skips the fade with Reduce Motion.
 - Spending totals on Home leave out free trials that haven't charged yet, matching the design.
 - The lapse. splash now shows each time the app opens and fades into Home (or into Turn on reminders the first time) after a moment; tap it to skip. It is no longer an onboarding step.
 - Calmer background: one warm glow at the top right and a faint gray one at the bottom left, and it now fills the whole screen on iPhone (it was cut off at the right and bottom).

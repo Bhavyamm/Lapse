@@ -22,6 +22,7 @@ export function Segmented<T extends string>({ label, options, value, onChange }:
             role="radio"
             aria-checked={selected}
             onPress={() => onChange(option.value)}
+            hitSlop={{ top: 4, bottom: 4 }}
             style={[styles.option, selected && styles.selected]}>
             <AppText variant="label" style={[styles.text, { color: selected ? colors.white : colors.inkSoft }]}>
               {option.label}

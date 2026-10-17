@@ -8,7 +8,8 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { View } from 'react-native';
 
 import { LaunchSplash } from '@/components/launch-splash';
 import { useSettings, useSettingsHydrated } from '@/stores/settings';
@@ -32,6 +33,7 @@ export default function RootLayout() {
   const ready = (loaded || !!error) && hydrated;
   // The lapse. splash plays once per launch, over whichever screen the app opens on.
   const [splashing, setSplashing] = useState(true);
+  const endSplash = useCallback(() => setSplashing(false), []);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
@@ -41,17 +43,23 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style={splashing ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }}>
-        <Stack.Protected guard={!hasOnboarded}>
-          <Stack.Screen name="reminders" />
-        </Stack.Protected>
-        <Stack.Protected guard={hasOnboarded}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="add" />
-        </Stack.Protected>
-      </Stack>
-      {splashing ? <LaunchSplash onDone={() => setSplashing(false)} /> : null}
+      <StatusBar style="dark" />
+      {/* Hidden from screen readers while the splash covers it. */}
+      <View
+        style={{ flex: 1 }}
+        aria-hidden={splashing}
+        importantForAccessibility={splashing ? 'no-hide-descendants' : 'auto'}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }}>
+          <Stack.Protected guard={!hasOnboarded}>
+            <Stack.Screen name="reminders" />
+          </Stack.Protected>
+          <Stack.Protected guard={hasOnboarded}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="add" />
+          </Stack.Protected>
+        </Stack>
+      </View>
+      {splashing ? <LaunchSplash onDone={endSplash} /> : null}
     </>
   );
 }

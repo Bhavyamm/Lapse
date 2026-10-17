@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { router } from 'expo-router';
 
 import { requestReminderPermission } from '@/features/reminders/permissions';
@@ -27,8 +28,26 @@ beforeEach(() => {
 });
 
 describe('Launch splash', () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
+  let screenReader: jest.SpyInstance;
+  let reduceMotion: jest.SpyInstance;
+  beforeEach(() => {
+    // setImmediate stays real so act() can flush the accessibility promises.
+    jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick', 'queueMicrotask'] });
+    screenReader = jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(false);
+    reduceMotion = jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+    screenReader.mockRestore();
+    reduceMotion.mockRestore();
+  });
+  // Lets the accessibility checks resolve, then runs timers.
+  const advance = (ms: number) =>
+    act(async () => {
+      await Promise.resolve();
+      jest.advanceTimersByTime(ms);
+      await Promise.resolve();
+    });
 
   it('shows the tagline and the privacy promise', async () => {
     await render(<LaunchSplash onDone={jest.fn()} />);
@@ -41,11 +60,10 @@ describe('Launch splash', () => {
     const onDone = jest.fn();
     await render(<LaunchSplash onDone={onDone} />);
 
-    await act(() => jest.advanceTimersByTime(SPLASH_MS - 100));
+    await advance(SPLASH_MS - 100);
     expect(onDone).not.toHaveBeenCalled();
-    await act(() => jest.advanceTimersByTime(100));
-    // The fade starts once the timer has fired.
-    await act(() => jest.advanceTimersByTime(400));
+    await advance(100);
+    await advance(400);
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
@@ -54,9 +72,32 @@ describe('Launch splash', () => {
     await render(<LaunchSplash onDone={onDone} />);
 
     await fireEvent.press(screen.getByRole('button', { name: /Your data stays on this phone\. Continue/ }));
-    await act(() => jest.advanceTimersByTime(400));
+    await advance(400);
     expect(onDone).toHaveBeenCalledTimes(1);
-    await act(() => jest.advanceTimersByTime(SPLASH_MS * 2));
+    await advance(SPLASH_MS * 2);
+    await advance(400);
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for a tap when a screen reader is on', async () => {
+    screenReader.mockResolvedValue(true);
+    const onDone = jest.fn();
+    await render(<LaunchSplash onDone={onDone} />);
+
+    await advance(SPLASH_MS * 3);
+    expect(onDone).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: /Continue/ }));
+    await advance(400);
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes without the fade when Reduce Motion is on', async () => {
+    reduceMotion.mockResolvedValue(true);
+    const onDone = jest.fn();
+    await render(<LaunchSplash onDone={onDone} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: /Continue/ }));
+    await advance(0);
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 });
