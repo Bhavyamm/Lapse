@@ -12,9 +12,12 @@ export type Upcoming = { sub: Subscription; next: LocalDate; trialEnding: boolea
 export type TrialAlert = { sub: Subscription; endsOn: LocalDate; daysLeft: number };
 
 export type Overview = {
+  /** Totals and count of what is being paid for; running free trials cost nothing yet. */
   monthlyCents: number;
   yearlyCents: number;
   count: number;
+  /** Everything tracked, trials included. */
+  tracked: number;
   /** Trials ending soon, soonest first. */
   attention: TrialAlert[];
   /** The next charges not already shown under attention, soonest first. */
@@ -39,10 +42,12 @@ export function buildOverview(subscriptions: Subscription[], today: LocalDate): 
     .map((u) => ({ sub: u.sub, endsOn: u.next, daysLeft: daysBetween(today, u.next) }));
   const flagged = new Set(attention.map((a) => a.sub.id));
 
+  const paying = all.filter((u) => !u.trialEnding).map((u) => u.sub);
   return {
-    monthlyCents: subscriptions.reduce((sum, s) => sum + monthlyCents(s.priceCents, s.cycle), 0),
-    yearlyCents: subscriptions.reduce((sum, s) => sum + s.priceCents * PER_YEAR[s.cycle], 0),
-    count: subscriptions.length,
+    monthlyCents: paying.reduce((sum, s) => sum + monthlyCents(s.priceCents, s.cycle), 0),
+    yearlyCents: paying.reduce((sum, s) => sum + s.priceCents * PER_YEAR[s.cycle], 0),
+    count: paying.length,
+    tracked: subscriptions.length,
     attention,
     upcoming: all.filter((u) => !flagged.has(u.sub.id)).slice(0, UPCOMING_LIMIT),
     all,
@@ -62,4 +67,30 @@ export function whenShort(date: LocalDate, today: LocalDate): string {
   if (days <= 1) return inDays(days);
   if (days < 7) return fromLocalDate(date).toLocaleDateString(undefined, { weekday: 'short' });
   return formatShortDate(date);
+}
+
+export type SortKey = 'next' | 'price' | 'name';
+
+export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'next', label: 'Next renewal' },
+  { value: 'price', label: 'Price' },
+  { value: 'name', label: 'Name' },
+];
+
+/**
+ * Splits the full list for All subscriptions: running free trials first (soonest ending),
+ * then everything else in the chosen order. Price sorts by cost per month, highest first.
+ */
+export function sortForList(all: Upcoming[], by: SortKey): { trials: Upcoming[]; rest: Upcoming[] } {
+  const byName = (a: Upcoming, b: Upcoming) => a.sub.name.localeCompare(b.sub.name);
+  const compare: Record<SortKey, (a: Upcoming, b: Upcoming) => number> = {
+    next: (a, b) => a.next.localeCompare(b.next) || byName(a, b),
+    price: (a, b) =>
+      monthlyCents(b.sub.priceCents, b.sub.cycle) - monthlyCents(a.sub.priceCents, a.sub.cycle) || byName(a, b),
+    name: byName,
+  };
+  return {
+    trials: all.filter((u) => u.trialEnding).sort(compare.next),
+    rest: all.filter((u) => !u.trialEnding).sort(compare[by]),
+  };
 }

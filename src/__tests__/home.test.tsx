@@ -39,8 +39,8 @@ describe('Home', () => {
     await render(<HomeScreen />);
 
     expect(screen.getByText('Spending this month')).toBeOnTheScreen();
-    expect(screen.getByLabelText('$45.48')).toBeOnTheScreen();
-    expect(screen.getByText('$546 a year across 2 subscriptions')).toBeOnTheScreen();
+    expect(screen.getByLabelText('$15.49')).toBeOnTheScreen();
+    expect(screen.getByText('$186 a year across 1 subscription')).toBeOnTheScreen();
     expect(screen.getByText('Duolingo Max trial ends in 2 days')).toBeOnTheScreen();
     expect(screen.getByText('Then $29.99 a month from Mon')).toBeOnTheScreen();
     expect(screen.getByRole('link', { name: 'See all' })).toBeOnTheScreen();

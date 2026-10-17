@@ -51,6 +51,11 @@ export function formatShortDate(value: LocalDate): string {
   return fromLocalDate(value).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
+/** "Nov 12" in the device locale. */
+export function formatMonthDay(value: LocalDate): string {
+  return fromLocalDate(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 /** "October 2026" in the device locale. */
 export function formatMonthYear(year: number, month: number): string {
   return new Date(year, month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });

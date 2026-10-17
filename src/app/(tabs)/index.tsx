@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AddButton } from '@/components/add-button';
 import { AppText } from '@/components/app-text';
 import { CharcoalCard, GlassCard } from '@/components/cards';
 import { ChevronIcon, PlusIcon } from '@/components/icons';
@@ -9,6 +10,7 @@ import { Mascot } from '@/components/mascot';
 import { PillButton } from '@/components/pill-button';
 import { ScreenHeader } from '@/components/screen-header';
 import { ServiceLogo } from '@/components/service-logo';
+import { SubscriptionRow } from '@/components/subscription-row';
 import { TabScreen } from '@/components/tab-screen';
 import { formatMoney } from '@/features/subscriptions/billing';
 import { buildOverview, inDays, whenShort, type TrialAlert, type Upcoming } from '@/features/subscriptions/overview';
@@ -24,27 +26,12 @@ export default function HomeScreen() {
   const empty = subscriptions.length === 0;
   return (
     <TabScreen>
-      <ScreenHeader
-        eyebrow={formatToday()}
-        title="Your subscriptions"
-        right={
-          empty ? null : (
-            <Pressable
-              role="button"
-              aria-label="Add a subscription"
-              onPress={() => router.push('/add')}
-              style={styles.add}>
-              <PlusIcon color={colors.white} />
-            </Pressable>
-          )
-        }
-      />
+      <ScreenHeader eyebrow={formatToday()} title="Your subscriptions" right={empty ? null : <AddButton />} />
       {empty ? <EmptyHome /> : <Dashboard subscriptions={subscriptions} />}
     </TabScreen>
   );
 }
 
-const CYCLE_LABEL: Record<BillingCycle, string> = { week: 'Weekly', month: 'Monthly', year: 'Yearly' };
 const CYCLE_WORD: Record<BillingCycle, string> = { week: 'a week', month: 'a month', year: 'a year' };
 
 function Dashboard({ subscriptions }: { subscriptions: Subscription[] }) {
@@ -132,23 +119,7 @@ function ComingUp({ rows }: { rows: Upcoming[] }) {
         </Pressable>
       </View>
       {rows.map(({ sub, next, trialEnding }) => (
-        <View key={sub.id} style={styles.row}>
-          <ServiceLogo serviceId={sub.serviceId} name={sub.name} />
-          <View style={styles.rowText}>
-            <AppText variant="bodyStrong" numberOfLines={1}>
-              {sub.name}
-            </AppText>
-            <AppText variant="caption" muted>
-              {trialEnding ? 'Free trial' : CYCLE_LABEL[sub.cycle]}
-            </AppText>
-          </View>
-          <View style={styles.rowRight}>
-            <AppText variant="bodyStrong">{formatMoney(sub.priceCents)}</AppText>
-            <AppText variant="caption" muted>
-              {formatShortDate(next)}
-            </AppText>
-          </View>
-        </View>
+        <SubscriptionRow key={sub.id} sub={sub} date={formatShortDate(next)} trialEnding={trialEnding} />
       ))}
     </GlassCard>
   );
@@ -184,14 +155,6 @@ function EmptyHome() {
 }
 
 const styles = StyleSheet.create({
-  add: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.pill,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   spend: {
     paddingVertical: 20,
     paddingHorizontal: spacing.xl,
@@ -258,19 +221,8 @@ const styles = StyleSheet.create({
   seeAll: {
     fontFamily: fonts.medium,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
-  },
   rowText: {
     flex: 1,
-  },
-  rowRight: {
-    alignItems: 'flex-end',
   },
   card: {
     paddingTop: 56,
