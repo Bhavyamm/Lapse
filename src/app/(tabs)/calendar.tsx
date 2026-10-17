@@ -18,6 +18,7 @@ import {
   type Charge,
   type MonthPlan,
 } from '@/features/subscriptions/calendar';
+import { openSubscription } from '@/features/subscriptions/open';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { formatMonth, formatMonthYear, formatShortDate, monthCells, type LocalDate } from '@/utils/dates';
@@ -176,6 +177,7 @@ function MonthList({ plan, name, empty }: { plan: MonthPlan; name: string; empty
           trialEnding={c.trialEnding}
           divider={i > 0}
           compact
+          onPress={() => openSubscription(c.sub.id)}
         />
       ))}
       {plan.charges.length > rows.length ? (

@@ -2,7 +2,7 @@ import type { CatalogService } from '@/features/catalog/catalog';
 import { addDays, type LocalDate } from '@/utils/dates';
 
 import { addCycles, describePrice, parsePrice } from './billing';
-import type { BillingCycle, NewSubscription } from './types';
+import type { BillingCycle, NewSubscription, Subscription } from './types';
 
 /** A subscription being set up on the Add screen, before it is saved. */
 export type Draft = {
@@ -30,6 +30,20 @@ export function draftFromService(service: CatalogService, today: LocalDate): Dra
     trial,
     chargeOn: trial ? addDays(today, service.trialDays!) : addCycles(today, service.cycle, 1),
     from: !!service.from,
+  };
+}
+
+/** A saved subscription opened in the editor to change it. */
+export function draftFromSubscription(sub: Subscription): Draft {
+  return {
+    key: sub.id,
+    serviceId: sub.serviceId,
+    name: sub.name,
+    priceText: (sub.priceCents / 100).toFixed(2),
+    cycle: sub.cycle,
+    trial: sub.trial,
+    chargeOn: sub.chargeOn,
+    from: false,
   };
 }
 

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AddButton } from '@/components/add-button';
 import { AppText } from '@/components/app-text';
@@ -20,6 +20,7 @@ import {
   type SortKey,
   type Upcoming,
 } from '@/features/subscriptions/overview';
+import { openSubscription } from '@/features/subscriptions/open';
 import type { BillingCycle } from '@/features/subscriptions/types';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
@@ -65,7 +66,13 @@ export default function SubscriptionsScreen() {
           {rest.length > 0 ? (
             <GlassCard contentStyle={styles.list}>
               {rest.map((u, i) => (
-                <SubscriptionRow key={u.sub.id} sub={u.sub} date={formatMonthDay(u.next)} divider={i > 0} />
+                <SubscriptionRow
+                  key={u.sub.id}
+                  sub={u.sub}
+                  date={formatMonthDay(u.next)}
+                  divider={i > 0}
+                  onPress={() => openSubscription(u.sub.id)}
+                />
               ))}
             </GlassCard>
           ) : null}
@@ -79,7 +86,11 @@ export default function SubscriptionsScreen() {
 function TrialRow({ item }: { item: Upcoming }) {
   const { sub, next } = item;
   return (
-    <View style={styles.trial}>
+    <Pressable
+      role="button"
+      aria-label={`${sub.name}, free trial ends ${formatMonthDay(next)}, then ${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}`}
+      onPress={() => openSubscription(sub.id)}
+      style={({ pressed }) => [styles.trial, pressed && styles.pressed]}>
       <View style={styles.trialText}>
         <AppText variant="bodyStrong" style={styles.bold} numberOfLines={1}>
           {sub.name}
@@ -96,7 +107,7 @@ function TrialRow({ item }: { item: Upcoming }) {
           Ends {formatMonthDay(next)}
         </AppText>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -120,6 +131,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: radii.row,
     backgroundColor: colors.accent,
+  },
+  pressed: {
+    opacity: 0.85,
   },
   trialText: {
     flex: 1,

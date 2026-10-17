@@ -15,6 +15,7 @@ import { SubscriptionRow } from '@/components/subscription-row';
 import { TabScreen } from '@/components/tab-screen';
 import { formatMoney } from '@/features/subscriptions/billing';
 import { buildOverview, inDays, whenShort, type TrialAlert, type Upcoming } from '@/features/subscriptions/overview';
+import { openSubscription } from '@/features/subscriptions/open';
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
@@ -87,7 +88,11 @@ function TrialCard({ alert, today }: { alert: TrialAlert; today: LocalDate }) {
   const { sub, endsOn, daysLeft } = alert;
   const when = whenShort(endsOn, today);
   return (
-    <View style={styles.trial}>
+    <Pressable
+      role="button"
+      aria-label={`${sub.name} trial ends ${inDays(daysLeft)}, then ${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}`}
+      onPress={() => openSubscription(sub.id)}
+      style={({ pressed }) => [styles.trial, pressed && styles.pressed]}>
       <ServiceLogo serviceId={sub.serviceId} name={sub.name} size={44} />
       <View style={styles.rowText}>
         <AppText variant="bodyStrong" style={styles.trialTitle}>
@@ -100,7 +105,7 @@ function TrialCard({ alert, today }: { alert: TrialAlert; today: LocalDate }) {
       <View style={styles.trialArrow}>
         <ChevronIcon color={colors.white} />
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -121,7 +126,13 @@ function ComingUp({ rows }: { rows: Upcoming[] }) {
         </Pressable>
       </View>
       {rows.map(({ sub, next, trialEnding }) => (
-        <SubscriptionRow key={sub.id} sub={sub} date={formatShortDate(next)} trialEnding={trialEnding} />
+        <SubscriptionRow
+          key={sub.id}
+          sub={sub}
+          date={formatShortDate(next)}
+          trialEnding={trialEnding}
+          onPress={() => openSubscription(sub.id)}
+        />
       ))}
     </GlassCard>
   );
@@ -188,6 +199,9 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: radii.row,
     backgroundColor: colors.accent,
+  },
+  pressed: {
+    opacity: 0.85,
   },
   trialTitle: {
     fontFamily: fonts.bold,

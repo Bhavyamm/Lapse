@@ -60,6 +60,7 @@ export default function RootLayout() {
           <Stack.Protected guard={hasOnboarded}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="add" />
+            <Stack.Screen name="subscription/[id]" />
           </Stack.Protected>
         </Stack>
       </View>

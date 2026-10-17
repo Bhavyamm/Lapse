@@ -24,6 +24,8 @@ export type CatalogService = {
   trialDays?: number;
   /** Rank in the Popular list. */
   popular?: number;
+  /** How to cancel, when known: the service's own page and steps, or "store" for App Store or Google Play billing. */
+  cancel?: { url: string; steps: string[] } | 'store';
 };
 
 export const CATALOG = services as CatalogService[];

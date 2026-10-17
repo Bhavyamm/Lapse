@@ -18,11 +18,16 @@ export type Subscription = {
    */
   chargeOn: LocalDate;
   trial: boolean;
+  /** The renewal alert for this one. Missing means on, so older saves keep their alerts. */
+  remind?: boolean;
   createdAt: string;
 };
 
 /** What the Add screen hands to the store; the store fills in id and createdAt. */
 export type NewSubscription = Omit<Subscription, 'id' | 'createdAt' | 'currency'>;
+
+/** What can change on a saved subscription. */
+export type SubscriptionChanges = Partial<NewSubscription>;
 
 /**
  * A subscription the person cancelled through lapse., kept for the money-saved total.

@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { ServiceLogo } from '@/components/service-logo';
@@ -17,12 +17,15 @@ type Props = {
   divider?: boolean;
   /** One line: the name with a "Trial ends" tag, no cycle line. For lists already grouped by date. */
   compact?: boolean;
+  /** Opens the subscription; the row becomes a button. */
+  onPress?: () => void;
 };
 
 /** One subscription in a glass list: logo, name and cycle, then price and date on the right. */
-export function SubscriptionRow({ sub, date, trialEnding, divider = true, compact = false }: Props) {
-  return (
-    <View style={[styles.row, divider && styles.divider]}>
+export function SubscriptionRow({ sub, date, trialEnding, divider = true, compact = false, onPress }: Props) {
+  const price = formatMoney(sub.priceCents);
+  const content = (
+    <>
       <ServiceLogo serviceId={sub.serviceId} name={sub.name} />
       {compact ? (
         <View style={[styles.text, styles.line]}>
@@ -48,12 +51,23 @@ export function SubscriptionRow({ sub, date, trialEnding, divider = true, compac
         </View>
       )}
       <View style={styles.right}>
-        <AppText variant="bodyStrong">{formatMoney(sub.priceCents)}</AppText>
+        <AppText variant="bodyStrong">{price}</AppText>
         <AppText variant="caption" muted>
           {date}
         </AppText>
       </View>
-    </View>
+    </>
+  );
+  const style = [styles.row, divider && styles.divider];
+  if (!onPress) return <View style={style}>{content}</View>;
+  return (
+    <Pressable
+      role="button"
+      aria-label={`${sub.name}, ${trialEnding ? 'trial ends' : 'renews'} ${date}, ${price}`}
+      onPress={onPress}
+      style={({ pressed }) => [...style, pressed && styles.pressed]}>
+      {content}
+    </Pressable>
   );
 }
 
@@ -63,6 +77,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     paddingVertical: 10,
+  },
+  pressed: {
+    opacity: 0.6,
   },
   divider: {
     borderTopWidth: 1,

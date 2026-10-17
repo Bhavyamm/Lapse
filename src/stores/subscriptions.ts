@@ -3,7 +3,12 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { toCancelled } from '@/features/subscriptions/savings';
-import type { CancelledSubscription, NewSubscription, Subscription } from '@/features/subscriptions/types';
+import type {
+  CancelledSubscription,
+  NewSubscription,
+  Subscription,
+  SubscriptionChanges,
+} from '@/features/subscriptions/types';
 import type { LocalDate } from '@/utils/dates';
 
 export type SubscriptionsState = {
@@ -12,6 +17,7 @@ export type SubscriptionsState = {
   subscriptions: Subscription[];
   /** Saves new subscriptions and returns them with their ids. */
   add: (items: NewSubscription[]) => Subscription[];
+  update: (id: string, changes: SubscriptionChanges) => void;
   remove: (id: string) => void;
   /** Subscriptions cancelled through the app, for the money-saved total on Profile. */
   cancelled: CancelledSubscription[];
@@ -41,6 +47,8 @@ export const useSubscriptions = create<SubscriptionsState>()(
         set((s) => ({ subscriptions: [...s.subscriptions, ...added] }));
         return added;
       },
+      update: (id, changes) =>
+        set((s) => ({ subscriptions: s.subscriptions.map((sub) => (sub.id === id ? { ...sub, ...changes } : sub)) })),
       remove: (id) => set((s) => ({ subscriptions: s.subscriptions.filter((sub) => sub.id !== id) })),
       cancelled: [],
       cancel: (id, today) =>
