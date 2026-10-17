@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { useSubscriptions } from '@/stores/subscriptions';
 
@@ -83,5 +83,21 @@ describe('Home', () => {
     expect(screen.getByText('Mon, Oct 19')).toBeOnTheScreen();
     expect(screen.getByText('Free trial')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Add a subscription' })).toBeOnTheScreen();
+  });
+});
+
+describe('Home rows', () => {
+  it('open the subscription', async () => {
+    const { router } = jest.requireMock('expo-router');
+    useSubscriptions.setState({
+      subscriptions: [
+        { ...base, id: 'a', serviceId: 'netflix', name: 'Netflix', priceCents: 1549, chargeOn: '2026-10-22' },
+      ],
+    });
+    await render(<HomeScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: /^Netflix, renews/ }));
+
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/subscription/[id]', params: { id: 'a' } });
   });
 });
