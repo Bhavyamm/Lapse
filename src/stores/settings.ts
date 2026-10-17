@@ -18,6 +18,8 @@ export type SettingsState = {
   reminderLead: ReminderLead;
   setReminderLead: (lead: ReminderLead) => void;
   completeOnboarding: (remindersEnabled: boolean) => void;
+  /** Puts onboarding back to a fresh-install state. Development builds only. */
+  resetOnboarding: () => void;
 };
 
 export const useSettings = create<SettingsState>()(
@@ -29,6 +31,7 @@ export const useSettings = create<SettingsState>()(
       reminderLead: DEFAULT_REMINDER_LEAD,
       setReminderLead: (reminderLead) => set({ reminderLead }),
       completeOnboarding: (remindersEnabled) => set({ hasOnboarded: true, remindersEnabled }),
+      resetOnboarding: () => set({ hasOnboarded: false, remindersEnabled: false, reminderLead: DEFAULT_REMINDER_LEAD }),
     }),
     {
       name: 'lapse.settings',

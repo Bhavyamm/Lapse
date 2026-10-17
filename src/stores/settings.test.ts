@@ -40,6 +40,19 @@ describe('settings store', () => {
     expect(useSettings.getState()).toMatchObject({ hasOnboarded: true, remindersEnabled: false });
   });
 
+  it('resetOnboarding puts onboarding back to a fresh install', () => {
+    useSettings.getState().setReminderLead('threeDays');
+    useSettings.getState().completeOnboarding(true);
+
+    useSettings.getState().resetOnboarding();
+
+    expect(useSettings.getState()).toMatchObject({
+      hasOnboarded: false,
+      remindersEnabled: false,
+      reminderLead: DEFAULT_REMINDER_LEAD,
+    });
+  });
+
   it('saves only the settings values, not actions or the hydrated flag', async () => {
     useSettings.getState().setReminderLead('morningOf');
     useSettings.getState().completeOnboarding(true);
