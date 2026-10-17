@@ -48,7 +48,18 @@ export const useSubscriptions = create<SubscriptionsState>()(
         return added;
       },
       update: (id, changes) =>
-        set((s) => ({ subscriptions: s.subscriptions.map((sub) => (sub.id === id ? { ...sub, ...changes } : sub)) })),
+        set((s) => ({
+          subscriptions: s.subscriptions.map((sub) => {
+            if (sub.id !== id) return sub;
+            const next = { ...sub, ...changes };
+            // A new end date or trial is a new trial to remind about: forget "keep it" and "tonight".
+            if (next.chargeOn !== sub.chargeOn || next.trial !== sub.trial) {
+              delete next.trialKept;
+              delete next.snoozeUntil;
+            }
+            return next;
+          }),
+        })),
       remove: (id) => set((s) => ({ subscriptions: s.subscriptions.filter((sub) => sub.id !== id) })),
       cancelled: [],
       cancel: (id, today) =>

@@ -93,4 +93,16 @@ describe('update', () => {
       name: 'Netflix',
     });
   });
+
+  it('forgets "keep it" and "tonight" once the trial’s end date changes', () => {
+    const [added] = useSubscriptions.getState().add([{ ...netflix, trial: true }]);
+    useSubscriptions.getState().update(added.id, { trialKept: true, snoozeUntil: 1 });
+    useSubscriptions.getState().update(added.id, { priceCents: 999 });
+    expect(useSubscriptions.getState().subscriptions[0]).toMatchObject({ trialKept: true, snoozeUntil: 1 });
+
+    useSubscriptions.getState().update(added.id, { chargeOn: '2026-11-01' });
+    const sub = useSubscriptions.getState().subscriptions[0];
+    expect(sub.trialKept).toBeUndefined();
+    expect(sub.snoozeUntil).toBeUndefined();
+  });
 });

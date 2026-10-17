@@ -35,8 +35,10 @@ function prepare(): Promise<void> {
       { identifier: TRIAL_ACTIONS.tonight, buttonTitle: 'Remind me tonight' },
       { identifier: TRIAL_ACTIONS.keep, buttonTitle: 'I’ll keep it' },
     ]);
-  })().catch(() => {
+  })().catch((error) => {
+    // Try again on the next sync rather than scheduling without the buttons or the channel.
     prepared = null;
+    throw error;
   });
   return prepared;
 }
@@ -56,7 +58,15 @@ export function syncReminders(
     try {
       await prepare();
       const planned = planReminders(subscriptions, settings, new Date());
-      await Notifications.cancelAllScheduledNotificationsAsync();
+      // Scheduling with an existing identifier replaces it, so only the ones no longer wanted are
+      // cancelled and there's no moment with nothing scheduled.
+      const wanted = new Set(planned.map((r) => r.id));
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      for (const old of scheduled) {
+        if (!wanted.has(old.identifier) && !old.content.data?.test) {
+          await Notifications.cancelScheduledNotificationAsync(old.identifier);
+        }
+      }
       for (const r of planned) {
         await Notifications.scheduleNotificationAsync({
           identifier: r.id,

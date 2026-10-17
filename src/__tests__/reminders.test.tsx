@@ -1,12 +1,25 @@
+import { render } from '@testing-library/react-native';
+import * as Notifications from 'expo-notifications';
+import { useRootNavigationState } from 'expo-router';
 import { Alert } from 'react-native';
 
-import { handleResponse } from '@/components/reminders';
+import { handleResponse, Reminders } from '@/components/reminders';
+import { syncReminders } from '@/features/reminders/sync';
+import { useSettings } from '@/stores/settings';
 import { useSubscriptions } from '@/stores/subscriptions';
 
-jest.mock('expo-notifications', () => ({}));
+jest.mock('expo-notifications', () => ({
+  useLastNotificationResponse: jest.fn(),
+  clearLastNotificationResponse: jest.fn(),
+}));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() }, useRootNavigationState: jest.fn() }));
+jest.mock('@/features/reminders/sync', () => ({
+  ...jest.requireActual('@/features/reminders/sync'),
+  syncReminders: jest.fn(),
+}));
 
 const initial = useSubscriptions.getState();
+const initialSettings = useSettings.getState();
 const duo = {
   id: 'd',
   serviceId: 'duolingo-max',
@@ -27,6 +40,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   useSubscriptions.setState({ ...initial, subscriptions: [duo] }, true);
+  useSettings.setState({ ...initialSettings, hasOnboarded: true, remindersEnabled: true }, true);
 });
 
 const router = () => jest.requireMock('expo-router').router;
@@ -68,6 +82,63 @@ describe('Reminder taps and buttons', () => {
     handleResponse(undefined, tap);
 
     expect(Alert.alert).not.toHaveBeenCalled();
+    expect(router().push).not.toHaveBeenCalled();
+  });
+
+  it('opens the detail instead of snoozing when no time is left', () => {
+    useSubscriptions.setState({ subscriptions: [{ ...duo, chargeOn: '2026-10-17' }] });
+    jest.setSystemTime(new Date(2026, 9, 17, 23, 30));
+    try {
+      handleResponse(data, 'tonight');
+    } finally {
+      jest.setSystemTime(new Date(2026, 9, 17, 9, 0));
+    }
+    expect(useSubscriptions.getState().subscriptions[0].snoozeUntil).toBeUndefined();
+    expect(router().push).toHaveBeenCalledWith({ pathname: '/subscription/[id]', params: { id: 'd' } });
+  });
+
+  it('leaves the real subscription alone for a test reminder', () => {
+    handleResponse({ ...data, test: true }, 'keep');
+    expect(useSubscriptions.getState().subscriptions[0].trialKept).toBeUndefined();
+    expect(Alert.alert).toHaveBeenCalled();
+  });
+});
+
+describe('Reminders', () => {
+  const response = {
+    notification: { date: 1, request: { identifier: 'd:2026-10-18', content: { data } } },
+    actionIdentifier: tap,
+  };
+
+  it('syncs on mount and when subscriptions change', async () => {
+    await render(<Reminders />);
+    expect(syncReminders).toHaveBeenCalledTimes(1);
+
+    useSubscriptions.getState().update('d', { priceCents: 1999 });
+    expect(syncReminders).toHaveBeenCalledTimes(2);
+  });
+
+  it('waits for navigation, then handles a tap once', async () => {
+    jest.mocked(Notifications.useLastNotificationResponse).mockReturnValue(response as never);
+    jest.mocked(useRootNavigationState).mockReturnValue(undefined as never);
+    const view = await render(<Reminders />);
+    expect(router().push).not.toHaveBeenCalled();
+
+    jest.mocked(useRootNavigationState).mockReturnValue({ key: 'root' } as never);
+    await view.rerender(<Reminders />);
+    await view.rerender(<Reminders />);
+
+    expect(router().push).toHaveBeenCalledTimes(1);
+    expect(router().push).toHaveBeenCalledWith({ pathname: '/trial/[id]', params: { id: 'd' } });
+    expect(Notifications.clearLastNotificationResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits until onboarding is done', async () => {
+    useSettings.setState({ hasOnboarded: false });
+    jest.mocked(Notifications.useLastNotificationResponse).mockReturnValue(response as never);
+    jest.mocked(useRootNavigationState).mockReturnValue({ key: 'root' } as never);
+    await render(<Reminders />);
+
     expect(router().push).not.toHaveBeenCalled();
   });
 });

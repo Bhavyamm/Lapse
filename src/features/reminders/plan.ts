@@ -1,10 +1,18 @@
 import { chargesBetween } from '@/features/subscriptions/calendar';
 import { formatMoney } from '@/features/subscriptions/billing';
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
-import { addDays, daysBetween, formatShortDate, fromLocalDate, toLocalDate, type LocalDate } from '@/utils/dates';
+import {
+  addDays,
+  daysBetween,
+  formatMonthDay,
+  formatShortDate,
+  fromLocalDate,
+  toLocalDate,
+  type LocalDate,
+} from '@/utils/dates';
 
 import type { ReminderLead } from './lead-time';
-import { reminderAt } from './when';
+import { REMINDER_HOUR, reminderDay } from './when';
 
 /** iOS keeps 64 pending notifications per app; stay under it and top up when the app opens. */
 export const MAX_REMINDERS = 60;
@@ -16,7 +24,13 @@ export const TONIGHT_HOUR = 20;
 export const TRIAL_CATEGORY = 'trial';
 
 export type ReminderKind = 'trial' | 'renewal';
-export type ReminderData = { subscriptionId: string; kind: ReminderKind; chargeOn: LocalDate };
+export type ReminderData = {
+  subscriptionId: string;
+  kind: ReminderKind;
+  chargeOn: LocalDate;
+  /** Set on the development "Send a test reminder" one. */
+  test?: boolean;
+};
 
 export type PlannedReminder = {
   /** Stable per subscription and charge, so a reschedule replaces rather than duplicates. */
@@ -55,7 +69,7 @@ export function reminderContent(sub: Subscription, chargeOn: LocalDate, kind: Re
   }
   return {
     title: `${sub.name} renews ${when}`,
-    body: `${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}, renews ${formatShortDate(chargeOn)}`,
+    body: `${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}, renews ${formatMonthDay(chargeOn)}`,
   };
 }
 
@@ -87,19 +101,40 @@ export function planReminders(
   for (const charge of chargesBetween(subs, today, addDays(today, HORIZON_DAYS))) {
     const { sub, on, trialEnding } = charge;
     if (trialEnding && sub.trialKept) continue;
-    const at = reminderAt(on, sub.lead ?? settings.reminderLead);
-    if (at.getTime() <= now.getTime()) continue;
+    const at = firstReminderTime(on, sub.lead ?? settings.reminderLead, now);
+    if (!at) continue;
     planned.push(reminder(sub, on, trialEnding ? 'trial' : 'renewal', at, `${sub.id}:${on}`));
   }
 
   for (const sub of subs) {
     if (!sub.snoozeUntil || sub.snoozeUntil <= now.getTime() || !sub.trial || sub.trialKept) continue;
-    // Only while the trial is still running.
-    if (toLocalDate(new Date(sub.snoozeUntil)) > sub.chargeOn) continue;
+    if (!snoozeFits(sub.snoozeUntil, sub.chargeOn)) continue;
     planned.push(reminder(sub, sub.chargeOn, 'trial', new Date(sub.snoozeUntil), `${sub.id}:snooze`));
   }
 
-  return planned.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, MAX_REMINDERS);
+  // Trial reminders matter most, so the cap never drops one for a renewal.
+  const byTime = (a: PlannedReminder, b: PlannedReminder) => a.at.getTime() - b.at.getTime();
+  const trials = planned.filter((r) => r.data.kind === 'trial').sort(byTime);
+  const renewals = planned.filter((r) => r.data.kind === 'renewal').sort(byTime);
+  return [...trials, ...renewals].slice(0, MAX_REMINDERS).sort(byTime);
+}
+
+/**
+ * When to remind about a charge on `chargeOn`: 9 AM on the lead day or, once that has passed (a
+ * trial added two days before it ends with a 3-day lead), the next 9 AM up to the charge day.
+ */
+function firstReminderTime(chargeOn: LocalDate, lead: ReminderLead, now: Date): Date | null {
+  for (let day = reminderDay(chargeOn, lead); day <= chargeOn; day = addDays(day, 1)) {
+    const at = fromLocalDate(day);
+    at.setHours(REMINDER_HOUR, 0, 0, 0);
+    if (at.getTime() > now.getTime()) return at;
+  }
+  return null;
+}
+
+/** A "remind me tonight" only counts while the trial runs: up to the end of its last day. */
+export function snoozeFits(at: number, chargeOn: LocalDate): boolean {
+  return toLocalDate(new Date(at)) <= chargeOn;
 }
 
 /** When "Remind me tonight" fires: 8 PM today, or an hour from now if that's too close or gone. */

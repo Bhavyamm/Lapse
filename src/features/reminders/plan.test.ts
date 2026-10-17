@@ -26,7 +26,7 @@ describe('planReminders', () => {
     expect(planned[0].at).toEqual(new Date(2026, 9, 18, 9, 0));
     expect(planned[0]).toMatchObject({
       title: 'Spotify renews tomorrow',
-      body: '$11.99 a month, renews Mon, Oct 19',
+      body: '$11.99 a month, renews Oct 19',
       data: { subscriptionId: 's', kind: 'renewal', chargeOn: '2026-10-19' },
       category: undefined,
     });
@@ -53,10 +53,17 @@ describe('planReminders', () => {
     expect(r.title).toBe('Spotify renews Sunday');
   });
 
-  it('skips reminders whose time has passed', () => {
-    const later = new Date(2026, 9, 18, 10, 0);
-    const planned = planReminders([sub({})], on, later);
-    expect(planned[0].id).toBe('s:2026-11-19');
+  it('falls back to the next 9 AM before the charge once the lead time has passed', () => {
+    const [late] = planReminders([sub({})], on, new Date(2026, 9, 18, 10, 0));
+    expect(late).toMatchObject({ id: 's:2026-10-19', title: 'Spotify renews today' });
+    expect(late.at).toEqual(new Date(2026, 9, 19, 9, 0));
+
+    // A trial ending in two days with a 3-day lead still gets reminded, at 9 AM today.
+    const trial = sub({ trial: true, chargeOn: '2026-10-18', lead: 'threeDays' });
+    expect(planReminders([trial], on, now)[0].at).toEqual(new Date(2026, 9, 16, 9, 0));
+
+    // Past 9 AM on the charge day there is nothing left to remind about.
+    expect(planReminders([sub({})], on, new Date(2026, 9, 19, 10, 0))[0].id).toBe('s:2026-11-19');
   });
 
   it('schedules nothing with reminders off, or for a subscription with its alert off', () => {
@@ -75,6 +82,20 @@ describe('planReminders', () => {
 
     expect(planned[0]).toMatchObject({ id: 's:snooze', title: 'Spotify trial ends Sunday', category: 'trial' });
     expect(planned[0].at).toEqual(new Date(2026, 9, 16, 20, 0));
+  });
+
+  it('never drops a trial reminder for renewals at the limit', () => {
+    const many = Array.from({ length: 30 }, (_, i) => sub({ id: `w${i}`, cycle: 'week', chargeOn: '2026-10-20' }));
+    const trial = sub({ id: 't', trial: true, chargeOn: '2027-01-10' });
+    const planned = planReminders([...many, trial], on, now);
+
+    expect(planned).toHaveLength(MAX_REMINDERS);
+    expect(planned.at(-1)?.id).toBe('t:2027-01-10');
+  });
+
+  it('ignores a "remind me tonight" past the trial’s last day', () => {
+    const late = sub({ chargeOn: '2026-10-16', trial: true, snoozeUntil: new Date(2026, 9, 17, 0, 30).getTime() });
+    expect(planReminders([late], on, now).some((r) => r.id === 's:snooze')).toBe(false);
   });
 
   it('keeps the soonest reminders under the iOS limit', () => {

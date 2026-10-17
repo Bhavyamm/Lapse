@@ -3,7 +3,7 @@ import { router, useRootNavigationState } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 
-import { tonight, type ReminderData } from '@/features/reminders/plan';
+import { snoozeFits, tonight, type ReminderData } from '@/features/reminders/plan';
 import { syncReminders, TRIAL_ACTIONS } from '@/features/reminders/sync';
 import { nextChargeDate } from '@/features/subscriptions/billing';
 import { useSettings } from '@/stores/settings';
@@ -56,7 +56,11 @@ function useReminderResponses() {
     const key = `${notification.request.identifier}|${notification.date}|${actionIdentifier}`;
     if (handled.current.has(key)) return;
     handled.current.add(key);
-    Notifications.clearLastNotificationResponse();
+    try {
+      Notifications.clearLastNotificationResponse();
+    } catch {
+      // The handled set still stops a repeat.
+    }
     handleResponse(notification.request.content.data as Partial<ReminderData> | undefined, actionIdentifier);
   }, [response, navigationReady, hasOnboarded]);
 }
@@ -72,14 +76,19 @@ export function handleResponse(data: Partial<ReminderData> | undefined, action: 
   if (action === TRIAL_ACTIONS.tonight) {
     if (!sub) return;
     const at = tonight(new Date());
-    store.update(id, { snoozeUntil: at.getTime() });
+    if (!trialRunning || !snoozeFits(at.getTime(), sub.chargeOn)) {
+      // No time left before it charges, so go straight to the way out.
+      router.push({ pathname: '/subscription/[id]', params: { id } });
+      return;
+    }
+    if (!data?.test) store.update(id, { snoozeUntil: at.getTime() });
     const time = at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
     notify('Okay', `We’ll remind you about ${sub.name} at ${time}.`);
     return;
   }
   if (action === TRIAL_ACTIONS.keep) {
     if (!sub) return;
-    store.update(id, { trialKept: true, snoozeUntil: undefined });
+    if (!data?.test) store.update(id, { trialKept: true, snoozeUntil: undefined });
     notify('Got it', `No more reminders about the ${sub.name} trial.`);
     return;
   }
