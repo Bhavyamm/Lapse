@@ -7,10 +7,12 @@ type Props = {
   /** Small line above the title, such as today's date. */
   eyebrow?: string;
   title: string;
+  /** Line under the title, such as a month's total. */
+  subtitle?: string;
   right?: ReactNode;
 };
 
-export function ScreenHeader({ eyebrow, title, right }: Props) {
+export function ScreenHeader({ eyebrow, title, subtitle, right }: Props) {
   return (
     <View style={styles.row}>
       <View style={styles.text}>
@@ -20,6 +22,11 @@ export function ScreenHeader({ eyebrow, title, right }: Props) {
           </AppText>
         ) : null}
         <AppText variant="title">{title}</AppText>
+        {subtitle ? (
+          <AppText variant="label" muted>
+            {subtitle}
+          </AppText>
+        ) : null}
       </View>
       {right}
     </View>

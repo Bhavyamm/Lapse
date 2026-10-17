@@ -60,3 +60,20 @@ export function formatMonthDay(value: LocalDate): string {
 export function formatMonthYear(year: number, month: number): string {
   return new Date(year, month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
+
+/** The month's days for a Sunday-first grid, with nulls for the blanks before and after. */
+export function monthCells(year: number, month: number): (LocalDate | null)[] {
+  const blanks = new Date(year, month, 1).getDay();
+  const days = new Date(year, month + 1, 0).getDate();
+  const cells: (LocalDate | null)[] = [
+    ...Array.from({ length: blanks }, () => null),
+    ...Array.from({ length: days }, (_, i) => toLocalDate(new Date(year, month, i + 1))),
+  ];
+  while (cells.length % 7) cells.push(null);
+  return cells;
+}
+
+/** "October" in the device locale. */
+export function formatMonth(year: number, month: number): string {
+  return new Date(year, month, 1).toLocaleDateString(undefined, { month: 'long' });
+}

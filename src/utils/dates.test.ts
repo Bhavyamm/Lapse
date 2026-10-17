@@ -1,4 +1,4 @@
-import { addDays, addMonths, daysBetween, fromLocalDate, toLocalDate } from './dates';
+import { addDays, addMonths, daysBetween, fromLocalDate, monthCells, toLocalDate } from './dates';
 
 describe('local dates', () => {
   it('round-trips a calendar day without shifting it', () => {
@@ -21,5 +21,14 @@ describe('local dates', () => {
   it('counts whole days between dates, including over a daylight saving change', () => {
     expect(daysBetween('2026-03-07', '2026-03-09')).toBe(2);
     expect(daysBetween('2026-11-02', '2026-10-31')).toBe(-2);
+  });
+});
+
+describe('monthCells', () => {
+  it('pads October 2026 to start on Sunday and fill whole weeks', () => {
+    const cells = monthCells(2026, 9);
+    expect(cells.slice(0, 5)).toEqual([null, null, null, null, '2026-10-01']);
+    expect(cells).toHaveLength(35);
+    expect(cells.filter(Boolean)).toHaveLength(31);
   });
 });

@@ -4,7 +4,14 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/app-text';
 import { BackIcon, ChevronIcon } from '@/components/icons';
 import { colors, fonts, radii } from '@/theme';
-import { formatMonthYear, formatShortDate, fromLocalDate, toLocalDate, type LocalDate } from '@/utils/dates';
+import {
+  formatMonthYear,
+  formatShortDate,
+  fromLocalDate,
+  monthCells,
+  toLocalDate,
+  type LocalDate,
+} from '@/utils/dates';
 
 type Props = {
   value: LocalDate;
@@ -26,13 +33,7 @@ export function DatePicker({ value, onChange, min, today }: Props) {
     setMonth({ year: selected.getFullYear(), month: selected.getMonth() });
   }
 
-  const first = new Date(month.year, month.month, 1);
-  const daysInMonth = new Date(month.year, month.month + 1, 0).getDate();
-  const cells: (LocalDate | null)[] = [
-    ...Array.from({ length: first.getDay() }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, i) => toLocalDate(new Date(month.year, month.month, i + 1))),
-  ];
-  while (cells.length % 7) cells.push(null);
+  const cells = monthCells(month.year, month.month);
 
   const shift = (delta: number) => {
     const d = new Date(month.year, month.month + delta, 1);
