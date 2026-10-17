@@ -1,4 +1,4 @@
-import type { LocalDate } from '@/utils/dates';
+import { addDays, type LocalDate } from '@/utils/dates';
 
 import { nextChargeDate } from './billing';
 import { chargesBetween } from './calendar';
@@ -16,22 +16,20 @@ export type Savings = {
 /** The record kept when a subscription is cancelled on `today`. */
 export function toCancelled(sub: Subscription, today: LocalDate): CancelledSubscription {
   const { createdAt: _createdAt, ...rest } = sub;
-  const next = nextChargeDate(sub, today);
-  // Still a trial only if it hasn't converted yet; that's a trial caught.
-  return { ...rest, chargeOn: next, trial: sub.trial && next === sub.chargeOn, cancelledOn: today };
+  // A running trial is caught: its first charge is saved, even if it was due today.
+  const trial = sub.trial && sub.chargeOn >= today;
+  // Otherwise a charge due today has most likely gone out already, so savings start after it.
+  const savedFrom = trial ? sub.chargeOn : nextChargeDate(sub, addDays(today, 1));
+  return { ...rest, trial, cancelledOn: today, savedFrom };
 }
 
 export function summarizeSavings(cancelled: CancelledSubscription[], today: LocalDate): Savings {
-  const caught = (c: CancelledSubscription) => c.trial;
-  // Counting from the next charge after cancelling: the one that was already paid isn't a saving.
-  const savedCents = chargesBetween(
-    cancelled.map((c) => ({ ...c, createdAt: c.cancelledOn })),
-    '0000-01-01',
-    today,
-  ).reduce((sum, charge) => sum + charge.sub.priceCents, 0);
+  const savedCents = cancelled
+    .flatMap((c) => chargesBetween([{ ...c, createdAt: c.cancelledOn }], c.savedFrom, today))
+    .reduce((sum, charge) => sum + charge.sub.priceCents, 0);
   return {
     savedCents,
-    cancelled: cancelled.filter((c) => !caught(c)).length,
-    trialsCaught: cancelled.filter(caught).length,
+    cancelled: cancelled.filter((c) => !c.trial).length,
+    trialsCaught: cancelled.filter((c) => c.trial).length,
   };
 }

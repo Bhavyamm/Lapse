@@ -8,11 +8,15 @@ import { CloseIcon } from '@/components/icons';
 import { Toggle } from '@/components/toggle';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
 import { requestReminderPermission } from '@/features/reminders/permissions';
+import { useLock } from '@/stores/lock';
 import { useSettings } from '@/stores/settings';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 /** Bottom sheet to turn reminders on or off and pick how early they come. */
-export function ReminderSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export function ReminderSheet({ visible: wanted, onClose }: { visible: boolean; onClose: () => void }) {
+  // Modals draw above the Face ID lock, so they step aside while it is up.
+  const locked = useLock((s) => s.locked);
+  const visible = wanted && !locked;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       {visible ? <Sheet onClose={onClose} /> : null}

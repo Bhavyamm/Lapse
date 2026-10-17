@@ -68,7 +68,7 @@ describe('cancel', () => {
     const state = useSubscriptions.getState();
     expect(state.subscriptions).toEqual([]);
     expect(state.cancelled).toEqual([
-      expect.objectContaining({ id: added.id, name: 'Netflix', chargeOn: '2026-10-22', cancelledOn: '2026-10-16' }),
+      expect.objectContaining({ id: added.id, name: 'Netflix', savedFrom: '2026-10-22', cancelledOn: '2026-10-16' }),
     ]);
   });
 

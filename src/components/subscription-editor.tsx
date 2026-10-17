@@ -22,6 +22,7 @@ import { addCycles } from '@/features/subscriptions/billing';
 import { draftProblem, type Draft } from '@/features/subscriptions/draft';
 import type { BillingCycle } from '@/features/subscriptions/types';
 import { colors, fonts, radii, spacing, type } from '@/theme';
+import { useLock } from '@/stores/lock';
 import type { LocalDate } from '@/utils/dates';
 
 const CYCLES: { value: BillingCycle; label: string }[] = [
@@ -40,8 +41,10 @@ type Props = {
 
 /** Bottom sheet for a subscription's price, how often it charges, trial, and next date. */
 export function SubscriptionEditor({ draft, today, onSave, onClose }: Props) {
+  // Modals draw above the Face ID lock, so they step aside while it is up; the draft is kept.
+  const locked = useLock((s) => s.locked);
   return (
-    <Modal visible={!!draft} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={!!draft && !locked} transparent animationType="slide" onRequestClose={onClose}>
       {/* Keyed so each opening starts from the draft it was given. */}
       {draft ? <EditorSheet key={draft.key} initial={draft} today={today} onSave={onSave} onClose={onClose} /> : null}
     </Modal>

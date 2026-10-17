@@ -27,12 +27,21 @@ export async function getBiometrics(): Promise<Biometrics> {
   }
 }
 
-/** Asks for Face ID (falling back to the passcode). Resolves whether it passed. */
-export async function unlock(reason: string): Promise<boolean> {
+export type UnlockResult = 'unlocked' | 'failed' | 'unavailable';
+
+/** Errors that mean this phone can no longer check Face ID or the passcode at all. */
+const UNAVAILABLE = new Set(['not_available', 'not_enrolled', 'passcode_not_set']);
+
+/**
+ * Asks for Face ID (falling back to the passcode). "unavailable" means the phone can't check
+ * at all any more, such as after the passcode was removed, so the lock must stand down.
+ */
+export async function unlock(reason: string): Promise<UnlockResult> {
   try {
     const result = await LocalAuthentication.authenticateAsync({ promptMessage: reason, cancelLabel: 'Cancel' });
-    return result.success;
+    if (result.success) return 'unlocked';
+    return UNAVAILABLE.has(result.error) ? 'unavailable' : 'failed';
   } catch {
-    return false;
+    return 'failed';
   }
 }

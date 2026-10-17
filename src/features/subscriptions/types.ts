@@ -26,6 +26,7 @@ export type NewSubscription = Omit<Subscription, 'id' | 'createdAt' | 'currency'
 
 /**
  * A subscription the person cancelled through lapse., kept for the money-saved total.
- * `chargeOn` is the next charge it would have made, so savings count from there.
+ * `chargeOn` stays the original anchor so later dates don't drift; `savedFrom` is the first
+ * charge that won't happen, and `trial` is true only for a trial cancelled before it converted.
  */
-export type CancelledSubscription = Omit<Subscription, 'createdAt'> & { cancelledOn: LocalDate };
+export type CancelledSubscription = Omit<Subscription, 'createdAt'> & { cancelledOn: LocalDate; savedFrom: LocalDate };

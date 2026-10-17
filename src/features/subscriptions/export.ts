@@ -12,8 +12,11 @@ export async function shareCsv(csv: string, filename: string): Promise<boolean> 
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
+    link.remove();
+    // Some browsers read the URL after click() returns.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     return true;
   }
   if (!(await Sharing.isAvailableAsync())) return false;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { BigAmount } from '@/components/big-amount';
@@ -29,6 +29,7 @@ import { summarizeSavings } from '@/features/subscriptions/savings';
 import { useSettings } from '@/stores/settings';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
+import { notify } from '@/utils/notify';
 
 const PRO_PRICE = '$14.99';
 
@@ -65,10 +66,7 @@ export default function ProfileScreen() {
 
 /** Pro arrives in a later step; until then its entry points say so. */
 function proComingSoon() {
-  Alert.alert(
-    'Pro is on its way',
-    `Statement import and the rest of Pro arrive in a later update, for ${PRO_PRICE} once.`,
-  );
+  notify('Pro is on its way', `Statement import and the rest of Pro arrive in a later update, for ${PRO_PRICE} once.`);
 }
 
 function SavingsCard() {
@@ -140,9 +138,9 @@ function SettingsCard() {
     if (confirming.current) return;
     // Check Face ID works before relying on it to open the app.
     confirming.current = true;
-    const ok = await unlock(`Turn on ${biometrics?.name ?? 'Face ID'} lock`);
+    const result = await unlock(`Turn on ${biometrics?.name ?? 'Face ID'} lock`);
     confirming.current = false;
-    if (ok) setAppLock(true);
+    if (result === 'unlocked') setAppLock(true);
   };
 
   const leadLabel = REMINDER_LEADS.find((l) => l.value === lead)?.label ?? '';
@@ -184,9 +182,9 @@ function DataCard() {
     exporting.current = true;
     try {
       const shared = await shareCsv(toCsv(subscriptions, today), `lapse-subscriptions-${today}.csv`);
-      if (!shared) Alert.alert('Can’t share files', 'This device has no way to share a file.');
+      if (!shared) notify('Can’t share files', 'This device has no way to share a file.');
     } catch {
-      Alert.alert('Export failed', 'Something went wrong making the file. Try again.');
+      notify('Export failed', 'Something went wrong making the file. Try again.');
     } finally {
       exporting.current = false;
     }

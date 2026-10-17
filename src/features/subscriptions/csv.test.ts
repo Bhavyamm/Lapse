@@ -25,7 +25,7 @@ describe('toCsv', () => {
       '2026-10-16',
     );
     expect(csv.split('\r\n')).toEqual([
-      'Name,Price,Currency,Billing cycle,Next charge,Free trial,Cost per month',
+      '\uFEFFName,Price,Currency,Billing cycle,Next charge,Free trial,Cost per month',
       'Duolingo Max,29.99,USD,Monthly,2026-10-18,Yes,29.99',
       'Netflix,15.49,USD,Monthly,2026-10-22,No,15.49',
       'iCloud+,35.99,USD,Yearly,2026-11-01,No,3.00',

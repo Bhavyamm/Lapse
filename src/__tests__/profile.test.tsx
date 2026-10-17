@@ -23,7 +23,7 @@ beforeAll(() => jest.useFakeTimers({ now: new Date(2026, 9, 16, 9, 0), advanceTi
 afterAll(() => jest.useRealTimers());
 beforeEach(() => {
   jest.mocked(getBiometrics).mockResolvedValue({ ready: true, name: 'Face ID' });
-  jest.mocked(unlock).mockResolvedValue(true);
+  jest.mocked(unlock).mockResolvedValue('unlocked');
   jest.mocked(shareCsv).mockResolvedValue(true);
 });
 afterEach(() => {
@@ -38,7 +38,15 @@ describe('Profile screen', () => {
     useSubscriptions.setState({
       subscriptions: [{ ...base, id: 'a', name: 'Netflix', priceCents: 1549, chargeOn: '2026-10-22', createdAt: 'x' }],
       cancelled: [
-        { ...base, id: 'h', name: 'Hulu', priceCents: 1799, chargeOn: '2026-06-10', cancelledOn: '2026-06-01' },
+        {
+          ...base,
+          id: 'h',
+          name: 'Hulu',
+          priceCents: 1799,
+          chargeOn: '2026-06-10',
+          cancelledOn: '2026-06-01',
+          savedFrom: '2026-06-10',
+        },
         {
           ...base,
           id: 'd',
@@ -47,6 +55,7 @@ describe('Profile screen', () => {
           chargeOn: '2026-09-20',
           trial: true,
           cancelledOn: '2026-09-18',
+          savedFrom: '2026-09-20',
         },
       ],
     });
@@ -102,7 +111,7 @@ describe('Profile screen', () => {
   });
 
   it('leaves the lock off when Face ID fails', async () => {
-    jest.mocked(unlock).mockResolvedValue(false);
+    jest.mocked(unlock).mockResolvedValue('failed');
     await render(<ProfileScreen />);
 
     await fireEvent.press(await screen.findByRole('switch', { name: 'Face ID lock' }));

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved to Expo SDK 57 so the app opens in the Expo Go version on the App Store.
 
 ### Added
+- Profile: money saved from subscriptions you cancel in the app (counted once the Subscription detail screen can cancel), with tracked, cancelled and trials-caught counts. A Reminders sheet turns reminders on or off and picks how early they come. A Face ID lock asks for Face ID when the app opens or comes back, and hides the app in the app switcher. Export as CSV sends everything you track to Files, Mail or any app. Unlock Pro and statement import say Pro is coming.
 - Calendar: each month's renewals on a grid, with a dot on renewal days, the day a free trial ends in orange and today outlined. The header shows what is still to pay this month or what is due in a later month, and a list below shows the next charges. You can look up to 11 months ahead.
 - All subscriptions: everything you track with the count and monthly total, running free trials on top in orange, and the rest sorted by next renewal, price (per month, highest first) or name.
 - Add a subscription: search 145 popular services with their logos, pick one or more, and set the price, how often it charges, whether it is a free trial, and the next charge date. Anything not listed can be added by hand.

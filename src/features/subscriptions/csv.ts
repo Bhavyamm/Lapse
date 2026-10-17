@@ -17,7 +17,7 @@ function cell(value: string): string {
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-/** Everything tracked as a CSV a spreadsheet opens, soonest charge first. */
+/** Everything tracked as a CSV a spreadsheet opens, soonest charge first. Starts with a BOM so Excel reads UTF-8. */
 export function toCsv(subscriptions: Subscription[], today: LocalDate): string {
   const rows = subscriptions
     .map((sub) => ({ sub, next: nextChargeDate(sub, today) }))
@@ -31,5 +31,5 @@ export function toCsv(subscriptions: Subscription[], today: LocalDate): string {
       sub.trial && next === sub.chargeOn ? 'Yes' : 'No',
       amount(monthlyCents(sub.priceCents, sub.cycle)),
     ]);
-  return [HEADER, ...rows].map((row) => row.map(cell).join(',')).join('\r\n') + '\r\n';
+  return '\uFEFF' + [HEADER, ...rows].map((row) => row.map(cell).join(',')).join('\r\n') + '\r\n';
 }

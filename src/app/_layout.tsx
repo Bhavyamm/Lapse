@@ -13,6 +13,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppLock } from '@/components/app-lock';
 import { LaunchSplash } from '@/components/launch-splash';
+import { useLock } from '@/stores/lock';
 import { useSettings, useSettingsHydrated } from '@/stores/settings';
 import { useSubscriptionsHydrated } from '@/stores/subscriptions';
 import { colors } from '@/theme';
@@ -35,8 +36,7 @@ export default function RootLayout() {
   // The lapse. splash plays once per launch, over whichever screen the app opens on.
   const [splashing, setSplashing] = useState(true);
   const endSplash = useCallback(() => setSplashing(false), []);
-  // True while the Face ID lock covers the app.
-  const [locked, setLocked] = useState(false);
+  const locked = useLock((s) => s.locked);
   const covered = splashing || locked;
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function RootLayout() {
         pointerEvents="box-none"
         aria-hidden={splashing}
         importantForAccessibility={splashing ? 'no-hide-descendants' : 'auto'}>
-        <AppLock canPrompt={!splashing} onLockedChange={setLocked} />
+        <AppLock canPrompt={!splashing} />
       </View>
       {splashing ? <LaunchSplash onDone={endSplash} /> : null}
     </>
