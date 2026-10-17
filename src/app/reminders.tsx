@@ -71,18 +71,12 @@ export default function RemindersScreen() {
             time="now"
             message="Your Duolingo Max trial ends tomorrow. Cancel now to skip the $29.99 charge."
           />
-          <NotificationPreview
-            time="2d ago"
-            message="Netflix renews Wednesday for $15.49."
-            style={styles.olderNotification}
-          />
         </CharcoalCard>
 
         <View style={styles.copy}>
           <AppText variant="hero">{'Never get charged\nby surprise.'}</AppText>
           <AppText variant="lede" muted style={styles.body}>
-            We’ll nudge you before every trial ends and every renewal hits. Reminders are set on your phone, with no
-            account.
+            We’ll nudge you before trials end and renewals hit. Reminders stay on your phone.
           </AppText>
           <View style={styles.chips} role="radiogroup" aria-label="When to remind you">
             {REMINDER_LEADS.map((option) => (
@@ -140,16 +134,11 @@ const styles = StyleSheet.create({
     paddingTop: 52,
     paddingHorizontal: spacing.lg,
     paddingBottom: 18,
-    gap: 10,
   },
   mascot: {
     position: 'absolute',
     right: 6,
     top: -88,
-  },
-  olderNotification: {
-    opacity: 0.6,
-    marginHorizontal: 10,
   },
   copy: {
     paddingTop: 24,

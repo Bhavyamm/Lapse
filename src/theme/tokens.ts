@@ -33,6 +33,8 @@ export const brand = {
   orange: '#EE7A3A',
   orangeDeep: '#C9541F',
   peach: '#FFD2B0',
+  /** Faint gray glow at the bottom of the canvas. */
+  cool: '#6E6E7D',
   cardLight: '#2E2E2E',
   cardDark: '#0E0E0E',
   /** Light card behind a sample notification. */
