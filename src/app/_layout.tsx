@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { useSettings, useSettingsHydrated } from '@/stores/settings';
+import { useSubscriptionsHydrated } from '@/stores/subscriptions';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -23,7 +24,9 @@ export default function RootLayout() {
     BricolageGrotesque_700Bold,
   });
 
-  const hydrated = useSettingsHydrated();
+  const settingsHydrated = useSettingsHydrated();
+  const subscriptionsHydrated = useSubscriptionsHydrated();
+  const hydrated = settingsHydrated && subscriptionsHydrated;
   const hasOnboarded = useSettings((s) => s.hasOnboarded);
   const ready = (loaded || !!error) && hydrated;
 
@@ -43,7 +46,7 @@ export default function RootLayout() {
         </Stack.Protected>
         <Stack.Protected guard={hasOnboarded}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="add" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="add" />
         </Stack.Protected>
       </Stack>
     </>

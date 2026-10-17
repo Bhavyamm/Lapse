@@ -8,16 +8,18 @@ type Props = {
   label: string;
   selected: boolean;
   onPress: () => void;
+  /** Set when the chip sits on a white surface, so unselected chips stay visible. */
+  onWhite?: boolean;
 };
 
 /** Small pill choice. The selected one turns black with an orange check. */
-export function Chip({ label, selected, onPress }: Props) {
+export function Chip({ label, selected, onPress, onWhite }: Props) {
   return (
     <Pressable
       role="radio"
       aria-checked={selected}
       onPress={onPress}
-      style={[styles.chip, selected ? styles.selected : styles.idle]}>
+      style={[styles.chip, selected ? styles.selected : onWhite ? styles.idleOnWhite : styles.idle]}>
       {selected ? <CheckIcon color={colors.accent} /> : null}
       <AppText variant="caption" style={[styles.label, { color: selected ? colors.white : colors.ink }]}>
         {label}
@@ -37,6 +39,9 @@ const styles = StyleSheet.create({
   },
   idle: {
     backgroundColor: colors.white,
+  },
+  idleOnWhite: {
+    backgroundColor: colors.canvas,
   },
   selected: {
     backgroundColor: colors.ink,

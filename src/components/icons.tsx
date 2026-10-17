@@ -99,3 +99,37 @@ export function CheckIcon({ size = 12, color }: IconProps) {
     </Svg>
   );
 }
+
+export function BackIcon({ size = 18, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)} strokeWidth={2.4}>
+      <Path d="M15 6l-6 6 6 6" />
+    </Svg>
+  );
+}
+
+export function SearchIcon({ size = 18, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)} strokeWidth={2.2}>
+      <Circle cx={11} cy={11} r={7} />
+      <Path d="M20 20l-3.5-3.5" />
+    </Svg>
+  );
+}
+
+export function PencilIcon({ size = 18, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)} strokeWidth={2.2}>
+      <Path d="M12 20h9" />
+      <Path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </Svg>
+  );
+}
+
+export function ArrowRightIcon({ size = 18, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)} strokeWidth={2.4}>
+      <Path d="M5 12h14M13 6l6 6-6 6" />
+    </Svg>
+  );
+}
