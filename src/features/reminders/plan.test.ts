@@ -148,9 +148,17 @@ describe('monthly check-in reminders', () => {
     expect(checkIns.map((r) => r.id)).toEqual(['checkin:2026-11-01', 'checkin:2026-12-01', 'checkin:2027-01-01']);
     expect(checkIns[0]).toMatchObject({
       title: 'Monthly check-in',
-      body: 'Take a minute to see if your 2 subscriptions are still worth it.',
+      body: 'Take a minute to see if your subscriptions are still worth it.',
     });
     expect(checkIns[0].at).toEqual(new Date(2026, 10, 1, 9, 0));
+  });
+
+  it('include today when it’s the 1st and 9 AM hasn’t come yet', () => {
+    const early = planReminders([sub({ chargeOn: '2026-11-20' })], on, new Date(2026, 10, 1, 8, 0));
+    expect(early.find((r) => r.data.kind === 'checkin')?.id).toBe('checkin:2026-11-01');
+
+    const late = planReminders([sub({ chargeOn: '2026-11-20' })], on, new Date(2026, 10, 1, 10, 0));
+    expect(late.find((r) => r.data.kind === 'checkin')?.id).toBe('checkin:2026-12-01');
   });
 
   it('don’t come with only free trials running', () => {

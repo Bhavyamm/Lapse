@@ -18,9 +18,11 @@ function inCheckIn(sub: Subscription, today: LocalDate): boolean {
   return !(sub.trial && nextChargeDate(sub, today) === sub.chargeOn);
 }
 
-/** Not kept at a check-in this month, and added before this month started. */
+/** Not kept or put off at a check-in this month, and added before this month started. */
 export function isDue(sub: Subscription, today: LocalDate): boolean {
-  return inCheckIn(sub, today) && (sub.reviewedOn ?? addedOn(sub)) < monthStart(today);
+  const dates = [addedOn(sub), sub.reviewedOn, sub.skippedOn].filter((d): d is LocalDate => !!d);
+  const last = dates.reduce((a, b) => (b > a ? b : a));
+  return inCheckIn(sub, today) && last < monthStart(today);
 }
 
 export function dueCount(subscriptions: Subscription[], today: LocalDate): number {

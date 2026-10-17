@@ -12,7 +12,10 @@ jest.mock('expo-notifications', () => ({
   useLastNotificationResponse: jest.fn(),
   clearLastNotificationResponse: jest.fn(),
 }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn() }, useRootNavigationState: jest.fn() }));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), navigate: jest.fn() },
+  useRootNavigationState: jest.fn(),
+}));
 jest.mock('@/features/reminders/sync', () => ({
   ...jest.requireActual('@/features/reminders/sync'),
   syncReminders: jest.fn(),
@@ -53,7 +56,7 @@ describe('Reminder taps and buttons', () => {
 
   it('opens the monthly check-in from its reminder', () => {
     handleResponse({ subscriptionId: '', kind: 'checkin', chargeOn: '2026-11-01' }, tap);
-    expect(router().push).toHaveBeenCalledWith('/check-in');
+    expect(router().navigate).toHaveBeenCalledWith('/check-in');
   });
 
   it('opens the cancel steps from "Cancel the trial"', () => {

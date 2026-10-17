@@ -29,6 +29,8 @@ export type Subscription = {
   snoozeUntil?: number;
   /** The last monthly check-in where the person chose to keep it. */
   reviewedOn?: LocalDate;
+  /** The last monthly check-in where the person chose "Next month". */
+  skippedOn?: LocalDate;
   createdAt: string;
 };
 

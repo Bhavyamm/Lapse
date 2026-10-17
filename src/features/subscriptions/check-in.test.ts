@@ -20,6 +20,9 @@ describe('isDue', () => {
     expect(isDue(sub({}), today)).toBe(true);
     expect(isDue(sub({ reviewedOn: '2026-09-16' }), today)).toBe(true);
     expect(isDue(sub({ reviewedOn: '2026-10-01' }), today)).toBe(false);
+    // "Next month" puts it off until the next month starts.
+    expect(isDue(sub({ reviewedOn: '2026-08-10', skippedOn: '2026-10-02' }), today)).toBe(false);
+    expect(isDue(sub({ skippedOn: '2026-10-02' }), '2026-11-01')).toBe(true);
   });
 
   it('waits a month for one added this month, and leaves running trials out', () => {

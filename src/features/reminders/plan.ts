@@ -141,19 +141,20 @@ export function snoozeFits(at: number, chargeOn: LocalDate): boolean {
 
 /** 9 AM on the 1st of each month in the horizon, while there's anything to check in on. */
 function checkInReminders(subscriptions: Subscription[], today: LocalDate, now: Date): PlannedReminder[] {
-  const count = subscriptions.filter((s) => !(s.trial && s.chargeOn >= today)).length;
-  if (!count) return [];
+  if (!subscriptions.some((s) => !(s.trial && s.chargeOn >= today))) return [];
   const reminders: PlannedReminder[] = [];
   const last = addDays(today, HORIZON_DAYS);
-  for (let month = 1; ; month++) {
+  // From this month's 1st, in case today is the 1st and 9 AM hasn't come yet.
+  for (let month = 0; ; month++) {
     const first = new Date(now.getFullYear(), now.getMonth() + month, 1, REMINDER_HOUR);
     const day = toLocalDate(first);
     if (day > last) break;
+    if (first.getTime() <= now.getTime()) continue;
     reminders.push({
       id: `checkin:${day}`,
       at: first,
       title: 'Monthly check-in',
-      body: `Take a minute to see if your ${count === 1 ? 'subscription is' : `${count} subscriptions are`} still worth it.`,
+      body: 'Take a minute to see if your subscriptions are still worth it.',
       data: { subscriptionId: '', kind: 'checkin', chargeOn: day },
     });
   }

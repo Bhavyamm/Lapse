@@ -72,7 +72,10 @@ describe('Monthly check-in', () => {
     expect(screen.getByLabelText(/YouTube Premium, .* Last reviewed Sep 16/)).toBeOnTheScreen();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Next month' }));
-    expect(useSubscriptions.getState().subscriptions.find((s) => s.id === 'yt')?.reviewedOn).toBe('2026-09-16');
+    expect(useSubscriptions.getState().subscriptions.find((s) => s.id === 'yt')).toMatchObject({
+      reviewedOn: '2026-09-16',
+      skippedOn: '2026-10-16',
+    });
     expect(screen.getByRole('heading', { name: 'All checked' })).toBeOnTheScreen();
     expect(screen.getByText('You kept 1 and left 1 for next month. See you next month.')).toBeOnTheScreen();
 
@@ -90,6 +93,17 @@ describe('Monthly check-in', () => {
     await view.rerender(<CheckInScreen />);
 
     expect(screen.getByText('2 of 2')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+    expect(screen.getByText('You kept 1 and cancelled 1. See you next month.')).toBeOnTheScreen();
+  });
+
+  it('doesn’t count one deleted rather than cancelled', async () => {
+    const view = await render(<CheckInScreen />);
+    useSubscriptions.getState().remove('gpt');
+    await view.rerender(<CheckInScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep it' }));
+
+    expect(screen.getByText('You kept 1. See you next month.')).toBeOnTheScreen();
   });
 
   it('says there’s nothing to check with no subscriptions', async () => {

@@ -68,7 +68,8 @@ function useReminderResponses() {
 /** What a tap or a button on a reminder does. Exported for tests. */
 export function handleResponse(data: Partial<ReminderData> | undefined, action: string) {
   if (data?.kind === 'checkin') {
-    router.push('/check-in');
+    // Navigate, not push, so a check-in that's already open isn't opened twice.
+    router.navigate('/check-in');
     return;
   }
   const id = data?.subscriptionId;

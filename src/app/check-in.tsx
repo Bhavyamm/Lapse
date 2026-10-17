@@ -35,13 +35,15 @@ export default function CheckInScreen() {
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
 
   const byId = useMemo(() => new Map(subscriptions.map((s) => [s.id, s])), [subscriptions]);
+  const cancelledList = useSubscriptions((s) => s.cancelled);
+  const cancelledIds = useMemo(() => new Set(cancelledList.map((c) => c.id)), [cancelledList]);
   // One that is gone without an answer was cancelled from its detail screen.
   const current = ids.find((id) => !outcomes[id] && byId.has(id));
   const sub = current ? byId.get(current) : undefined;
 
   const answer = (outcome: Outcome) => {
     if (!sub) return;
-    if (outcome === 'kept') update(sub.id, { reviewedOn: today });
+    update(sub.id, outcome === 'kept' ? { reviewedOn: today } : { skippedOn: today });
     setOutcomes((o) => ({ ...o, [sub.id]: outcome }));
   };
 
@@ -69,6 +71,7 @@ export default function CheckInScreen() {
           <View style={styles.actions}>
             <RoundAction
               label="Cancel it"
+              hint={`Shows how to cancel ${sub.name}`}
               size={76}
               color={colors.ink}
               icon={<CloseIcon size={26} color={colors.white} />}
@@ -91,7 +94,7 @@ export default function CheckInScreen() {
           </View>
         </>
       ) : (
-        <Finished ids={ids} outcomes={outcomes} gone={ids.filter((id) => !byId.has(id))} />
+        <Finished ids={ids} outcomes={outcomes} cancelled={ids.filter((id) => !byId.has(id) && cancelledIds.has(id))} />
       )}
     </ScreenBackground>
   );
@@ -134,12 +137,21 @@ function ReviewCard({ sub }: { sub: Subscription }) {
   );
 }
 
-function RoundAction(props: { label: string; size: number; color: string; icon: ReactNode; onPress: () => void }) {
-  const { label, size, color, icon, onPress } = props;
+type RoundActionProps = {
+  label: string;
+  hint?: string;
+  size: number;
+  color: string;
+  icon: ReactNode;
+  onPress: () => void;
+};
+
+function RoundAction({ label, hint, size, color, icon, onPress }: RoundActionProps) {
   return (
     <Pressable
       role="button"
       aria-label={label}
+      accessibilityHint={hint}
       onPress={onPress}
       style={({ pressed }) => [styles.action, pressed && { opacity: 0.8 }]}>
       <View style={[styles.round, { width: size, height: size, backgroundColor: color }]}>{icon}</View>
@@ -150,12 +162,13 @@ function RoundAction(props: { label: string; size: number; color: string; icon: 
   );
 }
 
-function Finished({ ids, outcomes, gone }: { ids: string[]; outcomes: Record<string, Outcome>; gone: string[] }) {
+function Finished(props: { ids: string[]; outcomes: Record<string, Outcome>; cancelled: string[] }) {
+  const { ids, outcomes, cancelled } = props;
   const kept = ids.filter((id) => outcomes[id] === 'kept').length;
   const later = ids.filter((id) => outcomes[id] === 'later').length;
   const parts = [
     kept ? `kept ${kept}` : null,
-    gone.length ? `cancelled ${gone.length}` : null,
+    cancelled.length ? `cancelled ${cancelled.length}` : null,
     later ? `left ${later} for next month` : null,
   ].filter((part): part is string => !!part);
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0];
