@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
+import { PressScale } from '@/components/press-scale';
 import { ServiceLogo } from '@/components/service-logo';
 import { formatMoney } from '@/features/subscriptions/billing';
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
@@ -61,13 +62,14 @@ export function SubscriptionRow({ sub, date, trialEnding, divider = true, compac
   const style = [styles.row, divider && styles.divider];
   if (!onPress) return <View style={style}>{content}</View>;
   return (
-    <Pressable
+    <PressScale
       role="button"
       aria-label={`${sub.name}, ${trialEnding ? 'trial ends' : 'renews'} ${date}, ${price}`}
       onPress={onPress}
-      style={({ pressed }) => [...style, pressed && styles.pressed]}>
+      scale={0.98}
+      style={style}>
       {content}
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -77,9 +79,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     paddingVertical: 10,
-  },
-  pressed: {
-    opacity: 0.6,
   },
   divider: {
     borderTopWidth: 1,

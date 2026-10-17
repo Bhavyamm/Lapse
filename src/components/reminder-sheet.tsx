@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
-import { Linking, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/app-text';
+import { BottomSheet } from '@/components/bottom-sheet';
 import { Chip } from '@/components/chip';
 import { CloseIcon } from '@/components/icons';
 import { Toggle } from '@/components/toggle';
@@ -18,9 +19,9 @@ export function ReminderSheet({ visible: wanted, onClose }: { visible: boolean; 
   const locked = useLock((s) => s.locked);
   const visible = wanted && !locked;
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      {visible ? <Sheet onClose={onClose} /> : null}
-    </Modal>
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Sheet onClose={onClose} />
+    </BottomSheet>
   );
 }
 
@@ -45,76 +46,62 @@ function Sheet({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <View style={styles.backdrop}>
-      {/* Tapping outside closes too; hidden from screen readers, which use the Close button. */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} aria-hidden accessible={false} />
-      <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.xl }]}>
-        <View style={styles.header}>
-          <AppText variant="headline" style={styles.title}>
-            Reminders
-          </AppText>
-          <Pressable role="button" aria-label="Close" onPress={onClose} style={styles.close} hitSlop={8}>
-            <CloseIcon size={16} color={colors.ink} />
-          </Pressable>
-        </View>
-
-        <Pressable
-          role="switch"
-          aria-checked={enabled}
-          aria-label="Remind me"
-          onPress={toggle}
-          style={styles.toggleRow}>
-          <View style={styles.toggleText}>
-            <AppText variant="section">Remind me</AppText>
-            <AppText variant="caption" muted>
-              Before trials end and renewals charge. Reminders stay on your phone.
-            </AppText>
-          </View>
-          <Toggle on={enabled} />
-        </Pressable>
-
-        {blocked ? (
-          <View style={styles.blocked} role="alert">
-            <AppText variant="label">
-              {Platform.OS === 'web'
-                ? 'Reminders work in the app on your phone.'
-                : 'Notifications are off for lapse. Turn them on in Settings.'}
-            </AppText>
-            {Platform.OS === 'web' ? null : (
-              <Pressable role="link" onPress={() => Linking.openSettings()} hitSlop={8}>
-                <AppText variant="label" style={styles.settingsLink}>
-                  Open Settings
-                </AppText>
-              </Pressable>
-            )}
-          </View>
-        ) : null}
-
-        <AppText variant="section" style={styles.label}>
-          When
+    <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.xl }]}>
+      <View style={styles.header}>
+        <AppText variant="headline" style={styles.title}>
+          Reminders
         </AppText>
-        <View style={styles.chips} role="radiogroup" aria-label="When to remind you">
-          {REMINDER_LEADS.map((option) => (
-            <Chip
-              key={option.value}
-              label={option.label}
-              selected={option.value === lead}
-              onPress={() => setLead(option.value)}
-              onWhite
-            />
-          ))}
+        <Pressable role="button" aria-label="Close" onPress={onClose} style={styles.close} hitSlop={8}>
+          <CloseIcon size={16} color={colors.ink} />
+        </Pressable>
+      </View>
+
+      <Pressable role="switch" aria-checked={enabled} aria-label="Remind me" onPress={toggle} style={styles.toggleRow}>
+        <View style={styles.toggleText}>
+          <AppText variant="section">Remind me</AppText>
+          <AppText variant="caption" muted>
+            Before trials end and renewals charge. Reminders stay on your phone.
+          </AppText>
         </View>
+        <Toggle on={enabled} />
+      </Pressable>
+
+      {blocked ? (
+        <View style={styles.blocked} role="alert">
+          <AppText variant="label">
+            {Platform.OS === 'web'
+              ? 'Reminders work in the app on your phone.'
+              : 'Notifications are off for lapse. Turn them on in Settings.'}
+          </AppText>
+          {Platform.OS === 'web' ? null : (
+            <Pressable role="link" onPress={() => Linking.openSettings()} hitSlop={8}>
+              <AppText variant="label" style={styles.settingsLink}>
+                Open Settings
+              </AppText>
+            </Pressable>
+          )}
+        </View>
+      ) : null}
+
+      <AppText variant="section" style={styles.label}>
+        When
+      </AppText>
+      <View style={styles.chips} role="radiogroup" aria-label="When to remind you">
+        {REMINDER_LEADS.map((option) => (
+          <Chip
+            key={option.value}
+            label={option.label}
+            selected={option.value === lead}
+            onPress={() => setLead(option.value)}
+            onWhite
+          />
+        ))}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: colors.scrim,
-  },
   sheet: {
     backgroundColor: colors.white,
     borderTopLeftRadius: radii.large,

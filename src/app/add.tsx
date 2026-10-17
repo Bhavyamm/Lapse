@@ -5,13 +5,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/app-text';
 import { GlassCard } from '@/components/cards';
-import { ArrowRightIcon, BackIcon, CheckIcon, PencilIcon, PlusIcon, SearchIcon } from '@/components/icons';
+import { FadeFooter } from '@/components/fade-footer';
+import { ArrowRightIcon, BackIcon, CheckIcon, CloseIcon, PencilIcon, PlusIcon, SearchIcon } from '@/components/icons';
 import { PillButton } from '@/components/pill-button';
+import { PressScale } from '@/components/press-scale';
 import { ScreenBackground } from '@/components/screen-background';
 import { ServiceLogo } from '@/components/service-logo';
 import { SubscriptionEditor } from '@/components/subscription-editor';
 import { CATALOG, normalize, searchCatalog, type CatalogService } from '@/features/catalog/catalog';
-import { describePrice } from '@/features/subscriptions/billing';
+import { describePrice, formatMoney, monthlyCents, parsePrice } from '@/features/subscriptions/billing';
 import {
   blankDraft,
   describeDraft,
@@ -23,6 +25,7 @@ import {
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing, type } from '@/theme';
 import { formatShortDate, today as getToday } from '@/utils/dates';
+import { animateLayout } from '@/utils/motion';
 
 /** Add from catalog: search, pick one or more services, adjust them, and save. */
 export default function AddScreen() {
@@ -37,16 +40,25 @@ export default function AddScreen() {
   const [editing, setEditing] = useState<Draft | null>(null);
   const saving = useRef(false);
 
-  const selectedIds = new Set(drafts.map((d) => d.serviceId));
-  // Ask for extra results so picked ones, which are hidden here, don't shorten the list.
-  const results = useMemo(() => searchCatalog(query, 30 + drafts.length), [query, drafts.length]);
-  const visible = results.filter((s) => !selectedIds.has(s.id)).slice(0, 30);
+  const picked = new Map(drafts.map((d) => [d.serviceId, d]));
+  // Picked services stay in place, marked, so the list never jumps.
+  const visible = useMemo(() => searchCatalog(query, 30), [query]);
+  const [footerHeight, setFooterHeight] = useState(110);
   const typed = query.trim();
   const searching = normalize(query) !== '';
 
-  const select = (service: CatalogService) => setDrafts((list) => [...list, draftFromService(service, today)]);
-  const unselect = (key: string) => setDrafts((list) => list.filter((d) => d.key !== key));
+  const toggle = (service: CatalogService) => {
+    animateLayout();
+    const draft = picked.get(service.id);
+    if (draft) unselect(draft.key);
+    else setDrafts((list) => [...list, draftFromService(service, today)]);
+  };
+  const unselect = (key: string) => {
+    animateLayout();
+    setDrafts((list) => list.filter((d) => d.key !== key));
+  };
   const saveDraft = (draft: Draft) => {
+    animateLayout();
     setDrafts((list) =>
       list.some((d) => d.key === draft.key) ? list.map((d) => (d.key === draft.key ? draft : d)) : [...list, draft],
     );
@@ -100,45 +112,44 @@ export default function AddScreen() {
 
         <ScrollView
           style={styles.flex}
-          contentContainerStyle={[styles.list, { paddingBottom: 110 + insets.bottom }]}
+          contentContainerStyle={[styles.list, { paddingBottom: footerHeight + spacing.md }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}>
-          {drafts.map((draft) => (
-            <SelectedCard
-              key={draft.key}
-              draft={draft}
-              onUnselect={() => unselect(draft.key)}
-              onEdit={() => setEditing(draft)}
-            />
-          ))}
-
           <AppText variant="section" style={styles.section}>
             {searching ? (visible.length ? 'Results' : `No match for “${typed}”`) : 'Popular'}
           </AppText>
           <GlassCard contentStyle={styles.card}>
-            {visible.map((service, i) => (
-              <Pressable
-                key={service.id}
-                role="button"
-                aria-label={`Add ${service.name}, ${savedIds.has(service.id) ? 'already added, ' : ''}${describePrice(service.price, service.cycle, service.from)}`}
-                onPress={() => select(service)}
-                style={[styles.row, i > 0 && styles.divider]}>
-                <ServiceLogo serviceId={service.id} name={service.name} />
-                <View style={styles.rowText}>
-                  <AppText variant="bodyStrong" numberOfLines={1}>
-                    {service.name}
-                  </AppText>
-                  <AppText variant="caption" muted>
-                    {savedIds.has(service.id) ? 'Already added · ' : ''}
-                    {describePrice(service.price, service.cycle, service.from)}
-                  </AppText>
-                </View>
-                <View style={styles.plus}>
-                  <PlusIcon size={16} color={colors.ink} />
-                </View>
-              </Pressable>
-            ))}
+            {visible.map((service, i) => {
+              const draft = picked.get(service.id);
+              const price = draft ? describeDraft(draft) : describePrice(service.price, service.cycle, service.from);
+              const already = savedIds.has(service.id) ? 'already added, ' : '';
+              return (
+                <PressScale
+                  key={service.id}
+                  role="button"
+                  aria-label={
+                    draft ? `Remove ${service.name}, picked, ${price}` : `Add ${service.name}, ${already}${price}`
+                  }
+                  scale={0.98}
+                  onPress={() => toggle(service)}
+                  style={[styles.row, i > 0 && styles.divider]}>
+                  <ServiceLogo serviceId={service.id} name={service.name} />
+                  <View style={styles.rowText}>
+                    <AppText variant="bodyStrong" numberOfLines={1}>
+                      {service.name}
+                    </AppText>
+                    <AppText variant="caption" muted>
+                      {savedIds.has(service.id) ? 'Already added · ' : ''}
+                      {price}
+                    </AppText>
+                  </View>
+                  <View style={[styles.plus, draft && styles.pickedMark]}>
+                    {draft ? <CheckIcon size={14} color={colors.ink} /> : <PlusIcon size={16} color={colors.ink} />}
+                  </View>
+                </PressScale>
+              );
+            })}
             <Pressable
               role="button"
               onPress={() => setEditing(blankDraft(typed, today))}
@@ -151,7 +162,10 @@ export default function AddScreen() {
           </GlassCard>
         </ScrollView>
 
-        <View style={[styles.cta, { bottom: insets.bottom + spacing.md }]}>
+        <FadeFooter
+          style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}
+          onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}>
+          {count ? <Picks drafts={drafts} onEdit={setEditing} onRemove={unselect} /> : null}
           <PillButton
             label={count > 1 ? `Add ${count} and remind me` : 'Add and remind me'}
             tone="dark"
@@ -159,7 +173,7 @@ export default function AddScreen() {
             onPress={save}
             disabled={count === 0}
           />
-        </View>
+        </FadeFooter>
       </KeyboardAvoidingView>
 
       <SubscriptionEditor draft={editing} today={today} onSave={saveDraft} onClose={() => setEditing(null)} />
@@ -167,43 +181,60 @@ export default function AddScreen() {
   );
 }
 
-function SelectedCard({ draft, onUnselect, onEdit }: { draft: Draft; onUnselect: () => void; onEdit: () => void }) {
+/**
+ * What's picked so far, in one row above the save button: a running monthly total and a chip
+ * per pick to change or remove it. It scrolls sideways, so picking more never pushes the list.
+ */
+function Picks({
+  drafts,
+  onEdit,
+  onRemove,
+}: {
+  drafts: Draft[];
+  onEdit: (draft: Draft) => void;
+  onRemove: (key: string) => void;
+}) {
+  const monthly = drafts.reduce((sum, d) => sum + monthlyCents(parsePrice(d.priceText) ?? 0, d.cycle), 0);
   return (
-    <View style={styles.selected}>
-      <View style={styles.selectedTop}>
-        <ServiceLogo serviceId={draft.serviceId} name={draft.name} />
-        <View style={styles.rowText}>
-          <AppText variant="bodyStrong" style={styles.bold} numberOfLines={1}>
-            {draft.name}
-          </AppText>
-          <AppText variant="caption" style={styles.selectedDetail}>
-            {describeDraft(draft)}
-          </AppText>
-        </View>
-        <Pressable
-          role="button"
-          aria-label={`Remove ${draft.name}`}
-          onPress={onUnselect}
-          hitSlop={6}
-          style={styles.check}>
-          <CheckIcon size={16} color={colors.white} />
-        </Pressable>
-      </View>
-      <Pressable
-        role="button"
-        aria-label={`Change ${draft.name}`}
-        onPress={onEdit}
-        style={({ pressed }) => [styles.dateRow, pressed && { opacity: 0.8 }]}>
-        <AppText variant="label">
-          {draft.trial ? 'Trial ends ' : 'Next charge '}
-          <AppText variant="label" style={styles.bold}>
-            {formatShortDate(draft.chargeOn)}
-          </AppText>
-        </AppText>
-        <AppText variant="label" style={styles.change}>
-          Change
-        </AppText>
-      </Pressable>
+    <View style={styles.picks}>
+      <AppText variant="caption" onDark style={styles.picksTitle}>
+        {drafts.length} picked · {formatMoney(monthly)} a month
+      </AppText>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chips}
+        keyboardShouldPersistTaps="handled">
+        {drafts.map((draft) => (
+          <View key={draft.key} style={styles.pick}>
+            <Pressable
+              role="button"
+              aria-label={`Change ${draft.name}`}
+              onPress={() => onEdit(draft)}
+              style={styles.pickMain}>
+              <ServiceLogo serviceId={draft.serviceId} name={draft.name} size={30} />
+              <View>
+                <AppText variant="label" style={styles.bold} numberOfLines={1}>
+                  {draft.name}
+                </AppText>
+                <AppText variant="caption" style={styles.pickDetail} numberOfLines={1}>
+                  {draft.trial
+                    ? `Trial ends ${formatShortDate(draft.chargeOn)}`
+                    : `${describeDraft(draft)} · ${formatShortDate(draft.chargeOn)}`}
+                </AppText>
+              </View>
+            </Pressable>
+            <Pressable
+              role="button"
+              aria-label={`Remove ${draft.name}`}
+              onPress={() => onRemove(draft.key)}
+              hitSlop={8}
+              style={styles.pickRemove}>
+              <CloseIcon size={10} color={colors.ink} />
+            </Pressable>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -293,48 +324,56 @@ const styles = StyleSheet.create({
   ownText: {
     color: colors.inkSoft,
   },
-  selected: {
-    backgroundColor: colors.accent,
-    borderRadius: radii.row,
-    padding: 14,
-    gap: spacing.md,
-  },
-  selectedTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
   bold: {
     fontFamily: fonts.bold,
   },
-  selectedDetail: {
-    color: colors.ink,
-    fontFamily: fonts.medium,
+  pickedMark: {
+    backgroundColor: colors.accent,
   },
-  check: {
-    width: 34,
-    height: 34,
+  footer: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  picks: {
+    backgroundColor: colors.charcoal,
+    borderRadius: radii.card,
+    paddingTop: spacing.md,
+    paddingBottom: 10,
+    gap: 10,
+  },
+  picksTitle: {
+    fontFamily: fonts.semibold,
+    paddingHorizontal: spacing.lg,
+  },
+  chips: {
+    paddingHorizontal: 10,
+    gap: spacing.sm,
+  },
+  pick: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accent,
     borderRadius: radii.pill,
-    backgroundColor: colors.ink,
+    paddingLeft: 6,
+    paddingRight: 8,
+    gap: 6,
+  },
+  pickMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: 6,
+    maxWidth: 220,
+  },
+  pickDetail: {
+    color: colors.ink,
+  },
+  pickRemove: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.onAccentPanel,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  dateRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.onAccentPanel,
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: spacing.md,
-  },
-  change: {
-    fontFamily: fonts.semibold,
-    textDecorationLine: 'underline',
-  },
-  cta: {
-    position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
   },
 });

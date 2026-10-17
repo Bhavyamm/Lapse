@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { BigAmount } from '@/components/big-amount';
@@ -17,6 +17,7 @@ import {
   ShareIcon,
 } from '@/components/icons';
 import { PillButton } from '@/components/pill-button';
+import { PressScale } from '@/components/press-scale';
 import { ReminderSheet } from '@/components/reminder-sheet';
 import { ScreenHeader } from '@/components/screen-header';
 import { SettingsRow } from '@/components/settings-row';
@@ -129,18 +130,14 @@ function SavingsCard() {
           </View>
         ))}
       </View>
-      <Pressable
-        role="button"
-        aria-label={`Unlock Pro, ${PRO_PRICE} once`}
-        onPress={openPro}
-        style={({ pressed }) => [styles.pro, pressed && { opacity: 0.85 }]}>
+      <PressScale role="button" aria-label={`Unlock Pro, ${PRO_PRICE} once`} onPress={openPro} style={[styles.pro]}>
         <AppText variant="link" style={styles.proText}>
           Unlock Pro · {PRO_PRICE} once
         </AppText>
         <View style={styles.proArrow}>
           <ArrowRightIcon size={16} color={colors.white} />
         </View>
-      </Pressable>
+      </PressScale>
     </CharcoalCard>
   );
 }

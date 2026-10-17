@@ -7,6 +7,7 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { AppText } from '@/components/app-text';
 import { ArrowRightIcon, CloseIcon, DocumentIcon, LockIcon, MailIcon, PeopleIcon } from '@/components/icons';
+import { PressScale } from '@/components/press-scale';
 import { useToday } from '@/hooks/use-today';
 import { purchasePro, PRO_PRICE, restorePro, type PurchaseResult } from '@/features/pro/purchase';
 import { formatMoney } from '@/features/subscriptions/billing';
@@ -112,11 +113,11 @@ export default function ProScreen() {
         </View>
       </ScrollView>
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 12 }]}>
-        <Pressable
+        <PressScale
           role="button"
           aria-label={`Unlock Pro · ${PRO_PRICE}. One-time. No renewal, ever.`}
           onPress={() => run(false)}
-          style={({ pressed }) => [styles.buy, pressed && { opacity: 0.85 }]}>
+          style={[styles.buy]}>
           <View>
             <AppText variant="button" style={styles.buyText}>
               Unlock Pro · {PRO_PRICE}
@@ -128,7 +129,7 @@ export default function ProScreen() {
           <View style={styles.buyArrow}>
             <ArrowRightIcon color={colors.white} />
           </View>
-        </Pressable>
+        </PressScale>
         <Pressable role="button" onPress={() => run(true)} hitSlop={12} style={styles.restore}>
           <AppText variant="caption" onDark muted>
             Restore purchase

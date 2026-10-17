@@ -9,6 +9,7 @@ import { CharcoalCard, GlassCard } from '@/components/cards';
 import { ChevronIcon, ClockIcon, PlusIcon } from '@/components/icons';
 import { Mascot } from '@/components/mascot';
 import { PillButton } from '@/components/pill-button';
+import { PressScale } from '@/components/press-scale';
 import { ScreenHeader } from '@/components/screen-header';
 import { ServiceLogo } from '@/components/service-logo';
 import { SubscriptionRow } from '@/components/subscription-row';
@@ -91,11 +92,11 @@ function TrialCard({ alert, today }: { alert: TrialAlert; today: LocalDate }) {
   const { sub, endsOn, daysLeft } = alert;
   const when = whenShort(endsOn, today);
   return (
-    <Pressable
+    <PressScale
       role="button"
       aria-label={`${sub.name} trial ends ${inDays(daysLeft)}, then ${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}`}
       onPress={() => openSubscription(sub.id, true)}
-      style={({ pressed }) => [styles.trial, pressed && styles.pressed]}>
+      style={[styles.trial]}>
       <ServiceLogo serviceId={sub.serviceId} name={sub.name} size={44} />
       <View style={styles.rowText}>
         <AppText variant="bodyStrong" style={styles.trialTitle}>
@@ -108,7 +109,7 @@ function TrialCard({ alert, today }: { alert: TrialAlert; today: LocalDate }) {
       <View style={styles.trialArrow}>
         <ChevronIcon color={colors.white} />
       </View>
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -116,11 +117,11 @@ function TrialCard({ alert, today }: { alert: TrialAlert; today: LocalDate }) {
 function CheckInCard({ count }: { count: number }) {
   const detail = `${count} ${count === 1 ? 'subscription' : 'subscriptions'} to look over`;
   return (
-    <Pressable
+    <PressScale
       role="button"
       aria-label={`Monthly check-in, ${detail}`}
       onPress={() => router.push('/check-in')}
-      style={({ pressed }) => [styles.trial, styles.checkIn, pressed && styles.pressed]}>
+      style={[styles.trial, styles.checkIn]}>
       <View style={styles.checkInIcon}>
         <ClockIcon color={colors.white} />
       </View>
@@ -135,7 +136,7 @@ function CheckInCard({ count }: { count: number }) {
       <View style={[styles.trialArrow, styles.checkInArrow]}>
         <ChevronIcon color={colors.ink} />
       </View>
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -229,9 +230,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: radii.row,
     backgroundColor: colors.accent,
-  },
-  pressed: {
-    opacity: 0.85,
   },
   trialTitle: {
     fontFamily: fonts.bold,

@@ -9,6 +9,7 @@ import { BigAmount } from '@/components/big-amount';
 import { CharcoalCard, GlassCard } from '@/components/cards';
 import { FadeFooter } from '@/components/fade-footer';
 import { ArrowUpRightIcon, BackIcon, PencilIcon } from '@/components/icons';
+import { PressScale } from '@/components/press-scale';
 import { ScreenBackground } from '@/components/screen-background';
 import { luminance, ServiceLogo } from '@/components/service-logo';
 import { SubscriptionEditor } from '@/components/subscription-editor';
@@ -177,17 +178,14 @@ function Detail({ sub }: { sub: Subscription }) {
       <FadeFooter
         style={[styles.actions, { paddingBottom: insets.bottom + spacing.sm }]}
         onLayout={(e) => setActionsHeight(e.nativeEvent.layout.height)}>
-        <Pressable
-          role="link"
-          onPress={() => openLink(guide.url)}
-          style={({ pressed }) => [styles.primary, pressed && { opacity: 0.9 }]}>
+        <PressScale role="link" onPress={() => openLink(guide.url)} style={[styles.primary]}>
           <AppText variant="button" onDark style={styles.primaryText} numberOfLines={1}>
             {guide.action}
           </AppText>
           <View style={styles.primaryIcon}>
             <ArrowUpRightIcon color={colors.ink} />
           </View>
-        </Pressable>
+        </PressScale>
         <Pressable role="button" onPress={markCancelled} style={styles.secondary}>
           <AppText variant="link" style={styles.secondaryText}>
             I already cancelled

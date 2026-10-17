@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
+import { Appear } from '@/components/appear';
 import { GlassCard } from '@/components/cards';
 import { BackIcon, ChevronIcon } from '@/components/icons';
 import { ScreenHeader } from '@/components/screen-header';
@@ -30,10 +31,15 @@ export default function CalendarScreen() {
   // The month on screen, as a month count from today's. Kept as an absolute month so it stays put
   // when today rolls over, then clamped to the months the screen can show.
   const [picked, setPicked] = useState<number | null>(null);
+  // Which way the last month change went, so the new month slides in from that side.
+  const [direction, setDirection] = useState(0);
   const current = monthIndex(today);
   const offset = Math.min(Math.max((picked ?? current) - current, 0), MONTHS_AHEAD);
   const { year, month } = shiftMonth(today, offset);
-  const go = (delta: number) => setPicked(current + offset + delta);
+  const go = (delta: number) => {
+    setDirection(delta);
+    setPicked(current + offset + delta);
+  };
   const plan = useMemo(() => planMonth(subscriptions, year, month, today), [subscriptions, year, month, today]);
   const sameYear = year === Number(today.slice(0, 4));
   const name = sameYear ? formatMonth(year, month) : formatMonthYear(year, month);
@@ -54,8 +60,10 @@ export default function CalendarScreen() {
           </View>
         }
       />
-      <MonthGrid plan={plan} today={today} name={name} />
-      <MonthList plan={plan} name={name} empty={subscriptions.length === 0} />
+      <Appear key={offset} x={direction * 28} style={styles.month}>
+        <MonthGrid plan={plan} today={today} name={name} />
+        <MonthList plan={plan} name={name} empty={subscriptions.length === 0} />
+      </Appear>
     </TabScreen>
   );
 }
@@ -205,6 +213,9 @@ function MonthList({ plan, name, empty }: { plan: MonthPlan; name: string; empty
 }
 
 const styles = StyleSheet.create({
+  month: {
+    gap: spacing.md,
+  },
   arrows: {
     flexDirection: 'row',
     gap: spacing.sm,

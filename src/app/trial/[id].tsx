@@ -7,6 +7,7 @@ import { AppText } from '@/components/app-text';
 import { Chip } from '@/components/chip';
 import { ArrowUpRightIcon, BellIcon, CloseIcon } from '@/components/icons';
 import { PillButton } from '@/components/pill-button';
+import { PressScale } from '@/components/press-scale';
 import { ServiceLogo } from '@/components/service-logo';
 import { useToday } from '@/hooks/use-today';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
@@ -149,12 +150,9 @@ function Trial({ sub, today }: { sub: Subscription; today: LocalDate }) {
               icon={<ArrowUpRightIcon color={colors.ink} />}
               onPress={openCancel}
             />
-            <Pressable
-              role="button"
-              onPress={leave}
-              style={({ pressed }) => [styles.keep, pressed && { opacity: 0.8 }]}>
+            <PressScale role="button" onPress={leave} style={[styles.keep]}>
               <AppText variant="link">I’ll keep it</AppText>
-            </Pressable>
+            </PressScale>
           </View>
         </View>
       </ScrollView>

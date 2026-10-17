@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AddButton } from '@/components/add-button';
 import { AppText } from '@/components/app-text';
 import { GlassCard } from '@/components/cards';
 import { PlusIcon } from '@/components/icons';
 import { PillButton } from '@/components/pill-button';
+import { PressScale } from '@/components/press-scale';
 import { ScreenHeader } from '@/components/screen-header';
 import { Segmented } from '@/components/segmented';
 import { SubscriptionRow } from '@/components/subscription-row';
@@ -86,11 +87,11 @@ export default function SubscriptionsScreen() {
 function TrialRow({ item }: { item: Upcoming }) {
   const { sub, next } = item;
   return (
-    <Pressable
+    <PressScale
       role="button"
       aria-label={`${sub.name}, free trial ends ${formatMonthDay(next)}, then ${formatMoney(sub.priceCents)} ${CYCLE_WORD[sub.cycle]}`}
       onPress={() => openSubscription(sub.id, true)}
-      style={({ pressed }) => [styles.trial, pressed && styles.pressed]}>
+      style={[styles.trial]}>
       <View style={styles.trialText}>
         <AppText variant="bodyStrong" style={styles.bold} numberOfLines={1}>
           {sub.name}
@@ -107,7 +108,7 @@ function TrialRow({ item }: { item: Upcoming }) {
           Ends {formatMonthDay(next)}
         </AppText>
       </View>
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -131,9 +132,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: radii.row,
     backgroundColor: colors.accent,
-  },
-  pressed: {
-    opacity: 0.85,
   },
   trialText: {
     flex: 1,

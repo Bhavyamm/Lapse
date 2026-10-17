@@ -10,7 +10,7 @@ import { Confetti } from '@/components/confetti';
 import { FadeFooter } from '@/components/fade-footer';
 import { CheckIcon, ClockIcon, CloseIcon } from '@/components/icons';
 import { Mascot } from '@/components/mascot';
-import { PillButton } from '@/components/pill-button';
+import { PressScale } from '@/components/press-scale';
 import { ScreenBackground } from '@/components/screen-background';
 import { ServiceLogo } from '@/components/service-logo';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
@@ -32,7 +32,7 @@ const SWIPE_MS = 320;
 /** Space under the buttons, above the home indicator. */
 const SCREEN_BOTTOM = 24;
 /** Done and its fade, so the last row can scroll clear of it. */
-const DONE_ROOM = 110;
+const DONE_ROOM = 96;
 
 const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -254,17 +254,12 @@ type RoundActionProps = {
 
 function RoundAction({ label, hint, size, color, icon, onPress }: RoundActionProps) {
   return (
-    <Pressable
-      role="button"
-      aria-label={label}
-      accessibilityHint={hint}
-      onPress={onPress}
-      style={({ pressed }) => [styles.action, pressed && { opacity: 0.8 }]}>
+    <PressScale role="button" aria-label={label} accessibilityHint={hint} onPress={onPress} style={[styles.action]}>
       <View style={[styles.round, { width: size, height: size, backgroundColor: color }]}>{icon}</View>
       <AppText variant="caption" style={styles.bold}>
         {label}
       </AppText>
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -380,7 +375,11 @@ function Finished({ ids, outcomes, subscriptions, cancelled, animate }: Finished
         ) : null}
       </ScrollView>
       <FadeFooter style={[styles.doneFooter, { paddingBottom: bottom }]}>
-        <PillButton label="Done" tone="dark" icon={<CheckIcon size={16} color={colors.ink} />} onPress={leave} />
+        <PressScale role="button" onPress={leave} style={styles.doneButton}>
+          <AppText variant="button" onDark>
+            Done
+          </AppText>
+        </PressScale>
       </FadeFooter>
     </View>
   );
@@ -604,6 +603,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   doneFooter: {
-    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  doneButton: {
+    minWidth: 140,
+    height: 52,
+    paddingHorizontal: 36,
+    borderRadius: radii.pill,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

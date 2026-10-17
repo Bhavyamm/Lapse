@@ -1,17 +1,9 @@
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/app-text';
+import { BottomSheet } from '@/components/bottom-sheet';
 import { Chip } from '@/components/chip';
 import { DatePicker } from '@/components/date-picker';
 import { CheckIcon, CloseIcon } from '@/components/icons';
@@ -43,16 +35,20 @@ type Props = {
 export function SubscriptionEditor({ draft, today, onSave, onClose }: Props) {
   // Modals draw above the Face ID lock, so they step aside while it is up; the draft is kept.
   const locked = useLock((s) => s.locked);
+  // The last draft stays on the sheet while it slides away.
+  const [shown, setShown] = useState(draft);
+  if (draft && draft !== shown) setShown(draft);
   return (
-    <Modal visible={!!draft && !locked} transparent animationType="slide" onRequestClose={onClose}>
+    <BottomSheet visible={!!draft && !locked} onClose={onClose}>
       {/* Keyed so each opening starts from the draft it was given. */}
-      {draft ? <EditorSheet key={draft.key} initial={draft} today={today} onSave={onSave} onClose={onClose} /> : null}
-    </Modal>
+      {shown ? <EditorSheet key={shown.key} initial={shown} today={today} onSave={onSave} onClose={onClose} /> : null}
+    </BottomSheet>
   );
 }
 
 function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> & { initial: Draft }) {
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const [draft, setDraft] = useState(initial);
   const [problem, setProblem] = useState<string | null>(null);
   const custom = initial.serviceId === null;
@@ -76,117 +72,107 @@ function EditorSheet({ initial, today, onSave, onClose }: Omit<Props, 'draft'> &
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.backdrop}>
-      {/* Tapping outside closes too; hidden from screen readers, which use the Close button. */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} aria-hidden accessible={false} />
-      <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <View style={styles.header}>
-          <ServiceLogo serviceId={draft.serviceId} name={draft.name} size={40} />
-          {custom ? (
-            <TextInput
-              value={draft.name}
-              onChangeText={(name) => update({ name })}
-              placeholder="Name, like Gym"
-              placeholderTextColor={colors.textSecondary}
-              aria-label="Name"
-              autoFocus={!draft.name}
-              style={[styles.nameInput, type.headline]}
-            />
-          ) : (
-            <AppText variant="headline" style={styles.title} numberOfLines={1}>
-              {draft.name}
-            </AppText>
-          )}
-          <Pressable role="button" aria-label="Close" onPress={onClose} style={styles.close} hitSlop={8}>
-            <CloseIcon size={16} color={colors.ink} />
-          </Pressable>
+    <View style={[styles.sheet, { maxHeight: height * 0.92, paddingBottom: insets.bottom + spacing.lg }]}>
+      <View style={styles.header}>
+        <ServiceLogo serviceId={draft.serviceId} name={draft.name} size={40} />
+        {custom ? (
+          <TextInput
+            value={draft.name}
+            onChangeText={(name) => update({ name })}
+            placeholder="Name, like Gym"
+            placeholderTextColor={colors.textSecondary}
+            aria-label="Name"
+            autoFocus={!draft.name}
+            style={[styles.nameInput, type.headline]}
+          />
+        ) : (
+          <AppText variant="headline" style={styles.title} numberOfLines={1}>
+            {draft.name}
+          </AppText>
+        )}
+        <Pressable role="button" aria-label="Close" onPress={onClose} style={styles.close} hitSlop={8}>
+          <CloseIcon size={16} color={colors.ink} />
+        </Pressable>
+      </View>
+
+      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <AppText variant="section" style={styles.label}>
+          Price
+        </AppText>
+        <View style={styles.priceField}>
+          <AppText variant="bodyStrong" muted>
+            $
+          </AppText>
+          <TextInput
+            value={draft.priceText}
+            onChangeText={(priceText) => update({ priceText, from: false })}
+            keyboardType="decimal-pad"
+            placeholder="9.99"
+            placeholderTextColor={colors.textSecondary}
+            aria-label="Price"
+            style={[styles.priceInput, type.bodyStrong]}
+          />
         </View>
-
-        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <AppText variant="section" style={styles.label}>
-            Price
-          </AppText>
-          <View style={styles.priceField}>
-            <AppText variant="bodyStrong" muted>
-              $
-            </AppText>
-            <TextInput
-              value={draft.priceText}
-              onChangeText={(priceText) => update({ priceText, from: false })}
-              keyboardType="decimal-pad"
-              placeholder="9.99"
-              placeholderTextColor={colors.textSecondary}
-              aria-label="Price"
-              style={[styles.priceInput, type.bodyStrong]}
-            />
-          </View>
-          {draft.from ? (
-            <AppText variant="caption" muted style={styles.hint}>
-              This is the cheapest plan. Change it to what you pay.
-            </AppText>
-          ) : null}
-
-          <AppText variant="section" style={styles.label}>
-            How often
-          </AppText>
-          <View style={styles.chips} role="radiogroup" aria-label="How often">
-            {CYCLES.map((c) => (
-              <Chip
-                key={c.value}
-                onWhite
-                label={c.label}
-                selected={draft.cycle === c.value}
-                onPress={() => setCycle(c.value)}
-              />
-            ))}
-          </View>
-
-          <Pressable
-            role="switch"
-            aria-checked={draft.trial}
-            aria-label="Free trial"
-            onPress={() => update({ trial: !draft.trial })}
-            style={styles.toggleRow}>
-            <View style={styles.toggleText}>
-              <AppText variant="section">Free trial</AppText>
-              <AppText variant="caption" muted>
-                We’ll remind you before the first charge.
-              </AppText>
-            </View>
-            <Toggle on={draft.trial} />
-          </Pressable>
-
-          <AppText variant="section" style={styles.label}>
-            {draft.trial ? 'Trial ends' : 'Next charge'}
-          </AppText>
-          <DatePicker value={draft.chargeOn} onChange={pickDate} min={today} today={today} />
-        </ScrollView>
-
-        {problem ? (
-          <AppText variant="label" style={styles.problem} role="alert">
-            {problem}
+        {draft.from ? (
+          <AppText variant="caption" muted style={styles.hint}>
+            This is the cheapest plan. Change it to what you pay.
           </AppText>
         ) : null}
-        <PillButton
-          label="Save"
-          tone="dark"
-          icon={<CheckIcon size={14} color={colors.ink} />}
-          onPress={save}
-          style={styles.save}
-        />
-      </View>
-    </KeyboardAvoidingView>
+
+        <AppText variant="section" style={styles.label}>
+          How often
+        </AppText>
+        <View style={styles.chips} role="radiogroup" aria-label="How often">
+          {CYCLES.map((c) => (
+            <Chip
+              key={c.value}
+              onWhite
+              label={c.label}
+              selected={draft.cycle === c.value}
+              onPress={() => setCycle(c.value)}
+            />
+          ))}
+        </View>
+
+        <Pressable
+          role="switch"
+          aria-checked={draft.trial}
+          aria-label="Free trial"
+          onPress={() => update({ trial: !draft.trial })}
+          style={styles.toggleRow}>
+          <View style={styles.toggleText}>
+            <AppText variant="section">Free trial</AppText>
+            <AppText variant="caption" muted>
+              We’ll remind you before the first charge.
+            </AppText>
+          </View>
+          <Toggle on={draft.trial} />
+        </Pressable>
+
+        <AppText variant="section" style={styles.label}>
+          {draft.trial ? 'Trial ends' : 'Next charge'}
+        </AppText>
+        <DatePicker value={draft.chargeOn} onChange={pickDate} min={today} today={today} />
+      </ScrollView>
+
+      {problem ? (
+        <AppText variant="label" style={styles.problem} role="alert">
+          {problem}
+        </AppText>
+      ) : null}
+      <PillButton
+        label="Save"
+        tone="dark"
+        icon={<CheckIcon size={14} color={colors.ink} />}
+        onPress={save}
+        style={styles.save}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: colors.scrim,
-  },
   sheet: {
-    maxHeight: '92%',
     backgroundColor: colors.white,
     borderTopLeftRadius: radii.large,
     borderTopRightRadius: radii.large,

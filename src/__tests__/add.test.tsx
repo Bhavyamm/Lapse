@@ -56,7 +56,8 @@ describe('Add a subscription', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: /^Add Spotify/ }));
     await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
-    expect(screen.getAllByText('Tue, Nov 17')).toHaveLength(2);
+    expect(screen.getAllByText(/· Tue, Nov 17$/)).toHaveLength(2);
+    expect(screen.getByText('2 picked · $19.98 a month')).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Add 2 and remind me' }));
 
     expect(saved().map((s) => [s.name, s.priceCents, s.chargeOn])).toEqual([
@@ -74,6 +75,17 @@ describe('Add a subscription', () => {
 
     expect(screen.getByRole('button', { name: /^Add Spotify/ })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Add and remind me' })).toBeDisabled();
+  });
+
+  it('keeps a picked service in place, marked, and unpicks it on a second tap', async () => {
+    await render(<AddScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: /^Add Spotify/ }));
+    expect(screen.getByRole('button', { name: /^Remove Spotify, picked/ })).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: /^Remove Spotify, picked/ }));
+
+    expect(screen.getByRole('button', { name: /^Add Spotify/ })).toBeOnTheScreen();
+    expect(screen.queryByText(/picked ·/)).toBeNull();
   });
 
   it('saves the price, how often and trial chosen in the editor', async () => {
