@@ -15,6 +15,8 @@ import { prefersReducedMotion, SETTLE } from '@/utils/motion';
 
 type Props = {
   visible: boolean;
+  /** Hides at once, with no slide, such as when the Face ID lock comes up over private details. */
+  hideNow?: boolean;
   onClose: () => void;
   /** The sheet itself, drawn at the bottom. Kept on screen while it slides away. */
   children: ReactNode;
@@ -24,7 +26,7 @@ type Props = {
  * A sheet that slides up over a dimming backdrop. The backdrop fades on its own instead of
  * sliding up with the sheet, and closing plays the slide in reverse before the modal goes.
  */
-export function BottomSheet({ visible, onClose, children }: Props) {
+export function BottomSheet({ visible, hideNow = false, onClose, children }: Props) {
   const { height } = useWindowDimensions();
   const [mounted, setMounted] = useState(visible);
   if (visible && !mounted) setMounted(true);
@@ -50,7 +52,7 @@ export function BottomSheet({ visible, onClose, children }: Props) {
 
   const slide = progress.interpolate({ inputRange: [0, 1], outputRange: [height, 0] });
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={mounted && !hideNow} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <Animated.View style={[styles.scrim, { opacity: progress }]}>
         {/* Tapping outside closes too; hidden from screen readers, which use the sheet's Close button. */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} aria-hidden accessible={false} />
@@ -59,7 +61,10 @@ export function BottomSheet({ visible, onClose, children }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.holder}
         pointerEvents="box-none">
-        <Animated.View style={{ transform: [{ translateY: slide }] }}>{children}</Animated.View>
+        {/* Inert while sliding away, so a second Save or Close can't land. */}
+        <Animated.View style={{ transform: [{ translateY: slide }] }} pointerEvents={visible ? 'auto' : 'none'}>
+          {children}
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );

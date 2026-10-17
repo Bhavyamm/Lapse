@@ -88,6 +88,28 @@ describe('Add a subscription', () => {
     expect(screen.queryByText(/picked ·/)).toBeNull();
   });
 
+  it('removes a pick from its chip in the tray', async () => {
+    await render(<AddScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Add Spotify/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
+    expect(screen.getByText('2 picked · $19.98 a month')).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Remove Netflix' }));
+    expect(screen.getByText('1 picked · $11.99 a month')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^Add Netflix/ })).toBeOnTheScreen();
+  });
+
+  it('opens the editor fresh after closing it with unsaved changes', async () => {
+    await render(<AddScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+    await fireEvent.changeText(screen.getByLabelText('Price'), '99');
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
+    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+
+    expect(screen.getAllByLabelText('Price').at(-1)).toHaveDisplayValue('7.99');
+  });
+
   it('saves the price, how often and trial chosen in the editor', async () => {
     await render(<AddScreen />);
     await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));

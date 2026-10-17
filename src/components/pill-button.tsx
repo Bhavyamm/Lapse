@@ -26,7 +26,8 @@ export function PillButton({ label, onPress, icon, tone = 'accent', disabled, st
       onPress={onPress}
       style={[
         styles.button,
-        { backgroundColor: dark ? colors.ink : colors.accent, opacity: disabled ? 0.6 : 1 },
+        { backgroundColor: dark ? colors.ink : colors.accent },
+        disabled && styles.disabled,
         style,
       ]}>
       <AppText variant="button" style={{ color: dark ? colors.white : colors.ink }}>
@@ -38,6 +39,9 @@ export function PillButton({ label, onPress, icon, tone = 'accent', disabled, st
 }
 
 const styles = StyleSheet.create({
+  disabled: {
+    opacity: 0.6,
+  },
   button: {
     height: 60,
     borderRadius: radii.pill,

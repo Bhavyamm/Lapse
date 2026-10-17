@@ -35,13 +35,21 @@ type Props = {
 export function SubscriptionEditor({ draft, today, onSave, onClose }: Props) {
   // Modals draw above the Face ID lock, so they step aside while it is up; the draft is kept.
   const locked = useLock((s) => s.locked);
-  // The last draft stays on the sheet while it slides away.
+  // The last draft stays on the sheet while it slides away. Each opening gets a fresh sheet, even
+  // for the same draft reopened mid-slide, so edits that were closed away never come back.
+  const [previous, setPrevious] = useState(draft);
   const [shown, setShown] = useState(draft);
-  if (draft && draft !== shown) setShown(draft);
+  const [opening, setOpening] = useState(0);
+  if (draft !== previous) {
+    setPrevious(draft);
+    if (draft) {
+      setShown(draft);
+      setOpening((n) => n + 1);
+    }
+  }
   return (
-    <BottomSheet visible={!!draft && !locked} onClose={onClose}>
-      {/* Keyed so each opening starts from the draft it was given. */}
-      {shown ? <EditorSheet key={shown.key} initial={shown} today={today} onSave={onSave} onClose={onClose} /> : null}
+    <BottomSheet visible={!!draft} hideNow={locked} onClose={onClose}>
+      {shown ? <EditorSheet key={opening} initial={shown} today={today} onSave={onSave} onClose={onClose} /> : null}
     </BottomSheet>
   );
 }

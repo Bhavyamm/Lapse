@@ -20,7 +20,8 @@ export function Appear({ x = 0, y = 0, style, children }: Props) {
     return () => settle.stop();
   }, [progress]);
   const motion = {
-    opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+    // From part-way, so quick repeated changes never blank the content.
+    opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
     transform: [
       { translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [x, 0] }) },
       { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [y, 0] }) },

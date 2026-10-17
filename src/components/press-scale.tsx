@@ -11,11 +11,15 @@ type Props = Omit<PressableProps, 'style'> & {
   scale?: number;
 };
 
-/** A Pressable that eases down a little while held and springs back, instead of blinking. */
+/**
+ * A Pressable that eases down a little while held and springs back, instead of blinking. With
+ * Reduce Motion it dims while held instead.
+ */
 export function PressScale({ style, scale = 0.96, onPressIn, onPressOut, ...rest }: Props) {
   const [value] = useState(() => new Animated.Value(1));
+  const [dim] = useState(() => new Animated.Value(1));
   const to = (toValue: number) => {
-    if (prefersReducedMotion()) return;
+    if (prefersReducedMotion()) return dim.setValue(toValue === 1 ? 1 : 0.7);
     Animated.spring(value, { toValue, damping: 18, stiffness: 320, mass: 0.6, useNativeDriver: true }).start();
   };
   return (
@@ -29,7 +33,8 @@ export function PressScale({ style, scale = 0.96, onPressIn, onPressOut, ...rest
         to(1);
         onPressOut?.(e);
       }}
-      style={[style, { transform: [{ scale: value }] }]}
+      // The caller's style comes last, so a disabled button's own opacity wins.
+      style={[{ opacity: dim, transform: [{ scale: value }] }, style]}
     />
   );
 }

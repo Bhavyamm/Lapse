@@ -17,9 +17,8 @@ import { colors, fonts, radii, spacing } from '@/theme';
 export function ReminderSheet({ visible: wanted, onClose }: { visible: boolean; onClose: () => void }) {
   // Modals draw above the Face ID lock, so they step aside while it is up.
   const locked = useLock((s) => s.locked);
-  const visible = wanted && !locked;
   return (
-    <BottomSheet visible={visible} onClose={onClose}>
+    <BottomSheet visible={wanted} hideNow={locked} onClose={onClose}>
       <Sheet onClose={onClose} />
     </BottomSheet>
   );

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Add a subscription: picked services stay where they are in the list with an orange check (tap again to unpick), and gather in a tray above the save button with the monthly total and a chip per pick to change or remove it. The list no longer grows as you pick.
+- Smoother motion everywhere: sheets slide up on a spring over a fading backdrop and slide away when closed, buttons ease down when pressed, toggles and the sort control slide, tabs cross-fade, and calendar months slide in from the side you moved to. Reduce Motion turns it off.
+- Monthly check-in: Done is a small pill instead of a full-width button.
 - Monthly check-in: answering a card swipes it away (right for Keep it, left for Next month) while the next card rises from the stack. The finished screen now celebrates with the mascot and confetti, shows what you'll save from cancelling (or what the ones you kept cost a year), a Kept / Cancelled / Next month tally, and each subscription with its result.
 - Subscription detail: the cancel button and I already cancelled sit on a soft fade, so content no longer runs into them, and the screen is tighter so it fits on a phone.
 - Reminders on Android show the lapse. icon in orange (development and store builds; Expo Go always shows its own icon).

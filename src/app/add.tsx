@@ -1,6 +1,16 @@
 import { router } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AccessibilityInfo,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/app-text';
@@ -47,9 +57,12 @@ export default function AddScreen() {
   const typed = query.trim();
   const searching = normalize(query) !== '';
 
+  const keyboardUp = useKeyboardUp();
   const toggle = (service: CatalogService) => {
     animateLayout();
     const draft = picked.get(service.id);
+    const count = drafts.length + (draft ? -1 : 1);
+    AccessibilityInfo.announceForAccessibility(`${service.name} ${draft ? 'removed' : 'picked'}. ${count} picked.`);
     if (draft) unselect(draft.key);
     else setDrafts((list) => [...list, draftFromService(service, today)]);
   };
@@ -165,7 +178,8 @@ export default function AddScreen() {
         <FadeFooter
           style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}
           onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}>
-          {count ? <Picks drafts={drafts} onEdit={setEditing} onRemove={unselect} /> : null}
+          {/* Hidden while typing a search, so the results keep the room above the keyboard. */}
+          {count && !keyboardUp ? <Picks drafts={drafts} onEdit={setEditing} onRemove={unselect} /> : null}
           <PillButton
             label={count > 1 ? `Add ${count} and remind me` : 'Add and remind me'}
             tone="dark"
@@ -181,6 +195,27 @@ export default function AddScreen() {
   );
 }
 
+/** True while the on-screen keyboard is open. */
+function useKeyboardUp(): boolean {
+  const [up, setUp] = useState(false);
+  useEffect(() => {
+    const ios = Platform.OS === 'ios';
+    const show = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', () => {
+      animateLayout();
+      setUp(true);
+    });
+    const hide = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => {
+      animateLayout();
+      setUp(false);
+    });
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  return up;
+}
+
 /**
  * What's picked so far, in one row above the save button: a running monthly total and a chip
  * per pick to change or remove it. It scrolls sideways, so picking more never pushes the list.
@@ -194,7 +229,10 @@ function Picks({
   onEdit: (draft: Draft) => void;
   onRemove: (key: string) => void;
 }) {
-  const monthly = drafts.reduce((sum, d) => sum + monthlyCents(parsePrice(d.priceText) ?? 0, d.cycle), 0);
+  // Free trials cost nothing until they charge, so they stay out of the total.
+  const monthly = drafts
+    .filter((d) => !d.trial)
+    .reduce((sum, d) => sum + monthlyCents(parsePrice(d.priceText) ?? 0, d.cycle), 0);
   return (
     <View style={styles.picks}>
       <AppText variant="caption" onDark style={styles.picksTitle}>
