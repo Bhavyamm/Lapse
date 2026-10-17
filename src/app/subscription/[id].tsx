@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import { AppText } from '@/components/app-text';
 import { BigAmount } from '@/components/big-amount';
 import { CharcoalCard, GlassCard } from '@/components/cards';
+import { FadeFooter } from '@/components/fade-footer';
 import { ArrowUpRightIcon, BackIcon, PencilIcon } from '@/components/icons';
 import { ScreenBackground } from '@/components/screen-background';
 import { luminance, ServiceLogo } from '@/components/service-logo';
@@ -104,7 +105,7 @@ function Detail({ sub }: { sub: Subscription }) {
   return (
     <ScreenBackground>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + actionsHeight + spacing.xl }]}
+        contentContainerStyle={[styles.content, { paddingBottom: actionsHeight + spacing.sm }]}
         showsVerticalScrollIndicator={false}>
         <Hero
           sub={sub}
@@ -173,8 +174,8 @@ function Detail({ sub }: { sub: Subscription }) {
         </View>
       </ScrollView>
 
-      <View
-        style={[styles.actions, { bottom: insets.bottom + spacing.md }]}
+      <FadeFooter
+        style={[styles.actions, { paddingBottom: insets.bottom + spacing.sm }]}
         onLayout={(e) => setActionsHeight(e.nativeEvent.layout.height)}>
         <Pressable
           role="link"
@@ -192,7 +193,7 @@ function Detail({ sub }: { sub: Subscription }) {
             I already cancelled
           </AppText>
         </Pressable>
-      </View>
+      </FadeFooter>
 
       <SubscriptionEditor draft={editing} today={today} onSave={saveEdit} onClose={() => setEditing(null)} />
     </ScreenBackground>
@@ -234,7 +235,7 @@ function Hero({ sub, pill, suffix, topInset }: { sub: Subscription; pill: string
     <CharcoalCard
       radius={radii.large}
       style={styles.hero}
-      contentStyle={[styles.heroContent, { paddingTop: topInset + radii.large + spacing.sm }]}>
+      contentStyle={[styles.heroContent, { paddingTop: topInset + radii.large }]}>
       {logo ? (
         <View style={styles.watermarkClip} pointerEvents="none" aria-hidden>
           <Svg width={260} height={260} viewBox="0 0 24 24" style={styles.watermark}>
@@ -288,8 +289,8 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     paddingHorizontal: 24,
-    paddingBottom: 26,
-    gap: 22,
+    paddingBottom: 22,
+    gap: 18,
   },
   watermarkClip: {
     ...StyleSheet.absoluteFill,
@@ -348,7 +349,7 @@ const styles = StyleSheet.create({
   },
   guide: {
     padding: 20,
-    gap: spacing.lg,
+    gap: 14,
   },
   guideTitle: {
     flexDirection: 'row',
@@ -407,10 +408,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   actions: {
-    position: 'absolute',
-    left: spacing.sm,
-    right: spacing.sm,
-    gap: 6,
+    paddingHorizontal: spacing.sm,
+    gap: 2,
   },
   primary: {
     minHeight: 62,

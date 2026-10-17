@@ -48,6 +48,13 @@
         {
           "useSQLCipher": true
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#EE7A3A"
+        }
       ]
     ],
     "experiments": {

@@ -6,6 +6,8 @@
 
 export const colors = {
   canvas: '#E6E5E7',
+  /** The canvas color fully clear, for fades into it. */
+  canvasClear: 'rgba(230,229,231,0)',
   ink: '#141414',
   charcoal: '#232323',
   /** Darkest backdrop, used behind the launch splash. */
