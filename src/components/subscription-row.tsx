@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   tag: {
+    flexShrink: 0,
     backgroundColor: colors.accent,
     borderRadius: radii.pill,
     paddingHorizontal: spacing.sm,

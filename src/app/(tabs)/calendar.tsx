@@ -26,9 +26,13 @@ import { formatMonth, formatMonthYear, formatShortDate, monthCells, type LocalDa
 export default function CalendarScreen() {
   const subscriptions = useSubscriptions((s) => s.subscriptions);
   const today = useToday();
-  // Months after the current one, so the screen stays right when today rolls into a new month.
-  const [offset, setOffset] = useState(0);
+  // The month on screen, as a month count from today's. Kept as an absolute month so it stays put
+  // when today rolls over, then clamped to the months the screen can show.
+  const [picked, setPicked] = useState<number | null>(null);
+  const current = monthIndex(today);
+  const offset = Math.min(Math.max((picked ?? current) - current, 0), MONTHS_AHEAD);
   const { year, month } = shiftMonth(today, offset);
+  const go = (delta: number) => setPicked(current + offset + delta);
   const plan = useMemo(() => planMonth(subscriptions, year, month, today), [subscriptions, year, month, today]);
   const sameYear = year === Number(today.slice(0, 4));
   const name = sameYear ? formatMonth(year, month) : formatMonthYear(year, month);
@@ -40,10 +44,10 @@ export default function CalendarScreen() {
         subtitle={summary(plan, name)}
         right={
           <View style={styles.arrows}>
-            <MonthButton label="Previous month" disabled={offset === 0} onPress={() => setOffset(offset - 1)}>
+            <MonthButton label="Previous month" disabled={offset === 0} onPress={() => go(-1)}>
               <BackIcon size={14} color={colors.ink} />
             </MonthButton>
-            <MonthButton label="Next month" disabled={offset === MONTHS_AHEAD} onPress={() => setOffset(offset + 1)}>
+            <MonthButton label="Next month" disabled={offset === MONTHS_AHEAD} onPress={() => go(1)}>
               <ChevronIcon color={colors.ink} />
             </MonthButton>
           </View>
@@ -53,6 +57,11 @@ export default function CalendarScreen() {
       <MonthList plan={plan} name={name} empty={subscriptions.length === 0} />
     </TabScreen>
   );
+}
+
+/** Months since year 0, so two months can be compared and subtracted. */
+function monthIndex(day: LocalDate): number {
+  return Number(day.slice(0, 4)) * 12 + Number(day.slice(5, 7)) - 1;
 }
 
 /** "$67.47 still to pay this month" or "$74.46 due in November". */
@@ -100,6 +109,7 @@ function describeDay(day: LocalDate, charges: Charge[], isToday: boolean): strin
 
 function MonthGrid({ plan, today, name }: { plan: MonthPlan; today: LocalDate; name: string }) {
   const cells = monthCells(plan.year, plan.month);
+  const weeks = Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
   // Weekday initials in the device locale, starting on Sunday to match getDay().
   const weekdays = Array.from({ length: 7 }, (_, i) =>
     new Date(2026, 1, 1 + i).toLocaleDateString(undefined, { weekday: 'narrow' }),
@@ -107,42 +117,44 @@ function MonthGrid({ plan, today, name }: { plan: MonthPlan; today: LocalDate; n
   return (
     <GlassCard contentStyle={styles.calendar}>
       {/* Each day's label already names its weekday. */}
-      <View style={styles.week} aria-hidden>
+      <View style={styles.week} aria-hidden importantForAccessibility="no-hide-descendants">
         {weekdays.map((d, i) => (
-          <AppText key={i} variant="caption" style={styles.weekday}>
+          <AppText key={i} variant="caption" maxFontSizeMultiplier={1.3} style={styles.weekday}>
             {d}
           </AppText>
         ))}
       </View>
-      <View style={styles.grid} aria-label={`${name} renewals`}>
-        {cells.map((day, i) => {
-          if (!day) return <View key={`blank${i}`} style={styles.cell} />;
-          const charges = plan.byDay.get(day) ?? [];
-          const isToday = day === today;
-          const past = day < today;
-          const trial = charges.some((c) => c.trialEnding);
-          const renews = charges.some((c) => !c.trialEnding);
-          // Only days with something on them, and today, are worth a stop for a screen reader.
-          const announced = isToday || charges.length > 0;
-          return (
-            <View
-              key={day}
-              style={styles.cell}
-              accessible={announced}
-              aria-label={announced ? describeDay(day, charges, isToday) : undefined}
-              aria-hidden={!announced}
-              importantForAccessibility={announced ? 'yes' : 'no-hide-descendants'}>
-              <View style={[styles.day, trial && styles.trialDay, isToday && styles.today]}>
-                <AppText
-                  variant="label"
-                  style={[past && styles.pastText, (isToday || charges.length > 0) && styles.boldText]}>
-                  {Number(day.slice(8))}
-                </AppText>
-              </View>
-              <View style={[styles.dot, renews && styles.dotOn]} />
-            </View>
-          );
-        })}
+      <View role="grid" aria-label={`${formatMonthYear(plan.year, plan.month)} renewals`}>
+        {weeks.map((week, w) => (
+          <View key={w} role="row" style={styles.week}>
+            {week.map((day, i) => {
+              if (!day) return <View key={`blank${i}`} style={styles.cell} />;
+              const charges = plan.byDay.get(day) ?? [];
+              const isToday = day === today;
+              const past = day < today;
+              const trial = charges.some((c) => c.trialEnding);
+              const renews = charges.some((c) => !c.trialEnding);
+              return (
+                <View
+                  key={day}
+                  role="cell"
+                  style={styles.cell}
+                  accessible
+                  aria-label={describeDay(day, charges, isToday)}>
+                  <View style={[styles.day, trial && styles.trialDay, isToday && styles.today]}>
+                    <AppText
+                      variant="label"
+                      maxFontSizeMultiplier={1.3}
+                      style={[past && styles.pastText, (isToday || charges.length > 0) && styles.boldText]}>
+                      {Number(day.slice(8))}
+                    </AppText>
+                  </View>
+                  <View style={[styles.dot, renews && styles.dotOn]} />
+                </View>
+              );
+            })}
+          </View>
+        ))}
       </View>
     </GlassCard>
   );
@@ -166,6 +178,13 @@ function MonthList({ plan, name, empty }: { plan: MonthPlan; name: string; empty
           compact
         />
       ))}
+      {plan.charges.length > rows.length ? (
+        <AppText variant="caption" muted style={styles.more}>
+          {plan.current
+            ? `${plan.charges.length - rows.length} more this month`
+            : `${plan.charges.length - rows.length} more in ${name}`}
+        </AppText>
+      ) : null}
       {rows.length === 0 ? (
         empty ? (
           <Pressable role="link" onPress={() => router.push('/add')} style={styles.emptyRow}>
@@ -206,27 +225,23 @@ const styles = StyleSheet.create({
   },
   week: {
     flexDirection: 'row',
-    paddingBottom: 6,
   },
   weekday: {
+    paddingBottom: 6,
     width: `${100 / 7}%`,
     textAlign: 'center',
     color: colors.textSecondary,
     fontFamily: fonts.semibold,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
   cell: {
     width: `${100 / 7}%`,
-    height: 44,
+    minHeight: 44,
     alignItems: 'center',
     gap: 2,
   },
   day: {
-    width: 34,
-    height: 34,
+    minWidth: 34,
+    minHeight: 34,
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
@@ -259,6 +274,11 @@ const styles = StyleSheet.create({
   listTitle: {
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
+  },
+  more: {
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
+    paddingVertical: spacing.md,
   },
   emptyRow: {
     paddingVertical: spacing.md,

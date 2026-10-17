@@ -75,3 +75,22 @@ describe('Calendar', () => {
     expect(screen.getByText('Add a subscription to see its renewals here.')).toBeOnTheScreen();
   });
 });
+
+describe('Calendar when a month has many charges', () => {
+  it('says how many more charges the list leaves out', async () => {
+    useSubscriptions.setState({
+      subscriptions: ['A', 'B', 'C', 'D', 'E', 'F'].map((name, i) => ({
+        ...base,
+        id: name,
+        serviceId: null,
+        name,
+        priceCents: 100,
+        chargeOn: `2026-10-2${i}`,
+      })),
+    });
+    await render(<CalendarScreen />);
+
+    expect(screen.getByText('2 more this month')).toBeOnTheScreen();
+    expect(screen.getByLabelText('October 2026 renewals')).toBeOnTheScreen();
+  });
+});

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved to Expo SDK 57 so the app opens in the Expo Go version on the App Store.
 
 ### Added
+- Calendar: each month's renewals on a grid, with a dot on renewal days, the day a free trial ends in orange and today outlined. The header shows what is still to pay this month or what is due in a later month, and a list below shows the next charges. You can look up to 11 months ahead.
 - All subscriptions: everything you track with the count and monthly total, running free trials on top in orange, and the rest sorted by next renewal, price (per month, highest first) or name.
 - Add a subscription: search 145 popular services with their logos, pick one or more, and set the price, how often it charges, whether it is a free trial, and the next charge date. Anything not listed can be added by hand.
 - Home with subscriptions, as designed: a Spending this month card with the yearly total, Needs your attention for free trials ending within a week, and Coming up with the next four charges and See all. Subscriptions are saved on the phone.
