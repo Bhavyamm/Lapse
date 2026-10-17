@@ -47,7 +47,7 @@ describe('syncReminders', () => {
       expect.objectContaining({ identifier: 'tonight', buttonTitle: 'Remind me tonight' }),
       expect.objectContaining({ identifier: 'keep', buttonTitle: 'I’ll keep it' }),
     ]);
-    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledTimes(3);
+    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledTimes(6);
     expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith({
       identifier: 's:2026-10-19',
       content: {
@@ -98,7 +98,16 @@ describe('syncReminders', () => {
 
     await Promise.all([syncReminders([spotify], on), syncReminders([], on)]);
 
-    expect(order).toEqual(['read', 's:2026-10-19', 's:2026-11-19', 's:2026-12-19', 'read']);
+    expect(order).toEqual([
+      'read',
+      's:2026-10-19',
+      'checkin:2026-11-01',
+      's:2026-11-19',
+      'checkin:2026-12-01',
+      's:2026-12-19',
+      'checkin:2027-01-01',
+      'read',
+    ]);
   });
 
   it('never throws when the phone refuses', async () => {
@@ -117,7 +126,7 @@ describe('syncReminders', () => {
     jest.mocked(api.setNotificationCategoryAsync).mockRejectedValueOnce(new Error('nope'));
 
     await fresh([spotify], on);
-    expect(api.scheduleNotificationAsync).toHaveBeenCalledTimes(3);
+    expect(api.scheduleNotificationAsync).toHaveBeenCalledTimes(6);
 
     await fresh([spotify], on);
     expect(api.setNotificationCategoryAsync).toHaveBeenCalledTimes(2);

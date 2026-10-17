@@ -4,7 +4,7 @@ import { useSubscriptions } from '@/stores/subscriptions';
 
 import HomeScreen from '@/app/(tabs)/index';
 
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn(), navigate: jest.fn() } }));
 
 const initial = useSubscriptions.getState();
 const base = { currency: 'USD' as const, createdAt: '2026-10-01T00:00:00.000Z', trial: false, cycle: 'month' as const };
@@ -99,5 +99,45 @@ describe('Home rows', () => {
     await fireEvent.press(screen.getByRole('button', { name: /^Netflix, renews/ }));
 
     expect(router.push).toHaveBeenCalledWith({ pathname: '/subscription/[id]', params: { id: 'a' } });
+  });
+
+  it('offers the monthly check-in for subscriptions added before this month', async () => {
+    useSubscriptions.setState({
+      subscriptions: [
+        {
+          ...base,
+          id: 'a',
+          serviceId: null,
+          name: 'Gym',
+          priceCents: 4000,
+          chargeOn: '2026-10-30',
+          createdAt: '2026-08-01T00:00:00.000Z',
+        },
+        { ...base, id: 'b', serviceId: null, name: 'New', priceCents: 500, chargeOn: '2026-10-30' },
+      ],
+    });
+    await render(<HomeScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Monthly check-in, 1 subscription to look over' }));
+    expect(jest.requireMock('expo-router').router.push).toHaveBeenCalledWith('/check-in');
+  });
+
+  it('hides the check-in once everything is reviewed', async () => {
+    useSubscriptions.setState({
+      subscriptions: [
+        {
+          ...base,
+          id: 'a',
+          serviceId: null,
+          name: 'Gym',
+          priceCents: 4000,
+          chargeOn: '2026-10-30',
+          reviewedOn: '2026-10-02',
+        },
+      ],
+    });
+    await render(<HomeScreen />);
+
+    expect(screen.queryByText('Monthly check-in')).not.toBeOnTheScreen();
   });
 });

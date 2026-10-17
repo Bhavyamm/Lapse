@@ -63,6 +63,7 @@ export default function RootLayout() {
             <Stack.Screen name="add" />
             <Stack.Screen name="subscription/[id]" />
             <Stack.Screen name="trial/[id]" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="check-in" />
           </Stack.Protected>
         </Stack>
       </View>

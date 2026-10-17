@@ -22,7 +22,11 @@ describe('planReminders', () => {
   it('schedules each upcoming renewal at 9 AM, a day early by default', () => {
     const planned = planReminders([sub({})], on, now);
 
-    expect(planned.map((r) => r.id)).toEqual(['s:2026-10-19', 's:2026-11-19', 's:2026-12-19']);
+    expect(planned.filter((r) => r.data.kind === 'renewal').map((r) => r.id)).toEqual([
+      's:2026-10-19',
+      's:2026-11-19',
+      's:2026-12-19',
+    ]);
     expect(planned[0].at).toEqual(new Date(2026, 9, 18, 9, 0));
     expect(planned[0]).toMatchObject({
       title: 'Spotify renews tomorrow',
@@ -63,12 +67,13 @@ describe('planReminders', () => {
     expect(planReminders([trial], on, now)[0].at).toEqual(new Date(2026, 9, 16, 9, 0));
 
     // Past 9 AM on the charge day there is nothing left to remind about.
-    expect(planReminders([sub({})], on, new Date(2026, 9, 19, 10, 0))[0].id).toBe('s:2026-11-19');
+    const after = planReminders([sub({})], on, new Date(2026, 9, 19, 10, 0)).filter((r) => r.data.kind === 'renewal');
+    expect(after[0].id).toBe('s:2026-11-19');
   });
 
   it('schedules nothing with reminders off, or for a subscription with its alert off', () => {
     expect(planReminders([sub({})], { ...on, remindersEnabled: false }, now)).toEqual([]);
-    expect(planReminders([sub({ remind: false })], on, now)).toEqual([]);
+    expect(planReminders([sub({ remind: false })], on, now).filter((r) => r.data.kind !== 'checkin')).toEqual([]);
   });
 
   it('drops the trial reminder once the trial is kept, but keeps the renewals', () => {
@@ -131,5 +136,25 @@ describe('tonight', () => {
     expect(tonight(new Date(2026, 9, 16, 9, 0))).toEqual(new Date(2026, 9, 16, 20, 0));
     expect(tonight(new Date(2026, 9, 16, 19, 50))).toEqual(new Date(2026, 9, 16, 20, 50));
     expect(tonight(new Date(2026, 9, 16, 22, 0))).toEqual(new Date(2026, 9, 16, 23, 0));
+  });
+});
+
+describe('monthly check-in reminders', () => {
+  it('come at 9 AM on the 1st of each month ahead', () => {
+    const checkIns = planReminders([sub({}), sub({ id: 'n', name: 'Netflix' })], on, now).filter(
+      (r) => r.data.kind === 'checkin',
+    );
+
+    expect(checkIns.map((r) => r.id)).toEqual(['checkin:2026-11-01', 'checkin:2026-12-01', 'checkin:2027-01-01']);
+    expect(checkIns[0]).toMatchObject({
+      title: 'Monthly check-in',
+      body: 'Take a minute to see if your 2 subscriptions are still worth it.',
+    });
+    expect(checkIns[0].at).toEqual(new Date(2026, 10, 1, 9, 0));
+  });
+
+  it('don’t come with only free trials running', () => {
+    const trial = sub({ trial: true, chargeOn: '2026-10-25' });
+    expect(planReminders([trial], on, now).some((r) => r.data.kind === 'checkin')).toBe(false);
   });
 });

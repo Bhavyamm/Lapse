@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
@@ -25,6 +26,7 @@ import { getBiometrics, unlock, type Biometrics } from '@/features/lock/biometri
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
 import { sendTestReminder } from '@/features/reminders/sync';
 import { toCsv } from '@/features/subscriptions/csv';
+import { dueCount } from '@/features/subscriptions/check-in';
 import { shareCsv } from '@/features/subscriptions/export';
 import { summarizeSavings } from '@/features/subscriptions/savings';
 import { useSettings } from '@/stores/settings';
@@ -152,6 +154,9 @@ function SettingsCard() {
   const appLock = useSettings((s) => s.appLock);
   const setAppLock = useSettings((s) => s.setAppLock);
   const [editingReminders, setEditingReminders] = useState(false);
+  const today = useToday();
+  const subscriptions = useSubscriptions((s) => s.subscriptions);
+  const toReview = useMemo(() => dueCount(subscriptions, today), [subscriptions, today]);
   const [biometrics, setBiometrics] = useState<Biometrics | null>(null);
   const confirming = useRef(false);
 
@@ -186,7 +191,8 @@ function SettingsCard() {
       <SettingsRow
         icon={<CalendarIcon size={18} color={colors.ink} />}
         label="Monthly check-in"
-        detail="1st of month"
+        detail={toReview ? `${toReview} to look over` : '1st of month'}
+        onPress={subscriptions.length ? () => router.push('/check-in') : undefined}
       />
       <SettingsRow icon={<CurrencyIcon color={colors.ink} />} label="Currency" detail="USD" />
       {Platform.OS === 'web' || !biometrics ? null : (

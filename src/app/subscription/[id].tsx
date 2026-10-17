@@ -14,7 +14,7 @@ import { SubscriptionEditor } from '@/components/subscription-editor';
 import { Toggle } from '@/components/toggle';
 import { useToday } from '@/hooks/use-today';
 import { findService, logoFor } from '@/features/catalog/catalog';
-import { formatMoney, monthlyCents, nextChargeDate } from '@/features/subscriptions/billing';
+import { formatMoney, monthlyCents, nextChargeDate, yearlyCents } from '@/features/subscriptions/billing';
 import { cancelGuide, storeName } from '@/features/subscriptions/cancel';
 import { draftFromSubscription, toNewSubscription, type Draft } from '@/features/subscriptions/draft';
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
@@ -26,7 +26,6 @@ import { confirm } from '@/utils/notify';
 
 const CYCLE_WORD: Record<BillingCycle, string> = { week: 'a week', month: 'a month', year: 'a year' };
 const CYCLE_LABEL: Record<BillingCycle, string> = { week: 'Weekly', month: 'Monthly', year: 'Yearly' };
-const PER_YEAR: Record<BillingCycle, number> = { week: 52, month: 12, year: 1 };
 
 /** One subscription: what it costs, when it renews, and how to cancel it. */
 export default function SubscriptionScreen() {
@@ -227,7 +226,7 @@ function Hero({ sub, pill, suffix, topInset }: { sub: Subscription; pill: string
   const facts = [
     yearly
       ? { label: 'Per month', value: formatMoney(monthlyCents(sub.priceCents, sub.cycle)) }
-      : { label: 'Per year', value: formatMoney(sub.priceCents * PER_YEAR[sub.cycle]) },
+      : { label: 'Per year', value: formatMoney(yearlyCents(sub.priceCents, sub.cycle)) },
     { label: 'Billed', value: CYCLE_LABEL[sub.cycle] },
     { label: 'Tracked since', value: trackedSince(sub.createdAt) },
   ];

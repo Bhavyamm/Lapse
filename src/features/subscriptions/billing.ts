@@ -35,6 +35,13 @@ export function monthlyCents(priceCents: number, cycle: BillingCycle): number {
   }
 }
 
+const PER_YEAR: Record<BillingCycle, number> = { week: 52, month: 12, year: 1 };
+
+/** What a year of charges costs, in cents. */
+export function yearlyCents(priceCents: number, cycle: BillingCycle): number {
+  return priceCents * PER_YEAR[cycle];
+}
+
 /** "$11.99". */
 export function formatMoney(cents: number): string {
   const sign = cents < 0 ? '-' : '';

@@ -6,7 +6,7 @@ import { AddButton } from '@/components/add-button';
 import { AppText } from '@/components/app-text';
 import { BigAmount } from '@/components/big-amount';
 import { CharcoalCard, GlassCard } from '@/components/cards';
-import { ChevronIcon, PlusIcon } from '@/components/icons';
+import { ChevronIcon, ClockIcon, PlusIcon } from '@/components/icons';
 import { Mascot } from '@/components/mascot';
 import { PillButton } from '@/components/pill-button';
 import { ScreenHeader } from '@/components/screen-header';
@@ -14,6 +14,7 @@ import { ServiceLogo } from '@/components/service-logo';
 import { SubscriptionRow } from '@/components/subscription-row';
 import { TabScreen } from '@/components/tab-screen';
 import { formatMoney } from '@/features/subscriptions/billing';
+import { dueCount } from '@/features/subscriptions/check-in';
 import { buildOverview, inDays, whenShort, type TrialAlert, type Upcoming } from '@/features/subscriptions/overview';
 import { openSubscription } from '@/features/subscriptions/open';
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
@@ -44,10 +45,11 @@ const CYCLE_WORD: Record<BillingCycle, string> = { week: 'a week', month: 'a mon
 function Dashboard({ subscriptions }: { subscriptions: Subscription[] }) {
   const today = useToday();
   const overview = useMemo(() => buildOverview(subscriptions, today), [subscriptions, today]);
+  const toReview = useMemo(() => dueCount(subscriptions, today), [subscriptions, today]);
   return (
     <>
       <SpendCard monthlyCents={overview.monthlyCents} yearlyCents={overview.yearlyCents} count={overview.count} />
-      {overview.attention.length > 0 ? (
+      {overview.attention.length > 0 || toReview > 0 ? (
         <View style={styles.section}>
           <View style={styles.sectionTitle}>
             <View style={styles.dot} />
@@ -56,6 +58,7 @@ function Dashboard({ subscriptions }: { subscriptions: Subscription[] }) {
           {overview.attention.map((alert) => (
             <TrialCard key={alert.sub.id} alert={alert} today={today} />
           ))}
+          {toReview > 0 ? <CheckInCard count={toReview} /> : null}
         </View>
       ) : null}
       {overview.upcoming.length > 0 ? <ComingUp rows={overview.upcoming} /> : null}
@@ -104,6 +107,33 @@ function TrialCard({ alert, today }: { alert: TrialAlert; today: LocalDate }) {
       </View>
       <View style={styles.trialArrow}>
         <ChevronIcon color={colors.white} />
+      </View>
+    </Pressable>
+  );
+}
+
+/** Charcoal row that opens the monthly check-in while some subscriptions haven't had one. */
+function CheckInCard({ count }: { count: number }) {
+  const detail = `${count} ${count === 1 ? 'subscription' : 'subscriptions'} to look over`;
+  return (
+    <Pressable
+      role="button"
+      aria-label={`Monthly check-in, ${detail}`}
+      onPress={() => router.push('/check-in')}
+      style={({ pressed }) => [styles.trial, styles.checkIn, pressed && styles.pressed]}>
+      <View style={styles.checkInIcon}>
+        <ClockIcon color={colors.white} />
+      </View>
+      <View style={styles.rowText}>
+        <AppText variant="bodyStrong" onDark style={styles.trialTitle}>
+          Monthly check-in
+        </AppText>
+        <AppText variant="caption" onDark muted>
+          {detail}
+        </AppText>
+      </View>
+      <View style={[styles.trialArrow, styles.checkInArrow]}>
+        <ChevronIcon color={colors.ink} />
       </View>
     </Pressable>
   );
@@ -209,6 +239,20 @@ const styles = StyleSheet.create({
   trialDetail: {
     color: colors.ink,
     fontFamily: fonts.medium,
+  },
+  checkIn: {
+    backgroundColor: colors.charcoal,
+  },
+  checkInIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.onDarkButton,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkInArrow: {
+    backgroundColor: colors.accent,
   },
   trialArrow: {
     width: 32,

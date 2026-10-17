@@ -23,7 +23,7 @@ export const TONIGHT_HOUR = 20;
 
 export const TRIAL_CATEGORY = 'trial';
 
-export type ReminderKind = 'trial' | 'renewal';
+export type ReminderKind = 'trial' | 'renewal' | 'checkin';
 export type ReminderData = {
   subscriptionId: string;
   kind: ReminderKind;
@@ -112,11 +112,13 @@ export function planReminders(
     planned.push(reminder(sub, sub.chargeOn, 'trial', new Date(sub.snoozeUntil), `${sub.id}:snooze`));
   }
 
-  // Trial reminders matter most, so the cap never drops one for a renewal.
+  planned.push(...checkInReminders(subscriptions, today, now));
+
+  // Trial reminders and check-ins matter most, so the cap never drops one for a renewal.
   const byTime = (a: PlannedReminder, b: PlannedReminder) => a.at.getTime() - b.at.getTime();
-  const trials = planned.filter((r) => r.data.kind === 'trial').sort(byTime);
+  const first = planned.filter((r) => r.data.kind !== 'renewal').sort(byTime);
   const renewals = planned.filter((r) => r.data.kind === 'renewal').sort(byTime);
-  return [...trials, ...renewals].slice(0, MAX_REMINDERS).sort(byTime);
+  return [...first, ...renewals].slice(0, MAX_REMINDERS).sort(byTime);
 }
 
 /**
@@ -135,6 +137,27 @@ function firstReminderTime(chargeOn: LocalDate, lead: ReminderLead, now: Date): 
 /** A "remind me tonight" only counts while the trial runs: up to the end of its last day. */
 export function snoozeFits(at: number, chargeOn: LocalDate): boolean {
   return toLocalDate(new Date(at)) <= chargeOn;
+}
+
+/** 9 AM on the 1st of each month in the horizon, while there's anything to check in on. */
+function checkInReminders(subscriptions: Subscription[], today: LocalDate, now: Date): PlannedReminder[] {
+  const count = subscriptions.filter((s) => !(s.trial && s.chargeOn >= today)).length;
+  if (!count) return [];
+  const reminders: PlannedReminder[] = [];
+  const last = addDays(today, HORIZON_DAYS);
+  for (let month = 1; ; month++) {
+    const first = new Date(now.getFullYear(), now.getMonth() + month, 1, REMINDER_HOUR);
+    const day = toLocalDate(first);
+    if (day > last) break;
+    reminders.push({
+      id: `checkin:${day}`,
+      at: first,
+      title: 'Monthly check-in',
+      body: `Take a minute to see if your ${count === 1 ? 'subscription is' : `${count} subscriptions are`} still worth it.`,
+      data: { subscriptionId: '', kind: 'checkin', chargeOn: day },
+    });
+  }
+  return reminders;
 }
 
 /** When "Remind me tonight" fires: 8 PM today, or an hour from now if that's too close or gone. */

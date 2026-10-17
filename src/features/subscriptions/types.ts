@@ -27,6 +27,8 @@ export type Subscription = {
   trialKept?: boolean;
   /** "Remind me tonight" from a trial reminder: when the extra reminder fires, in ms since 1970. */
   snoozeUntil?: number;
+  /** The last monthly check-in where the person chose to keep it. */
+  reviewedOn?: LocalDate;
   createdAt: string;
 };
 

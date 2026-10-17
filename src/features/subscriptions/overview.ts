@@ -1,7 +1,7 @@
 import { daysBetween, formatShortDate, fromLocalDate, type LocalDate } from '@/utils/dates';
 
-import { monthlyCents, nextChargeDate } from './billing';
-import type { BillingCycle, Subscription } from './types';
+import { monthlyCents, nextChargeDate, yearlyCents } from './billing';
+import type { Subscription } from './types';
 
 /** How far ahead a trial ending counts as needing attention. */
 export const ATTENTION_DAYS = 7;
@@ -26,8 +26,6 @@ export type Overview = {
   all: Upcoming[];
 };
 
-const PER_YEAR: Record<BillingCycle, number> = { week: 52, month: 12, year: 1 };
-
 export function buildOverview(subscriptions: Subscription[], today: LocalDate): Overview {
   const all = subscriptions
     .map((sub) => {
@@ -45,7 +43,7 @@ export function buildOverview(subscriptions: Subscription[], today: LocalDate): 
   const paying = all.filter((u) => !u.trialEnding).map((u) => u.sub);
   return {
     monthlyCents: paying.reduce((sum, s) => sum + monthlyCents(s.priceCents, s.cycle), 0),
-    yearlyCents: paying.reduce((sum, s) => sum + s.priceCents * PER_YEAR[s.cycle], 0),
+    yearlyCents: paying.reduce((sum, s) => sum + yearlyCents(s.priceCents, s.cycle), 0),
     count: paying.length,
     tracked: subscriptions.length,
     attention,

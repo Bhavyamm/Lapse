@@ -11,7 +11,7 @@ import { ServiceLogo } from '@/components/service-logo';
 import { useToday } from '@/hooks/use-today';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
 import { formatReminder, reminderAt } from '@/features/reminders/when';
-import { formatMoney, nextChargeDate } from '@/features/subscriptions/billing';
+import { formatMoney, nextChargeDate, yearlyCents } from '@/features/subscriptions/billing';
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
 import { useSettings } from '@/stores/settings';
 import { useSubscriptions } from '@/stores/subscriptions';
@@ -19,7 +19,6 @@ import { colors, fonts, radii, spacing } from '@/theme';
 import { daysBetween, formatShortDate, fromLocalDate, type LocalDate } from '@/utils/dates';
 
 const CYCLE_WORD: Record<BillingCycle, string> = { week: 'a week', month: 'a month', year: 'a year' };
-const PER_YEAR: Record<BillingCycle, number> = { week: 52, month: 12, year: 1 };
 
 /** A running free trial: how long is left, what it costs after, the reminder, and the way out. */
 export default function TrialScreen() {
@@ -109,7 +108,7 @@ function Trial({ sub, today }: { sub: Subscription; today: LocalDate }) {
         <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.xl }]}>
           <View style={styles.facts}>
             <Fact label="First charge" value={formatShortDate(sub.chargeOn)} />
-            <Fact label="If you keep it" value={`${formatMoney(sub.priceCents * PER_YEAR[sub.cycle])}/yr`} />
+            <Fact label="If you keep it" value={`${formatMoney(yearlyCents(sub.priceCents, sub.cycle))}/yr`} />
           </View>
 
           <View style={styles.reminder}>

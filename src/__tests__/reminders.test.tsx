@@ -51,6 +51,11 @@ describe('Reminder taps and buttons', () => {
     expect(router().push).toHaveBeenCalledWith({ pathname: '/trial/[id]', params: { id: 'd' } });
   });
 
+  it('opens the monthly check-in from its reminder', () => {
+    handleResponse({ subscriptionId: '', kind: 'checkin', chargeOn: '2026-11-01' }, tap);
+    expect(router().push).toHaveBeenCalledWith('/check-in');
+  });
+
   it('opens the cancel steps from "Cancel the trial"', () => {
     handleResponse(data, 'cancel');
     expect(router().push).toHaveBeenCalledWith({ pathname: '/subscription/[id]', params: { id: 'd' } });
