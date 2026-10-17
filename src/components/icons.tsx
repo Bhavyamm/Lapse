@@ -177,3 +177,23 @@ export function ClockIcon({ size = 22, color }: IconProps) {
     </Svg>
   );
 }
+
+export function MailIcon({ size = 22, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)} strokeWidth={1.8}>
+      <Rect x={3} y={5} width={18} height={14} rx={3} />
+      <Path d="M3 8l9 6 9-6" />
+    </Svg>
+  );
+}
+
+export function PeopleIcon({ size = 22, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)} strokeWidth={1.8}>
+      <Circle cx={9} cy={8} r={3.5} />
+      <Path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <Circle cx={17} cy={9} r={2.5} />
+      <Path d="M17 14a5 5 0 0 1 4.5 5" />
+    </Svg>
+  );
+}

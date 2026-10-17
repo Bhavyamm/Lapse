@@ -23,6 +23,7 @@ import { SettingsRow } from '@/components/settings-row';
 import { TabScreen } from '@/components/tab-screen';
 import { useToday } from '@/hooks/use-today';
 import { getBiometrics, unlock, type Biometrics } from '@/features/lock/biometrics';
+import { PRO_PRICE } from '@/features/pro/purchase';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
 import { sendTestReminder } from '@/features/reminders/sync';
 import { toCsv } from '@/features/subscriptions/csv';
@@ -33,8 +34,6 @@ import { useSettings } from '@/stores/settings';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { notify } from '@/utils/notify';
-
-const PRO_PRICE = '$14.99';
 
 /** Money saved, settings, and data import and export. */
 export default function ProfileScreen() {
@@ -96,10 +95,7 @@ async function testReminder() {
   }
 }
 
-/** Pro arrives in a later step; until then its entry points say so. */
-function proComingSoon() {
-  notify('Pro is on its way', `Statement import and the rest of Pro arrive in a later update, for ${PRO_PRICE} once.`);
-}
+const openPro = () => router.push('/pro');
 
 function SavingsCard() {
   const today = useToday();
@@ -135,7 +131,7 @@ function SavingsCard() {
       <Pressable
         role="button"
         aria-label={`Unlock Pro, ${PRO_PRICE} once`}
-        onPress={proComingSoon}
+        onPress={openPro}
         style={({ pressed }) => [styles.pro, pressed && { opacity: 0.85 }]}>
         <AppText variant="link" style={styles.proText}>
           Unlock Pro · {PRO_PRICE} once
@@ -238,7 +234,7 @@ function DataCard() {
             </AppText>
           </View>
         }
-        onPress={proComingSoon}
+        onPress={openPro}
         divider={false}
       />
       <SettingsRow

@@ -14,6 +14,7 @@ jest.mock('@/features/lock/biometrics', () => ({ getBiometrics: jest.fn(), unloc
 jest.mock('@/features/reminders/permissions', () => ({ requestReminderPermission: jest.fn() }));
 jest.mock('@/features/subscriptions/export', () => ({ shareCsv: jest.fn() }));
 jest.mock('@/features/reminders/sync', () => ({ sendTestReminder: jest.fn() }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
 const initialSettings = useSettings.getState();
 const initialSubs = useSubscriptions.getState();
@@ -69,15 +70,15 @@ describe('Profile screen', () => {
     expect(screen.getByLabelText('1 Trial caught')).toBeOnTheScreen();
   });
 
-  it('says Pro is coming from the Pro button and statement import', async () => {
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  it('opens Pro from the Pro button and statement import', async () => {
     await render(<ProfileScreen />);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Unlock Pro, $14.99 once' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Import a statement' }));
 
-    expect(alert).toHaveBeenCalledTimes(2);
-    expect(alert.mock.calls[0][0]).toBe('Pro is on its way');
+    const push = jest.requireMock('expo-router').router.push;
+    expect(push).toHaveBeenCalledTimes(2);
+    expect(push).toHaveBeenCalledWith('/pro');
   });
 
   it('turns reminders on from the sheet once the phone allows them', async () => {
