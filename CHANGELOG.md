@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add a subscription: search 145 popular services with their logos, pick one or more, and set the price, how often it charges, whether it is a free trial, and the next charge date. Anything not listed can be added by hand.
-- Home lists your subscriptions under Coming up, soonest charge first, with a + button to add more. Subscriptions are saved on the phone.
+- Home with subscriptions, as designed: a Spending this month card with the yearly total, Needs your attention for free trials ending within a week, and Coming up with the next four charges and See all. Subscriptions are saved on the phone.
 - Welcome screen with the lapse. logo, the tagline, the promise that your data stays on the phone, and the mascot peeking in from the bottom-left corner. Tap anywhere to continue.
 - Turn on reminders screen: sample reminders, a choice of when to be reminded (3 days before, 1 day before, or the morning of), and a button that asks your phone for permission to send notifications. Skip and Not now finish onboarding with reminders off.
 - Development builds only: a "Show onboarding again" button on Profile brings the welcome screen back for testing. It is not in release builds.

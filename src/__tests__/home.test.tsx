@@ -21,6 +21,31 @@ describe('Home', () => {
     expect(screen.queryByText('Coming up')).not.toBeOnTheScreen();
   });
 
+  it('shows the spending card, a trial ending soon, and the next charges', async () => {
+    useSubscriptions.setState({
+      subscriptions: [
+        { ...base, id: 'a', serviceId: 'netflix', name: 'Netflix', priceCents: 1549, chargeOn: '2026-10-22' },
+        {
+          ...base,
+          id: 'b',
+          serviceId: 'duolingo-max',
+          name: 'Duolingo Max',
+          priceCents: 2999,
+          chargeOn: '2026-10-19',
+          trial: true,
+        },
+      ],
+    });
+    await render(<HomeScreen />);
+
+    expect(screen.getByText('Spending this month')).toBeOnTheScreen();
+    expect(screen.getByLabelText('$45.48')).toBeOnTheScreen();
+    expect(screen.getByText('$546 a year across 2 subscriptions')).toBeOnTheScreen();
+    expect(screen.getByText('Duolingo Max trial ends in 2 days')).toBeOnTheScreen();
+    expect(screen.getByText('Then $29.99 a month from Mon')).toBeOnTheScreen();
+    expect(screen.getByRole('link', { name: 'See all' })).toBeOnTheScreen();
+  });
+
   it('lists subscriptions soonest first, rolling past dates forward', async () => {
     useSubscriptions.setState({
       subscriptions: [
@@ -35,7 +60,7 @@ describe('Home', () => {
     const names = screen.getAllByText(/^(Netflix|Spotify|Gym)$/).map((n) => n.props.children);
     expect(names).toEqual(['Spotify', 'Netflix', 'Gym']);
     expect(screen.getByText('Mon, Oct 19')).toBeOnTheScreen();
-    expect(screen.getByText('Free trial ends')).toBeOnTheScreen();
+    expect(screen.getByText('Free trial')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Add a subscription' })).toBeOnTheScreen();
   });
 });

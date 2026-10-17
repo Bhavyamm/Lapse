@@ -68,6 +68,8 @@ export const type = {
   section: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 20 },
   button: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 22 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
+  /** The "$" and cents beside a display-size amount. */
+  amountUnit: { fontFamily: fonts.medium, fontSize: 26, letterSpacing: -1.1, lineHeight: 30 },
 } as const;
 
 export type TypeVariant = keyof typeof type;

@@ -1,22 +1,24 @@
 import { router } from 'expo-router';
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { CharcoalCard, GlassCard } from '@/components/cards';
-import { PlusIcon } from '@/components/icons';
+import { ChevronIcon, PlusIcon } from '@/components/icons';
 import { Mascot } from '@/components/mascot';
 import { PillButton } from '@/components/pill-button';
 import { ScreenHeader } from '@/components/screen-header';
 import { ServiceLogo } from '@/components/service-logo';
 import { TabScreen } from '@/components/tab-screen';
-import { formatMoney, nextChargeDate } from '@/features/subscriptions/billing';
+import { formatMoney } from '@/features/subscriptions/billing';
+import { buildOverview, inDays, whenShort, type TrialAlert, type Upcoming } from '@/features/subscriptions/overview';
 import type { BillingCycle, Subscription } from '@/features/subscriptions/types';
 import { useSubscriptions } from '@/stores/subscriptions';
-import { colors, radii, spacing } from '@/theme';
+import { colors, fonts, radii, spacing } from '@/theme';
 import { useToday } from '@/hooks/use-today';
-import { formatShortDate, formatToday } from '@/utils/dates';
+import { formatShortDate, formatToday, type LocalDate } from '@/utils/dates';
 
-/** Home: the empty state until something is added, then what's coming up. */
+/** Home: the empty state until something is added, then spending, alerts and what's next. */
 export default function HomeScreen() {
   const subscriptions = useSubscriptions((s) => s.subscriptions);
   const empty = subscriptions.length === 0;
@@ -37,46 +39,117 @@ export default function HomeScreen() {
           )
         }
       />
-      {empty ? <EmptyHome /> : <ComingUp subscriptions={subscriptions} />}
+      {empty ? <EmptyHome /> : <Dashboard subscriptions={subscriptions} />}
     </TabScreen>
   );
 }
 
 const CYCLE_LABEL: Record<BillingCycle, string> = { week: 'Weekly', month: 'Monthly', year: 'Yearly' };
+const CYCLE_WORD: Record<BillingCycle, string> = { week: 'a week', month: 'a month', year: 'a year' };
 
-/** Every subscription, soonest charge first. The spend card and alerts join it in the next step. */
-function ComingUp({ subscriptions }: { subscriptions: Subscription[] }) {
+function Dashboard({ subscriptions }: { subscriptions: Subscription[] }) {
   const today = useToday();
-  const rows = subscriptions
-    .map((sub) => ({ sub, next: nextChargeDate(sub, today) }))
-    .sort((a, b) => a.next.localeCompare(b.next) || a.sub.name.localeCompare(b.sub.name));
+  const overview = useMemo(() => buildOverview(subscriptions, today), [subscriptions, today]);
+  return (
+    <>
+      <SpendCard monthlyCents={overview.monthlyCents} yearlyCents={overview.yearlyCents} count={overview.count} />
+      {overview.attention.length > 0 ? (
+        <View style={styles.section}>
+          <View style={styles.sectionTitle}>
+            <View style={styles.dot} />
+            <AppText variant="section">Needs your attention</AppText>
+          </View>
+          {overview.attention.map((alert) => (
+            <TrialCard key={alert.sub.id} alert={alert} today={today} />
+          ))}
+        </View>
+      ) : null}
+      {overview.upcoming.length > 0 ? <ComingUp rows={overview.upcoming} /> : null}
+    </>
+  );
+}
+
+/** Charcoal card with the monthly total, as "$74.46" with a big dollar figure. */
+function SpendCard({ monthlyCents, yearlyCents, count }: { monthlyCents: number; yearlyCents: number; count: number }) {
+  const [dollars, cents] = formatMoney(monthlyCents).slice(1).split('.');
+  const yearly = formatMoney(Math.round(yearlyCents / 100) * 100).slice(0, -3);
+  const across = `${yearly} a year across ${count} ${count === 1 ? 'subscription' : 'subscriptions'}`;
+  return (
+    <CharcoalCard contentStyle={styles.spend}>
+      <AppText variant="label" onDark muted>
+        Spending this month
+      </AppText>
+      <View style={styles.amount} accessible aria-label={`$${dollars}.${cents}`}>
+        <AppText variant="amountUnit" onDark muted style={styles.symbol}>
+          $
+        </AppText>
+        <AppText variant="display" onDark>
+          {dollars}
+        </AppText>
+        <AppText variant="amountUnit" onDark muted>
+          .{cents}
+        </AppText>
+      </View>
+      <AppText variant="label" onDark muted>
+        {across}
+      </AppText>
+    </CharcoalCard>
+  );
+}
+
+/** Orange row for a free trial that is about to turn into a charge. */
+function TrialCard({ alert, today }: { alert: TrialAlert; today: LocalDate }) {
+  const { sub, endsOn, daysLeft } = alert;
+  const when = whenShort(endsOn, today);
+  return (
+    <View style={styles.trial}>
+      <ServiceLogo serviceId={sub.serviceId} name={sub.name} size={44} />
+      <View style={styles.rowText}>
+        <AppText variant="bodyStrong" style={styles.trialTitle}>
+          {sub.name} trial ends {inDays(daysLeft)}
+        </AppText>
+        <AppText variant="caption" style={styles.trialDetail}>
+          Then {formatMoney(sub.priceCents)} {CYCLE_WORD[sub.cycle]} from {when}
+        </AppText>
+      </View>
+      <View style={styles.trialArrow}>
+        <ChevronIcon color={colors.white} />
+      </View>
+    </View>
+  );
+}
+
+/** The next few charges, soonest first, with a link to the full list. */
+function ComingUp({ rows }: { rows: Upcoming[] }) {
   return (
     <GlassCard contentStyle={styles.list}>
-      <AppText variant="section" style={styles.listTitle}>
-        Coming up
-      </AppText>
-      {rows.map(({ sub, next }) => {
-        const trialing = sub.trial && next === sub.chargeOn;
-        return (
-          <View key={sub.id} style={styles.row}>
-            <ServiceLogo serviceId={sub.serviceId} name={sub.name} />
-            <View style={styles.rowText}>
-              <AppText variant="bodyStrong" numberOfLines={1}>
-                {sub.name}
-              </AppText>
-              <AppText variant="caption" muted>
-                {trialing ? 'Free trial ends' : CYCLE_LABEL[sub.cycle]}
-              </AppText>
-            </View>
-            <View style={styles.rowRight}>
-              <AppText variant="bodyStrong">{formatMoney(sub.priceCents)}</AppText>
-              <AppText variant="caption" muted>
-                {formatShortDate(next)}
-              </AppText>
-            </View>
+      <View style={styles.listHeader}>
+        <AppText variant="section">Coming up</AppText>
+        <Pressable role="link" onPress={() => router.navigate('/subscriptions')} hitSlop={10}>
+          <AppText variant="caption" muted style={styles.seeAll}>
+            See all
+          </AppText>
+        </Pressable>
+      </View>
+      {rows.map(({ sub, next, trialEnding }) => (
+        <View key={sub.id} style={styles.row}>
+          <ServiceLogo serviceId={sub.serviceId} name={sub.name} />
+          <View style={styles.rowText}>
+            <AppText variant="bodyStrong" numberOfLines={1}>
+              {sub.name}
+            </AppText>
+            <AppText variant="caption" muted>
+              {trialEnding ? 'Free trial' : CYCLE_LABEL[sub.cycle]}
+            </AppText>
           </View>
-        );
-      })}
+          <View style={styles.rowRight}>
+            <AppText variant="bodyStrong">{formatMoney(sub.priceCents)}</AppText>
+            <AppText variant="caption" muted>
+              {formatShortDate(next)}
+            </AppText>
+          </View>
+        </View>
+      ))}
     </GlassCard>
   );
 }
@@ -119,13 +192,71 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  spend: {
+    paddingVertical: 20,
+    paddingHorizontal: spacing.xl,
+  },
+  amount: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  symbol: {
+    marginRight: 3,
+  },
+  section: {
+    gap: spacing.sm,
+  },
+  sectionTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingTop: 6,
+    paddingHorizontal: 4,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.accent,
+  },
+  trial: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: 14,
+    borderRadius: radii.row,
+    backgroundColor: colors.accent,
+  },
+  trialTitle: {
+    fontFamily: fonts.bold,
+  },
+  trialDetail: {
+    color: colors.ink,
+    fontFamily: fonts.medium,
+  },
+  trialArrow: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.pill,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   list: {
     paddingHorizontal: spacing.lg,
-    paddingTop: 14,
-    paddingBottom: 4,
+    paddingVertical: spacing.sm,
   },
-  listTitle: {
-    paddingBottom: 8,
+  listHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  seeAll: {
+    fontFamily: fonts.medium,
   },
   row: {
     flexDirection: 'row',
