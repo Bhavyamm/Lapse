@@ -52,4 +52,5 @@ Docs: https://docs.expo.dev/eas/index.md
 - Run before every push: `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test`.
 - Tests use Jest (`jest-expo` preset) with React Native Testing Library; files sit beside the source as `*.test.ts(x)`, screen tests live in `src/__tests__/` (never inside `src/app/`, where every file becomes a route).
 - Use `role` and `aria-*` props for accessibility, not `accessibilityRole` or `accessibilityState`: react-native-web ignores the old props.
+- Apple HIG skills (`hig-*` in `.claude/skills`, from raintree-technology/apple-hig-skills via nexu-io/open-design; license in `.claude/skills/HIG-NOTICE.md`) guide iOS design decisions; project context for them is `.claude/apple-design-context.md`. Check new UI against them alongside the brand tokens.
 - Each screen goes through the workflow skills in `.claude/skills`: build it, `/check verify`, `/check review` on a second model, `/test`, `/document`, and `/debug` for any failure. Review findings live in `docs/reviews/`.
