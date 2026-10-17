@@ -58,7 +58,8 @@ export function AppLock({ canPrompt, onLockedChange }: Props) {
   };
 
   useEffect(() => {
-    if (!locked || !canPrompt) return;
+    // Not while in the background: the lock goes up then, and the prompt waits for the return.
+    if (!locked || !canPrompt || wasBackground.current) return;
     let cancelled = false;
     unlock('Unlock lapse.').then((ok) => ok && !cancelled && setLocked(false));
     return () => {

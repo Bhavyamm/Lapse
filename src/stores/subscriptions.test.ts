@@ -57,3 +57,23 @@ describe('subscriptions store', () => {
     expect(useSubscriptions.getState()).toMatchObject({ hydrated: true, subscriptions: [stored] });
   });
 });
+
+describe('cancel', () => {
+  beforeEach(() => useSubscriptions.setState(initial, true));
+
+  it('stops tracking the subscription and remembers it as cancelled', () => {
+    const [added] = useSubscriptions.getState().add([netflix]);
+    useSubscriptions.getState().cancel(added.id, '2026-10-16');
+
+    const state = useSubscriptions.getState();
+    expect(state.subscriptions).toEqual([]);
+    expect(state.cancelled).toEqual([
+      expect.objectContaining({ id: added.id, name: 'Netflix', chargeOn: '2026-10-22', cancelledOn: '2026-10-16' }),
+    ]);
+  });
+
+  it('ignores an id it does not know', () => {
+    useSubscriptions.getState().cancel('missing', '2026-10-16');
+    expect(useSubscriptions.getState().cancelled).toEqual([]);
+  });
+});
