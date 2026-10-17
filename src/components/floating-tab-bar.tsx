@@ -29,9 +29,9 @@ export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, ins
           return (
             <Pressable
               key={route.key}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: focused }}
-              accessibilityLabel={options.title ?? route.name}
+              role="tab"
+              aria-selected={focused}
+              aria-label={options.title ?? route.name}
               onPress={onPress}
               style={[styles.tab, focused && styles.tabActive]}>
               <Icon color={focused ? colors.ink : colors.textOnDarkSecondary} />

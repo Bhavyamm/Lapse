@@ -15,7 +15,11 @@ export default function AddScreen() {
       <ScreenHeader
         title="Add a subscription"
         right={
-          <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={() => router.back()} style={styles.close}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            onPress={() => router.back()}
+            style={styles.close}>
             <CloseIcon color={colors.white} />
           </Pressable>
         }

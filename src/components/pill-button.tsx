@@ -10,19 +10,22 @@ type Props = {
   icon: ReactNode;
   /** `accent` is the orange CTA; `dark` is the black pill. */
   tone?: 'accent' | 'dark';
+  disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
 /** Full-width pill CTA with a round icon button on its right end. */
-export function PillButton({ label, onPress, icon, tone = 'accent', style }: Props) {
+export function PillButton({ label, onPress, icon, tone = 'accent', disabled, style }: Props) {
   const dark = tone === 'dark';
   return (
     <Pressable
-      accessibilityRole="button"
+      role="button"
+      aria-disabled={!!disabled}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: dark ? colors.ink : colors.accent, opacity: pressed ? 0.85 : 1 },
+        { backgroundColor: dark ? colors.ink : colors.accent, opacity: disabled ? 0.6 : pressed ? 0.85 : 1 },
         style,
       ]}>
       <AppText variant="button" style={{ color: dark ? colors.white : colors.ink }}>

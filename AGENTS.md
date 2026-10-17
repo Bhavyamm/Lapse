@@ -45,3 +45,10 @@ Docs: https://docs.expo.dev/eas/index.md
 - Product: lapse., an on-device subscription tracker. No backend in the MVP; data lives in an encrypted SQLite database on the phone.
 - Use the tokens in `src/theme` and the shared components in `src/components`; don't hard-code new colors or font sizes.
 - Every screen must keep working in Expo Go until a feature truly needs a development build (SQLCipher, RevenueCat).
+
+## Checks and workflow
+
+- Run before every push: `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test`.
+- Tests use Jest (`jest-expo` preset) with React Native Testing Library; files sit beside the source as `*.test.ts(x)`, screen tests live in `src/__tests__/` (never inside `src/app/`, where every file becomes a route).
+- Use `role` and `aria-*` props for accessibility, not `accessibilityRole` or `accessibilityState`: react-native-web ignores the old props.
+- Each screen goes through the workflow skills in `.claude/skills`: build it, `/check verify`, `/check review` on a second model, `/test`, `/document`, and `/debug` for any failure. Review findings live in `docs/reviews/`.

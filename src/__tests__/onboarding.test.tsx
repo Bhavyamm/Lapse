@@ -1,0 +1,139 @@
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { router } from 'expo-router';
+
+import { requestReminderPermission } from '@/features/reminders/permissions';
+import { useSettings } from '@/stores/settings';
+
+import RemindersScreen from '@/app/reminders';
+import WelcomeScreen from '@/app/welcome';
+
+jest.mock('expo-router', () => ({ router: { push: jest.fn(), replace: jest.fn() } }));
+jest.mock('@/features/reminders/permissions', () => ({ requestReminderPermission: jest.fn() }));
+
+const requestPermission = requestReminderPermission as jest.Mock;
+
+/**
+ * Taps a pressable synchronously, outside fireEvent's own act(), so a test can
+ * land two taps before React re-renders.
+ */
+function tap(element: ReturnType<typeof screen.getByRole>) {
+  element.props.onClick({ nativeEvent: {}, persist: () => {} });
+}
+const initial = useSettings.getState();
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  useSettings.setState(initial, true);
+});
+
+describe('Welcome screen', () => {
+  it('shows the tagline and the privacy promise', async () => {
+    await render(<WelcomeScreen />);
+
+    expect(screen.getByText('Catch every charge before it lands.')).toBeOnTheScreen();
+    expect(screen.getByText('Your data stays on this phone')).toBeOnTheScreen();
+  });
+
+  it('exposes one continue button whose name includes the privacy promise for screen readers', async () => {
+    await render(<WelcomeScreen />);
+
+    expect(screen.getByRole('button', { name: /Your data stays on this phone\. Continue/ })).toBeOnTheScreen();
+  });
+
+  it('goes to the reminders screen when tapped', async () => {
+    await render(<WelcomeScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: /Continue/ }));
+
+    expect(router.push).toHaveBeenCalledWith('/reminders');
+  });
+});
+
+describe('Turn on reminders screen', () => {
+  it('shows the three timing choices with 1 day before selected', async () => {
+    await render(<RemindersScreen />);
+
+    expect(screen.getByRole('radio', { name: '1 day before' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: '3 days before' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Morning of' })).not.toBeChecked();
+  });
+
+  it('saves the timing the person picks', async () => {
+    await render(<RemindersScreen />);
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Morning of' }));
+
+    expect(useSettings.getState().reminderLead).toBe('morningOf');
+    expect(screen.getByRole('radio', { name: 'Morning of' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: '1 day before' })).not.toBeChecked();
+  });
+
+  it('asks for permission, finishes onboarding with reminders on, and opens Home when allowed', async () => {
+    requestPermission.mockResolvedValue(true);
+    await render(<RemindersScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: /Turn on reminders/ }));
+
+    expect(requestPermission).toHaveBeenCalledTimes(1);
+    expect(useSettings.getState()).toMatchObject({ hasOnboarded: true, remindersEnabled: true });
+    expect(router.replace).toHaveBeenCalledWith('/');
+  });
+
+  it('still finishes onboarding, with reminders off, when the person declines', async () => {
+    requestPermission.mockResolvedValue(false);
+    await render(<RemindersScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: /Turn on reminders/ }));
+
+    expect(useSettings.getState()).toMatchObject({ hasOnboarded: true, remindersEnabled: false });
+    expect(router.replace).toHaveBeenCalledWith('/');
+  });
+
+  it('asks only once when the button is tapped twice quickly', async () => {
+    let resolve: (granted: boolean) => void = () => {};
+    requestPermission.mockReturnValue(new Promise<boolean>((r) => (resolve = r)));
+    await render(<RemindersScreen />);
+    const button = screen.getByRole('button', { name: /Turn on reminders/ });
+
+    // Two taps in the same frame, before React re-renders the button as disabled.
+    await act(async () => {
+      tap(button);
+      tap(button);
+      resolve(true);
+    });
+
+    expect(requestPermission).toHaveBeenCalledTimes(1);
+    expect(router.replace).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores Skip while the permission prompt is open', async () => {
+    let resolve: (granted: boolean) => void = () => {};
+    requestPermission.mockReturnValue(new Promise<boolean>((r) => (resolve = r)));
+    await render(<RemindersScreen />);
+
+    await act(async () => {
+      tap(screen.getByRole('button', { name: /Turn on reminders/ }));
+      tap(screen.getByRole('button', { name: 'Skip' }));
+      resolve(true);
+    });
+
+    expect(router.replace).toHaveBeenCalledTimes(1);
+    expect(useSettings.getState().remindersEnabled).toBe(true);
+  });
+
+  it.each(['Skip', 'Not now'])('"%s" finishes onboarding without asking for permission', async (label) => {
+    await render(<RemindersScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: label }));
+
+    expect(requestPermission).not.toHaveBeenCalled();
+    expect(useSettings.getState()).toMatchObject({ hasOnboarded: true, remindersEnabled: false });
+    expect(router.replace).toHaveBeenCalledWith('/');
+  });
+
+  it('labels the progress dots for screen readers', async () => {
+    await render(<RemindersScreen />);
+
+    expect(screen.getByLabelText('Step 2 of 3')).toBeOnTheScreen();
+  });
+});

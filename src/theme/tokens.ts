@@ -8,6 +8,11 @@ export const colors = {
   canvas: '#E6E5E7',
   ink: '#141414',
   charcoal: '#232323',
+  /** Darkest backdrop, used behind the welcome screen. */
+  night: '#161616',
+  nightRaised: '#2A2A2A',
+  /** Strong text that is not quite ink, such as quiet buttons. */
+  inkSoft: '#3A3A3A',
   accent: '#EE7A3A',
   accentLight: '#FFAA6E',
   white: '#FFFFFF',
@@ -22,6 +27,18 @@ export const colors = {
   success: '#2FA36B',
 } as const;
 
+/** Brand gradient stops for the logo, mascot-style glossy orange and dark card. */
+export const brand = {
+  orangeHighlight: '#FFB07A',
+  orange: '#EE7A3A',
+  orangeDeep: '#C9541F',
+  peach: '#FFD2B0',
+  cardLight: '#2E2E2E',
+  cardDark: '#0E0E0E',
+  /** Light card behind a sample notification. */
+  notificationSurface: 'rgba(255,255,255,0.94)',
+} as const;
+
 export const fonts = {
   regular: 'BricolageGrotesque_400Regular',
   medium: 'BricolageGrotesque_500Medium',
@@ -31,12 +48,17 @@ export const fonts = {
 
 /** Type scale. 13px is the smallest size the app uses. */
 export const type = {
+  wordmark: { fontFamily: fonts.semibold, fontSize: 52, letterSpacing: -2.6, lineHeight: 56 },
   display: { fontFamily: fonts.semibold, fontSize: 60, letterSpacing: -2.7, lineHeight: 64 },
   title: { fontFamily: fonts.medium, fontSize: 29, letterSpacing: -1.16, lineHeight: 31 },
+  hero: { fontFamily: fonts.medium, fontSize: 36, letterSpacing: -1.44, lineHeight: 37 },
   headline: { fontFamily: fonts.medium, fontSize: 32, letterSpacing: -1.28, lineHeight: 35 },
   body: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 23 },
   bodyStrong: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 21 },
   label: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 19 },
+  link: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 20 },
+  bubble: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 19 },
+  lede: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22 },
   section: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 20 },
   button: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 22 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
