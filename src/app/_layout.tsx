@@ -1,0 +1,96 @@
+import {
+  BricolageGrotesque_400Regular,
+  BricolageGrotesque_500Medium,
+  BricolageGrotesque_600SemiBold,
+  BricolageGrotesque_700Bold,
+  useFonts,
+} from '@expo-google-fonts/bricolage-grotesque';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState, StyleSheet, View } from 'react-native';
+
+import { AppLock } from '@/components/app-lock';
+import { LaunchSplash } from '@/components/launch-splash';
+import { Reminders } from '@/components/reminders';
+import { refreshPro, startPro } from '@/features/pro/purchase';
+import { useLock } from '@/stores/lock';
+import { useSettings, useSettingsHydrated } from '@/stores/settings';
+import { useSubscriptionsHydrated } from '@/stores/subscriptions';
+import { colors } from '@/theme';
+
+SplashScreen.preventAutoHideAsync();
+
+export default function RootLayout() {
+  const [loaded, error] = useFonts({
+    BricolageGrotesque_400Regular,
+    BricolageGrotesque_500Medium,
+    BricolageGrotesque_600SemiBold,
+    BricolageGrotesque_700Bold,
+  });
+
+  const settingsHydrated = useSettingsHydrated();
+  const subscriptionsHydrated = useSubscriptionsHydrated();
+  const hydrated = settingsHydrated && subscriptionsHydrated;
+  const hasOnboarded = useSettings((s) => s.hasOnboarded);
+  const ready = (loaded || !!error) && hydrated;
+  // The lapse. splash plays once per launch, over whichever screen the app opens on.
+  const [splashing, setSplashing] = useState(true);
+  const endSplash = useCallback(() => setSplashing(false), []);
+  const locked = useLock((s) => s.locked);
+  const covered = splashing || locked;
+
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
+  // Connects to RevenueCat in the background; Pro's state and price fill in when it answers.
+  // Asks again each time the app comes back, so an offline start or a purchase approved later
+  // (Ask to Buy) shows up.
+  useEffect(() => {
+    void startPro();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void startPro().then((on) => (on ? refreshPro() : undefined));
+    });
+    return () => sub.remove();
+  }, []);
+
+  if (!ready) return null;
+
+  return (
+    <>
+      <StatusBar style="dark" />
+      {/* Hidden from screen readers while the splash or the lock covers it. */}
+      <View
+        style={{ flex: 1 }}
+        aria-hidden={covered}
+        importantForAccessibility={covered ? 'no-hide-descendants' : 'auto'}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }}>
+          <Stack.Protected guard={!hasOnboarded}>
+            <Stack.Screen name="reminders" />
+          </Stack.Protected>
+          <Stack.Protected guard={hasOnboarded}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="add" />
+            <Stack.Screen name="subscription/[id]" />
+            <Stack.Screen name="trial/[id]" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="check-in" />
+            <Stack.Screen name="pro" options={{ presentation: 'modal' }} />
+          </Stack.Protected>
+          {/* Readable from anywhere. A sheet, so it also opens above the Pro sheet on iOS. */}
+          <Stack.Screen name="legal/[doc]" options={{ presentation: 'modal' }} />
+        </Stack>
+      </View>
+      {/* Under the splash, so a locked app shows the lock as the splash fades. */}
+      <View
+        style={StyleSheet.absoluteFill}
+        pointerEvents="box-none"
+        aria-hidden={splashing}
+        importantForAccessibility={splashing ? 'no-hide-descendants' : 'auto'}>
+        <AppLock canPrompt={!splashing} />
+      </View>
+      <Reminders />
+      {splashing ? <LaunchSplash onDone={endSplash} /> : null}
+    </>
+  );
+}

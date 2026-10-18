@@ -1,0 +1,1321 @@
+[
+  {
+    "id": "netflix",
+    "name": "Netflix",
+    "icon": "netflix",
+    "price": 799,
+    "from": true,
+    "cycle": "month",
+    "category": "Video",
+    "tile": "#000000",
+    "glyph": "#E50914",
+    "popular": 1,
+    "cancel": {
+      "url": "https://www.netflix.com/cancelplan",
+      "steps": ["Open the cancel page and sign in.", "Tap Cancel Membership, then Finish Cancellation."]
+    }
+  },
+  {
+    "id": "spotify",
+    "name": "Spotify",
+    "icon": "spotify",
+    "price": 1199,
+    "from": true,
+    "cycle": "month",
+    "category": "Music",
+    "tile": "#000000",
+    "glyph": "#1ED760",
+    "popular": 2,
+    "cancel": {
+      "url": "https://www.spotify.com/account/subscription/",
+      "steps": [
+        "Open your Spotify account page and sign in.",
+        "Tap Change plan, then Cancel Premium under Spotify Free."
+      ]
+    }
+  },
+  {
+    "id": "youtube-premium",
+    "name": "YouTube Premium",
+    "icon": "youtube",
+    "price": 1399,
+    "cycle": "month",
+    "category": "Video",
+    "tile": "#FFFFFF",
+    "glyph": "#FF0033",
+    "aliases": ["yt"],
+    "popular": 3,
+    "cancel": {
+      "url": "https://www.youtube.com/paid_memberships",
+      "steps": ["Open your YouTube memberships and sign in.", "Tap Manage membership, then Deactivate or Cancel."]
+    }
+  },
+  {
+    "id": "chatgpt-plus",
+    "name": "ChatGPT Plus",
+    "icon": "openai",
+    "price": 2000,
+    "cycle": "month",
+    "category": "AI",
+    "tile": "#141414",
+    "glyph": "#FFFFFF",
+    "aliases": ["openai", "gpt"],
+    "popular": 4
+  },
+  {
+    "id": "duolingo-max",
+    "name": "Duolingo Max",
+    "icon": "duolingo",
+    "price": 2999,
+    "cycle": "month",
+    "category": "Learning",
+    "tile": "#58CC02",
+    "glyph": "#FFFFFF",
+    "trialDays": 14,
+    "popular": 5,
+    "cancel": "store"
+  },
+  {
+    "id": "icloud",
+    "name": "iCloud+",
+    "icon": "icloud",
+    "price": 299,
+    "from": true,
+    "cycle": "month",
+    "category": "Storage",
+    "aliases": ["apple"],
+    "popular": 6
+  },
+  {
+    "id": "notion",
+    "name": "Notion",
+    "icon": "notion",
+    "price": 1000,
+    "cycle": "month",
+    "category": "Productivity",
+    "tile": "#FFFFFF",
+    "glyph": "#141414",
+    "popular": 7
+  },
+  {
+    "id": "disney-plus",
+    "name": "Disney+",
+    "price": 999,
+    "from": true,
+    "cycle": "month",
+    "category": "Video",
+    "tile": "#113CCF",
+    "aliases": ["disney plus"],
+    "popular": 8
+  },
+  {
+    "id": "amazon-prime",
+    "name": "Amazon Prime",
+    "price": 1499,
+    "cycle": "month",
+    "category": "Shopping",
+    "tile": "#00A8E1",
+    "aliases": ["prime video"],
+    "popular": 9
+  },
+  {
+    "id": "hulu",
+    "name": "Hulu",
+    "price": 999,
+    "from": true,
+    "cycle": "month",
+    "category": "Video",
+    "tile": "#1CE783",
+    "glyph": "#141414"
+  },
+  {
+    "id": "max",
+    "name": "Max",
+    "icon": "hbomax",
+    "price": 999,
+    "from": true,
+    "cycle": "month",
+    "category": "Video",
+    "aliases": ["hbo", "hbo max"]
+  },
+  {
+    "id": "apple-music",
+    "name": "Apple Music",
+    "icon": "applemusic",
+    "price": 1099,
+    "cycle": "month",
+    "category": "Music",
+    "cancel": "apple"
+  },
+  {
+    "id": "apple-tv",
+    "name": "Apple TV+",
+    "icon": "appletv",
+    "price": 1299,
+    "cycle": "month",
+    "category": "Video",
+    "tile": "#141414",
+    "glyph": "#FFFFFF",
+    "cancel": "apple"
+  },
+  {
+    "id": "apple-one",
+    "name": "Apple One",
+    "icon": "apple",
+    "price": 1995,
+    "from": true,
+    "cycle": "month",
+    "category": "Bundle",
+    "tile": "#141414",
+    "glyph": "#FFFFFF",
+    "cancel": "apple"
+  },
+  {
+    "id": "paramount-plus",
+    "name": "Paramount+",
+    "icon": "paramountplus",
+    "price": 799,
+    "from": true,
+    "cycle": "month",
+    "category": "Video"
+  },
+  {
+    "id": "peacock",
+    "name": "Peacock",
+    "price": 799,
+    "from": true,
+    "cycle": "month",
+    "category": "Video",
+    "tile": "#141414"
+  },
+  {
+    "id": "crunchyroll",
+    "name": "Crunchyroll",
+    "icon": "crunchyroll",
+    "price": 799,
+    "from": true,
+    "cycle": "month",
+    "category": "Video"
+  },
+  {
+    "id": "youtube-tv",
+    "name": "YouTube TV",
+    "icon": "youtube",
+    "price": 8299,
+    "cycle": "month",
+    "category": "Video",
+    "tile": "#FFFFFF",
+    "glyph": "#FF0033"
+  },
+  {
+    "id": "youtube-music",
+    "name": "YouTube Music",
+    "icon": "youtubemusic",
+    "price": 1099,
+    "cycle": "month",
+    "category": "Music",
+    "cancel": {
+      "url": "https://www.youtube.com/paid_memberships",
+      "steps": ["Open your YouTube memberships and sign in.", "Tap Manage membership, then Deactivate or Cancel."]
+    }
+  },
+  {
+    "id": "fubo",
+    "name": "Fubo",
+    "icon": "fubo",
+    "price": 8499,
+    "from": true,
+    "cycle": "month",
+    "category": "Video"
+  },
+  {
+    "id": "sling",
+    "name": "Sling TV",
+    "price": 4599,
+    "from": true,
+    "cycle": "month",
+    "category": "Video",
+    "tile": "#0F2B5C"
+  },
+  {
+    "id": "espn-plus",
+    "name": "ESPN+",
+    "price": 1199,
+    "cycle": "month",
+    "category": "Video",
+    "tile": "#141414",
+    "aliases": ["espn"]
+  },
+  {
+    "id": "dazn",
+    "name": "DAZN",
+    "icon": "dazn",
+    "price": 2499,
+    "from": true,
+    "cycle": "month",
+    "category": "Video"
+  },
+  {
+    "id": "mubi",
+    "name": "MUBI",
+    "icon": "mubi",
+    "price": 1499,
+    "cycle": "month",
+    "category": "Video"
+  },
+  {
+    "id": "starz",
+    "name": "Starz",
+    "icon": "starz",
+    "price": 1099,
+    "cycle": "month",
+    "category": "Video"
+  },
+  {
+    "id": "plex-pass",
+    "name": "Plex Pass",
+    "icon": "plex",
+    "price": 699,
+    "cycle": "month",
+    "category": "Video"
+  },
+  {
+    "id": "tidal",
+    "name": "Tidal",
+    "icon": "tidal",
+    "price": 1099,
+    "cycle": "month",
+    "category": "Music"
+  },
+  {
+    "id": "deezer",
+    "name": "Deezer",
+    "icon": "deezer",
+    "price": 1199,
+    "cycle": "month",
+    "category": "Music"
+  },
+  {
+    "id": "soundcloud",
+    "name": "SoundCloud Go+",
+    "icon": "soundcloud",
+    "price": 1099,
+    "cycle": "month",
+    "category": "Music"
+  },
+  {
+    "id": "pandora",
+    "name": "Pandora",
+    "icon": "pandora",
+    "price": 499,
+    "from": true,
+    "cycle": "month",
+    "category": "Music"
+  },
+  {
+    "id": "siriusxm",
+    "name": "SiriusXM",
+    "price": 999,
+    "from": true,
+    "cycle": "month",
+    "category": "Music",
+    "tile": "#0000EB"
+  },
+  {
+    "id": "audible",
+    "name": "Audible",
+    "icon": "audible",
+    "price": 1495,
+    "cycle": "month",
+    "category": "Books"
+  },
+  {
+    "id": "kindle-unlimited",
+    "name": "Kindle Unlimited",
+    "price": 1199,
+    "cycle": "month",
+    "category": "Books",
+    "tile": "#141414"
+  },
+  {
+    "id": "everand",
+    "name": "Everand",
+    "price": 1199,
+    "cycle": "month",
+    "category": "Books",
+    "tile": "#1E7B85",
+    "aliases": ["scribd"]
+  },
+  {
+    "id": "pocket-casts",
+    "name": "Pocket Casts Plus",
+    "icon": "pocketcasts",
+    "price": 399,
+    "cycle": "month",
+    "category": "Music"
+  },
+  {
+    "id": "claude-pro",
+    "name": "Claude Pro",
+    "icon": "claude",
+    "price": 2000,
+    "cycle": "month",
+    "category": "AI",
+    "aliases": ["anthropic"]
+  },
+  {
+    "id": "gemini-advanced",
+    "name": "Google AI Pro",
+    "icon": "googlegemini",
+    "price": 1999,
+    "cycle": "month",
+    "category": "AI",
+    "aliases": ["gemini", "google one"]
+  },
+  {
+    "id": "perplexity-pro",
+    "name": "Perplexity Pro",
+    "icon": "perplexity",
+    "price": 2000,
+    "cycle": "month",
+    "category": "AI"
+  },
+  {
+    "id": "midjourney",
+    "name": "Midjourney",
+    "price": 1000,
+    "from": true,
+    "cycle": "month",
+    "category": "AI",
+    "tile": "#141414"
+  },
+  {
+    "id": "github-copilot",
+    "name": "GitHub Copilot",
+    "icon": "githubcopilot",
+    "price": 1000,
+    "cycle": "month",
+    "category": "AI",
+    "aliases": ["copilot"]
+  },
+  {
+    "id": "cursor",
+    "name": "Cursor Pro",
+    "icon": "cursor",
+    "price": 2000,
+    "cycle": "month",
+    "category": "AI"
+  },
+  {
+    "id": "google-one",
+    "name": "Google One",
+    "icon": "google",
+    "price": 199,
+    "from": true,
+    "cycle": "month",
+    "category": "Storage",
+    "tile": "#FFFFFF",
+    "glyph": "#4285F4"
+  },
+  {
+    "id": "dropbox",
+    "name": "Dropbox",
+    "icon": "dropbox",
+    "price": 1199,
+    "from": true,
+    "cycle": "month",
+    "category": "Storage"
+  },
+  {
+    "id": "microsoft-365",
+    "name": "Microsoft 365",
+    "price": 999,
+    "from": true,
+    "cycle": "month",
+    "category": "Productivity",
+    "tile": "#D83B01",
+    "aliases": ["office", "word", "excel"]
+  },
+  {
+    "id": "adobe-cc",
+    "name": "Adobe Creative Cloud",
+    "price": 5999,
+    "from": true,
+    "cycle": "month",
+    "category": "Creative",
+    "tile": "#FA0F00",
+    "aliases": ["photoshop", "lightroom", "adobe"]
+  },
+  {
+    "id": "canva-pro",
+    "name": "Canva Pro",
+    "price": 1500,
+    "cycle": "month",
+    "category": "Creative",
+    "tile": "#00C4CC"
+  },
+  {
+    "id": "figma",
+    "name": "Figma",
+    "icon": "figma",
+    "price": 1600,
+    "from": true,
+    "cycle": "month",
+    "category": "Creative",
+    "tile": "#141414",
+    "glyph": "#FFFFFF"
+  },
+  {
+    "id": "procreate",
+    "name": "Procreate Dreams",
+    "price": 1999,
+    "cycle": "year",
+    "category": "Creative",
+    "tile": "#141414"
+  },
+  {
+    "id": "vsco",
+    "name": "VSCO",
+    "icon": "vsco",
+    "price": 2999,
+    "cycle": "year",
+    "category": "Creative"
+  },
+  {
+    "id": "grammarly",
+    "name": "Grammarly",
+    "icon": "grammarly",
+    "price": 1200,
+    "cycle": "month",
+    "category": "Productivity"
+  },
+  {
+    "id": "1password",
+    "name": "1Password",
+    "icon": "1password",
+    "price": 299,
+    "cycle": "month",
+    "category": "Security"
+  },
+  {
+    "id": "bitwarden",
+    "name": "Bitwarden Premium",
+    "icon": "bitwarden",
+    "price": 1000,
+    "cycle": "year",
+    "category": "Security"
+  },
+  {
+    "id": "lastpass",
+    "name": "LastPass",
+    "icon": "lastpass",
+    "price": 300,
+    "cycle": "month",
+    "category": "Security"
+  },
+  {
+    "id": "dashlane",
+    "name": "Dashlane",
+    "icon": "dashlane",
+    "price": 499,
+    "cycle": "month",
+    "category": "Security"
+  },
+  {
+    "id": "nordvpn",
+    "name": "NordVPN",
+    "icon": "nordvpn",
+    "price": 1299,
+    "cycle": "month",
+    "category": "Security"
+  },
+  {
+    "id": "expressvpn",
+    "name": "ExpressVPN",
+    "icon": "expressvpn",
+    "price": 1299,
+    "cycle": "month",
+    "category": "Security"
+  },
+  {
+    "id": "surfshark",
+    "name": "Surfshark",
+    "icon": "surfshark",
+    "price": 1595,
+    "cycle": "month",
+    "category": "Security"
+  },
+  {
+    "id": "proton",
+    "name": "Proton Unlimited",
+    "icon": "proton",
+    "price": 1299,
+    "cycle": "month",
+    "category": "Security",
+    "aliases": ["proton mail", "proton vpn"]
+  },
+  {
+    "id": "norton",
+    "name": "Norton 360",
+    "icon": "norton",
+    "price": 4999,
+    "from": true,
+    "cycle": "year",
+    "category": "Security"
+  },
+  {
+    "id": "mcafee",
+    "name": "McAfee+",
+    "icon": "mcafee",
+    "price": 3999,
+    "from": true,
+    "cycle": "year",
+    "category": "Security"
+  },
+  {
+    "id": "malwarebytes",
+    "name": "Malwarebytes",
+    "icon": "malwarebytes",
+    "price": 4499,
+    "cycle": "year",
+    "category": "Security"
+  },
+  {
+    "id": "headspace",
+    "name": "Headspace",
+    "icon": "headspace",
+    "price": 1299,
+    "cycle": "month",
+    "category": "Health"
+  },
+  {
+    "id": "calm",
+    "name": "Calm",
+    "price": 6999,
+    "cycle": "year",
+    "category": "Health",
+    "tile": "#3A6BD9"
+  },
+  {
+    "id": "strava",
+    "name": "Strava",
+    "icon": "strava",
+    "price": 1199,
+    "cycle": "month",
+    "category": "Health"
+  },
+  {
+    "id": "peloton",
+    "name": "Peloton App",
+    "icon": "peloton",
+    "price": 1299,
+    "from": true,
+    "cycle": "month",
+    "category": "Health"
+  },
+  {
+    "id": "fitbit",
+    "name": "Fitbit Premium",
+    "icon": "fitbit",
+    "price": 999,
+    "cycle": "month",
+    "category": "Health"
+  },
+  {
+    "id": "myfitnesspal",
+    "name": "MyFitnessPal Premium",
+    "price": 1999,
+    "cycle": "month",
+    "category": "Health",
+    "tile": "#0066EE"
+  },
+  {
+    "id": "noom",
+    "name": "Noom",
+    "price": 7000,
+    "cycle": "month",
+    "category": "Health",
+    "tile": "#F6B620",
+    "glyph": "#141414"
+  },
+  {
+    "id": "whoop",
+    "name": "WHOOP",
+    "price": 23900,
+    "from": true,
+    "cycle": "year",
+    "category": "Health",
+    "tile": "#141414"
+  },
+  {
+    "id": "oura",
+    "name": "Oura",
+    "price": 599,
+    "cycle": "month",
+    "category": "Health",
+    "tile": "#141414"
+  },
+  {
+    "id": "alltrails",
+    "name": "AllTrails+",
+    "icon": "alltrails",
+    "price": 3599,
+    "cycle": "year",
+    "category": "Health"
+  },
+  {
+    "id": "tinder",
+    "name": "Tinder",
+    "icon": "tinder",
+    "price": 2499,
+    "from": true,
+    "cycle": "month",
+    "category": "Dating"
+  },
+  {
+    "id": "bumble",
+    "name": "Bumble",
+    "price": 2999,
+    "from": true,
+    "cycle": "month",
+    "category": "Dating",
+    "tile": "#FFC629",
+    "glyph": "#141414"
+  },
+  {
+    "id": "hinge",
+    "name": "Hinge",
+    "price": 3499,
+    "from": true,
+    "cycle": "month",
+    "category": "Dating",
+    "tile": "#141414"
+  },
+  {
+    "id": "linkedin-premium",
+    "name": "LinkedIn Premium",
+    "price": 3999,
+    "from": true,
+    "cycle": "month",
+    "category": "Work",
+    "tile": "#0A66C2"
+  },
+  {
+    "id": "slack",
+    "name": "Slack Pro",
+    "price": 875,
+    "cycle": "month",
+    "category": "Work",
+    "tile": "#4A154B"
+  },
+  {
+    "id": "zoom",
+    "name": "Zoom Pro",
+    "icon": "zoom",
+    "price": 1599,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "linear",
+    "name": "Linear",
+    "icon": "linear",
+    "price": 1000,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "github",
+    "name": "GitHub Pro",
+    "icon": "github",
+    "price": 400,
+    "cycle": "month",
+    "category": "Work",
+    "tile": "#141414",
+    "glyph": "#FFFFFF"
+  },
+  {
+    "id": "todoist",
+    "name": "Todoist Pro",
+    "icon": "todoist",
+    "price": 500,
+    "cycle": "month",
+    "category": "Productivity"
+  },
+  {
+    "id": "evernote",
+    "name": "Evernote",
+    "icon": "evernote",
+    "price": 1499,
+    "from": true,
+    "cycle": "month",
+    "category": "Productivity"
+  },
+  {
+    "id": "obsidian",
+    "name": "Obsidian Sync",
+    "icon": "obsidian",
+    "price": 500,
+    "cycle": "month",
+    "category": "Productivity"
+  },
+  {
+    "id": "goodnotes",
+    "name": "Goodnotes",
+    "price": 999,
+    "cycle": "year",
+    "category": "Productivity",
+    "tile": "#1B6FF5"
+  },
+  {
+    "id": "setapp",
+    "name": "Setapp",
+    "icon": "setapp",
+    "price": 999,
+    "cycle": "month",
+    "category": "Productivity"
+  },
+  {
+    "id": "raycast",
+    "name": "Raycast Pro",
+    "icon": "raycast",
+    "price": 1000,
+    "cycle": "month",
+    "category": "Productivity"
+  },
+  {
+    "id": "calendly",
+    "name": "Calendly",
+    "icon": "calendly",
+    "price": 1200,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "miro",
+    "name": "Miro",
+    "icon": "miro",
+    "price": 1000,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "loom",
+    "name": "Loom",
+    "icon": "loom",
+    "price": 1500,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "airtable",
+    "name": "Airtable",
+    "icon": "airtable",
+    "price": 2400,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "asana",
+    "name": "Asana",
+    "icon": "asana",
+    "price": 1375,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "trello",
+    "name": "Trello",
+    "icon": "trello",
+    "price": 600,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "clickup",
+    "name": "ClickUp",
+    "icon": "clickup",
+    "price": 1000,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "squarespace",
+    "name": "Squarespace",
+    "icon": "squarespace",
+    "price": 2500,
+    "from": true,
+    "cycle": "month",
+    "category": "Work",
+    "tile": "#141414",
+    "glyph": "#FFFFFF"
+  },
+  {
+    "id": "wix",
+    "name": "Wix",
+    "icon": "wix",
+    "price": 1700,
+    "from": true,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "shopify",
+    "name": "Shopify",
+    "icon": "shopify",
+    "price": 3900,
+    "from": true,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "quickbooks",
+    "name": "QuickBooks",
+    "icon": "quickbooks",
+    "price": 3500,
+    "from": true,
+    "cycle": "month",
+    "category": "Finance",
+    "aliases": ["intuit"]
+  },
+  {
+    "id": "ynab",
+    "name": "YNAB",
+    "price": 1499,
+    "cycle": "month",
+    "category": "Finance",
+    "tile": "#3B5EDA",
+    "aliases": ["you need a budget"]
+  },
+  {
+    "id": "monarch",
+    "name": "Monarch Money",
+    "price": 9999,
+    "cycle": "year",
+    "category": "Finance",
+    "tile": "#FF692D"
+  },
+  {
+    "id": "rocket-money",
+    "name": "Rocket Money",
+    "price": 600,
+    "from": true,
+    "cycle": "month",
+    "category": "Finance",
+    "tile": "#D6243A"
+  },
+  {
+    "id": "xbox-game-pass",
+    "name": "Xbox Game Pass",
+    "price": 1999,
+    "from": true,
+    "cycle": "month",
+    "category": "Games",
+    "tile": "#107C10",
+    "aliases": ["xbox"]
+  },
+  {
+    "id": "playstation-plus",
+    "name": "PlayStation Plus",
+    "icon": "playstation",
+    "price": 999,
+    "from": true,
+    "cycle": "month",
+    "category": "Games",
+    "aliases": ["ps plus", "psn"]
+  },
+  {
+    "id": "nintendo-switch-online",
+    "name": "Nintendo Switch Online",
+    "price": 1999,
+    "cycle": "year",
+    "category": "Games",
+    "tile": "#E60012",
+    "aliases": ["nintendo"]
+  },
+  {
+    "id": "ea-play",
+    "name": "EA Play",
+    "price": 599,
+    "cycle": "month",
+    "category": "Games",
+    "tile": "#FF4747"
+  },
+  {
+    "id": "ubisoft-plus",
+    "name": "Ubisoft+",
+    "icon": "ubisoft",
+    "price": 799,
+    "from": true,
+    "cycle": "month",
+    "category": "Games"
+  },
+  {
+    "id": "apple-arcade",
+    "name": "Apple Arcade",
+    "icon": "apple",
+    "price": 699,
+    "cycle": "month",
+    "category": "Games",
+    "tile": "#141414",
+    "glyph": "#FFFFFF",
+    "cancel": "apple"
+  },
+  {
+    "id": "discord-nitro",
+    "name": "Discord Nitro",
+    "icon": "discord",
+    "price": 999,
+    "cycle": "month",
+    "category": "Social"
+  },
+  {
+    "id": "twitch",
+    "name": "Twitch Turbo",
+    "icon": "twitch",
+    "price": 1199,
+    "cycle": "month",
+    "category": "Social"
+  },
+  {
+    "id": "x-premium",
+    "name": "X Premium",
+    "icon": "x",
+    "price": 800,
+    "from": true,
+    "cycle": "month",
+    "category": "Social",
+    "tile": "#141414",
+    "glyph": "#FFFFFF",
+    "aliases": ["twitter"]
+  },
+  {
+    "id": "snapchat-plus",
+    "name": "Snapchat+",
+    "icon": "snapchat",
+    "price": 399,
+    "cycle": "month",
+    "category": "Social",
+    "glyph": "#141414"
+  },
+  {
+    "id": "telegram-premium",
+    "name": "Telegram Premium",
+    "icon": "telegram",
+    "price": 499,
+    "cycle": "month",
+    "category": "Social"
+  },
+  {
+    "id": "reddit-premium",
+    "name": "Reddit Premium",
+    "icon": "reddit",
+    "price": 599,
+    "cycle": "month",
+    "category": "Social"
+  },
+  {
+    "id": "patreon",
+    "name": "Patreon",
+    "icon": "patreon",
+    "price": 500,
+    "from": true,
+    "cycle": "month",
+    "category": "Social",
+    "tile": "#141414",
+    "glyph": "#FFFFFF"
+  },
+  {
+    "id": "medium",
+    "name": "Medium",
+    "icon": "medium",
+    "price": 500,
+    "cycle": "month",
+    "category": "News",
+    "tile": "#141414",
+    "glyph": "#FFFFFF"
+  },
+  {
+    "id": "substack",
+    "name": "Substack",
+    "icon": "substack",
+    "price": 500,
+    "from": true,
+    "cycle": "month",
+    "category": "News"
+  },
+  {
+    "id": "nyt",
+    "name": "The New York Times",
+    "price": 2500,
+    "from": true,
+    "cycle": "month",
+    "category": "News",
+    "tile": "#141414",
+    "aliases": ["nytimes", "new york times"]
+  },
+  {
+    "id": "wsj",
+    "name": "The Wall Street Journal",
+    "price": 3899,
+    "from": true,
+    "cycle": "month",
+    "category": "News",
+    "tile": "#141414",
+    "aliases": ["wall street journal"]
+  },
+  {
+    "id": "washington-post",
+    "name": "The Washington Post",
+    "price": 1200,
+    "from": true,
+    "cycle": "month",
+    "category": "News",
+    "tile": "#141414"
+  },
+  {
+    "id": "economist",
+    "name": "The Economist",
+    "price": 2500,
+    "from": true,
+    "cycle": "month",
+    "category": "News",
+    "tile": "#E3120B"
+  },
+  {
+    "id": "babbel",
+    "name": "Babbel",
+    "price": 1795,
+    "from": true,
+    "cycle": "month",
+    "category": "Learning",
+    "tile": "#FF6600"
+  },
+  {
+    "id": "skillshare",
+    "name": "Skillshare",
+    "icon": "skillshare",
+    "price": 1399,
+    "cycle": "month",
+    "category": "Learning"
+  },
+  {
+    "id": "coursera-plus",
+    "name": "Coursera Plus",
+    "icon": "coursera",
+    "price": 5900,
+    "cycle": "month",
+    "category": "Learning"
+  },
+  {
+    "id": "masterclass",
+    "name": "MasterClass",
+    "price": 12000,
+    "from": true,
+    "cycle": "year",
+    "category": "Learning",
+    "tile": "#141414"
+  },
+  {
+    "id": "chess-com",
+    "name": "Chess.com",
+    "price": 1499,
+    "from": true,
+    "cycle": "month",
+    "category": "Games",
+    "tile": "#81B64C"
+  },
+  {
+    "id": "uber-one",
+    "name": "Uber One",
+    "icon": "uber",
+    "price": 999,
+    "cycle": "month",
+    "category": "Delivery",
+    "tile": "#141414",
+    "glyph": "#FFFFFF"
+  },
+  {
+    "id": "dashpass",
+    "name": "DashPass",
+    "icon": "doordash",
+    "price": 999,
+    "cycle": "month",
+    "category": "Delivery",
+    "aliases": ["doordash"]
+  },
+  {
+    "id": "instacart-plus",
+    "name": "Instacart+",
+    "icon": "instacart",
+    "price": 999,
+    "cycle": "month",
+    "category": "Delivery"
+  },
+  {
+    "id": "walmart-plus",
+    "name": "Walmart+",
+    "price": 1295,
+    "cycle": "month",
+    "category": "Shopping",
+    "tile": "#0071DC"
+  },
+  {
+    "id": "costco",
+    "name": "Costco membership",
+    "price": 6500,
+    "from": true,
+    "cycle": "year",
+    "category": "Shopping",
+    "tile": "#E31837"
+  },
+  {
+    "id": "hellofresh",
+    "name": "HelloFresh",
+    "icon": "hellofresh",
+    "price": 6000,
+    "from": true,
+    "cycle": "week",
+    "category": "Delivery"
+  },
+  {
+    "id": "chewy",
+    "name": "Chewy+",
+    "price": 4900,
+    "cycle": "year",
+    "category": "Shopping",
+    "tile": "#1C49C2"
+  },
+  {
+    "id": "ring",
+    "name": "Ring Protect",
+    "icon": "ring",
+    "price": 499,
+    "from": true,
+    "cycle": "month",
+    "category": "Home"
+  },
+  {
+    "id": "google-nest",
+    "name": "Google Home Premium",
+    "icon": "googlehome",
+    "price": 1000,
+    "from": true,
+    "cycle": "month",
+    "category": "Home",
+    "aliases": ["nest aware"]
+  },
+  {
+    "id": "backblaze",
+    "name": "Backblaze",
+    "icon": "backblaze",
+    "price": 900,
+    "cycle": "month",
+    "category": "Storage"
+  },
+  {
+    "id": "box",
+    "name": "Box",
+    "icon": "box",
+    "price": 1400,
+    "from": true,
+    "cycle": "month",
+    "category": "Storage"
+  },
+  {
+    "id": "mega",
+    "name": "MEGA",
+    "icon": "mega",
+    "price": 1099,
+    "from": true,
+    "cycle": "month",
+    "category": "Storage"
+  },
+  {
+    "id": "kagi",
+    "name": "Kagi",
+    "icon": "kagi",
+    "price": 1000,
+    "from": true,
+    "cycle": "month",
+    "category": "Productivity"
+  },
+  {
+    "id": "godaddy",
+    "name": "GoDaddy domain",
+    "icon": "godaddy",
+    "price": 2199,
+    "from": true,
+    "cycle": "year",
+    "category": "Work"
+  },
+  {
+    "id": "namecheap",
+    "name": "Namecheap domain",
+    "icon": "namecheap",
+    "price": 1398,
+    "from": true,
+    "cycle": "year",
+    "category": "Work"
+  },
+  {
+    "id": "cloudflare",
+    "name": "Cloudflare",
+    "icon": "cloudflare",
+    "price": 2000,
+    "from": true,
+    "cycle": "month",
+    "category": "Work"
+  },
+  {
+    "id": "vercel",
+    "name": "Vercel Pro",
+    "icon": "vercel",
+    "price": 2000,
+    "cycle": "month",
+    "category": "Work",
+    "tile": "#141414",
+    "glyph": "#FFFFFF"
+  },
+  {
+    "id": "garmin-connect",
+    "name": "Garmin Connect+",
+    "icon": "garmin",
+    "price": 699,
+    "cycle": "month",
+    "category": "Health"
+  },
+  {
+    "id": "zwift",
+    "name": "Zwift",
+    "price": 1999,
+    "cycle": "month",
+    "category": "Health",
+    "tile": "#FC6719"
+  },
+  {
+    "id": "speechify",
+    "name": "Speechify",
+    "price": 13900,
+    "cycle": "year",
+    "category": "Learning",
+    "tile": "#2F43FA"
+  },
+  {
+    "id": "capcut-pro",
+    "name": "CapCut Pro",
+    "price": 999,
+    "cycle": "month",
+    "category": "Creative",
+    "tile": "#141414"
+  },
+  {
+    "id": "lightroom",
+    "name": "Adobe Lightroom",
+    "price": 1199,
+    "cycle": "month",
+    "category": "Creative",
+    "tile": "#001E36",
+    "glyph": "#31A8FF"
+  }
+]
