@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
-import { purchasePro, restorePro } from '@/features/pro/purchase';
+import { purchasePro, restorePro, usePro } from '@/features/pro/purchase';
 import { useSubscriptions } from '@/stores/subscriptions';
 
 import ProScreen from '@/app/pro';
@@ -22,6 +22,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   useSubscriptions.setState({ ...initial, subscriptions: [] }, true);
+  usePro.setState({ isPro: false, price: null });
 });
 
 describe('Pro screen', () => {
@@ -94,5 +95,30 @@ describe('Pro screen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Restore purchase' }));
 
     expect(jest.mocked(Alert.alert).mock.calls[0][0]).toBe('Something went wrong');
+  });
+
+  it('shows the store’s price in the phone’s currency once it is known', async () => {
+    usePro.setState({ price: '₹1,299.00' });
+    await render(<ProScreen />);
+
+    expect(screen.getByRole('button', { name: /^Unlock Pro · ₹1,299\.00/ })).toBeOnTheScreen();
+  });
+
+  it('says when a restore finds no Pro purchase', async () => {
+    jest.mocked(restorePro).mockResolvedValue('nothing');
+    await render(<ProScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Restore purchase' }));
+
+    expect(jest.mocked(Alert.alert).mock.calls[0][0]).toBe('No Pro purchase found');
+  });
+
+  it('thanks someone who already has Pro instead of selling it again', async () => {
+    usePro.setState({ isPro: true });
+    await render(<ProScreen />);
+
+    expect(screen.getByText('You have Pro. Thank you!')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: /^Unlock Pro/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Restore purchase' })).toBeNull();
   });
 });

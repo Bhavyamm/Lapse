@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved to Expo SDK 57 so the app opens in the Expo Go version on the App Store.
 
 ### Added
+- Pro purchases through RevenueCat: Unlock Pro buys the one-time lifetime unlock in the App Store or Google Play at the store's local price, Restore purchase brings it back, and Profile shows the Pro plan once it's owned. Expo Go and the web use RevenueCat's Test Store. Without RevenueCat keys (see `.env.example`), Pro still says it isn't on sale yet.
 - Encrypted storage: in a development or store build, your subscriptions and settings are saved in an encrypted database (SQLCipher) whose key stays in the iPhone Keychain or Android Keystore. Data saved by earlier versions moves in on first launch. Expo Go can't encrypt, so it keeps the plain storage.
 - Pro unlock: Unlock Pro on Profile (and statement import) opens the Pro screen with the one-time $14.99 offer, what Pro adds and Restore purchase. Buying opens with the App Store release; until then the button says Pro isn't on sale yet.
 - Monthly check-in: once a month lapse walks you through your paid subscriptions, one card at a time with its yearly cost. Keep it, cancel it (opens the cancel steps) or put it off to next month. Home shows a Monthly check-in row while any are waiting, Profile opens it any time, and a reminder comes at 9 AM on the 1st.

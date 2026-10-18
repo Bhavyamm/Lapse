@@ -6,10 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { AppText } from '@/components/app-text';
-import { ArrowRightIcon, CloseIcon, DocumentIcon, LockIcon, MailIcon, PeopleIcon } from '@/components/icons';
+import { ArrowRightIcon, CheckIcon, CloseIcon, DocumentIcon, LockIcon, MailIcon, PeopleIcon } from '@/components/icons';
 import { PressScale } from '@/components/press-scale';
 import { useToday } from '@/hooks/use-today';
-import { purchasePro, PRO_PRICE, restorePro, type PurchaseResult } from '@/features/pro/purchase';
+import { purchasePro, PRO_PRICE, restorePro, usePro, type PurchaseResult } from '@/features/pro/purchase';
 import { formatMoney } from '@/features/subscriptions/billing';
 import { buildOverview } from '@/features/subscriptions/overview';
 import { useSubscriptions } from '@/stores/subscriptions';
@@ -36,8 +36,18 @@ function leave() {
 function explain(result: PurchaseResult, restoring: boolean) {
   if (result === 'unlocked') {
     success();
-    notify('Pro is unlocked', 'Thanks for supporting lapse.');
+    notify(restoring ? 'Pro is back' : 'Pro is unlocked', 'Thanks for supporting lapse.');
     leave();
+  } else if (result === 'pending') {
+    notify(
+      'Almost there',
+      'Pro unlocks as soon as the store approves the purchase. If it doesn’t, tap Restore purchase.',
+    );
+  } else if (result === 'nothing') {
+    notify(
+      'No Pro purchase found',
+      'This store account hasn’t bought Pro. Sign in with the one you used and try again.',
+    );
   } else if (result === 'unavailable') {
     notify(
       restoring ? 'Nothing to restore yet' : 'Pro isn’t on sale yet',
@@ -53,6 +63,8 @@ export default function ProScreen() {
   const subscriptions = useSubscriptions((s) => s.subscriptions);
   const yearly = useMemo(() => buildOverview(subscriptions, today).yearlyCents, [subscriptions, today]);
   const busy = useRef(false);
+  const isPro = usePro((s) => s.isPro);
+  const price = usePro((s) => s.price) ?? PRO_PRICE;
   useEffect(() => {
     leaving = false;
   }, []);
@@ -62,7 +74,8 @@ export default function ProScreen() {
     busy.current = true;
     try {
       explain(await (restoring ? restorePro() : purchasePro()), restoring);
-    } catch {
+    } catch (error) {
+      console.warn('[Pro]', error);
       notify('Something went wrong', 'The store didn’t answer. Try again in a moment.');
     } finally {
       busy.current = false;
@@ -115,28 +128,41 @@ export default function ProScreen() {
         </View>
       </ScrollView>
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 12 }]}>
-        <PressScale
-          role="button"
-          aria-label={`Unlock Pro · ${PRO_PRICE}. One-time. No renewal, ever.`}
-          onPress={() => run(false)}
-          style={[styles.buy]}>
-          <View>
+        {isPro ? (
+          <View style={styles.owned} role="status">
+            <View style={styles.buyArrow}>
+              <CheckIcon size={16} color={colors.accent} />
+            </View>
             <AppText variant="button" style={styles.buyText}>
-              Unlock Pro · {PRO_PRICE}
-            </AppText>
-            <AppText variant="caption" style={styles.buyNote}>
-              One-time. No renewal, ever.
+              You have Pro. Thank you!
             </AppText>
           </View>
-          <View style={styles.buyArrow}>
-            <ArrowRightIcon color={colors.white} />
-          </View>
-        </PressScale>
-        <Pressable role="button" onPress={() => run(true)} hitSlop={12} style={styles.restore}>
-          <AppText variant="caption" onDark muted>
-            Restore purchase
-          </AppText>
-        </Pressable>
+        ) : (
+          <>
+            <PressScale
+              role="button"
+              aria-label={`Unlock Pro · ${price}. One-time. No renewal, ever.`}
+              onPress={() => run(false)}
+              style={[styles.buy]}>
+              <View>
+                <AppText variant="button" style={styles.buyText}>
+                  Unlock Pro · {price}
+                </AppText>
+                <AppText variant="caption" style={styles.buyNote}>
+                  One-time. No renewal, ever.
+                </AppText>
+              </View>
+              <View style={styles.buyArrow}>
+                <ArrowRightIcon color={colors.white} />
+              </View>
+            </PressScale>
+            <Pressable role="button" onPress={() => run(true)} hitSlop={12} style={styles.restore}>
+              <AppText variant="caption" onDark muted>
+                Restore purchase
+              </AppText>
+            </Pressable>
+          </>
+        )}
       </View>
     </View>
   );
@@ -271,6 +297,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  owned: {
+    minHeight: 64,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accent,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.sm,
   },
   restore: {
     alignSelf: 'center',

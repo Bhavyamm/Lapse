@@ -23,7 +23,7 @@ import { SettingsRow } from '@/components/settings-row';
 import { TabScreen } from '@/components/tab-screen';
 import { useToday } from '@/hooks/use-today';
 import { getBiometrics, unlock, type Biometrics } from '@/features/lock/biometrics';
-import { PRO_PRICE } from '@/features/pro/purchase';
+import { PRO_PRICE, usePro } from '@/features/pro/purchase';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
 import { toCsv } from '@/features/subscriptions/csv';
 import { dueCount } from '@/features/subscriptions/check-in';
@@ -37,6 +37,7 @@ import { confirm, notify } from '@/utils/notify';
 
 /** Money saved, settings, and data import and export. */
 export default function ProfileScreen() {
+  const isPro = usePro((s) => s.isPro);
   return (
     <TabScreen>
       <View style={styles.header}>
@@ -44,7 +45,7 @@ export default function ProfileScreen() {
           <ProfileIcon size={26} color={colors.ink} />
         </View>
         <View style={styles.headerText}>
-          <ScreenHeader title="Profile" subtitle="Free plan · Data stays on this phone" />
+          <ScreenHeader title="Profile" subtitle={`${isPro ? 'Pro' : 'Free plan'} · Data stays on this phone`} />
         </View>
       </View>
       <SavingsCard />
@@ -62,6 +63,8 @@ function SavingsCard() {
   const tracked = useSubscriptions((s) => s.subscriptions.length);
   const cancelled = useSubscriptions((s) => s.cancelled);
   const savings = useMemo(() => summarizeSavings(cancelled, today), [cancelled, today]);
+  const isPro = usePro((s) => s.isPro);
+  const price = usePro((s) => s.price) ?? PRO_PRICE;
   const stats = [
     { value: tracked, label: 'Tracked' },
     { value: savings.cancelled, label: 'Cancelled' },
@@ -88,14 +91,16 @@ function SavingsCard() {
           </View>
         ))}
       </View>
-      <PressScale role="button" aria-label={`Unlock Pro, ${PRO_PRICE} once`} onPress={openPro} style={[styles.pro]}>
-        <AppText variant="link" style={styles.proText}>
-          Unlock Pro · {PRO_PRICE} once
-        </AppText>
-        <View style={styles.proArrow}>
-          <ArrowRightIcon size={16} color={colors.white} />
-        </View>
-      </PressScale>
+      {isPro ? null : (
+        <PressScale role="button" aria-label={`Unlock Pro, ${price} once`} onPress={openPro} style={[styles.pro]}>
+          <AppText variant="link" style={styles.proText}>
+            Unlock Pro · {price} once
+          </AppText>
+          <View style={styles.proArrow}>
+            <ArrowRightIcon size={16} color={colors.white} />
+          </View>
+        </PressScale>
+      )}
     </CharcoalCard>
   );
 }

@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 import { getBiometrics, unlock } from '@/features/lock/biometrics';
+import { usePro } from '@/features/pro/purchase';
 import { requestReminderPermission } from '@/features/reminders/permissions';
 import { shareCsv } from '@/features/subscriptions/export';
 import { useSettings } from '@/stores/settings';
@@ -77,6 +78,15 @@ describe('Profile screen', () => {
     const navigate = jest.requireMock('expo-router').router.navigate;
     expect(navigate).toHaveBeenCalledTimes(2);
     expect(navigate).toHaveBeenCalledWith('/pro');
+  });
+
+  it('shows the Pro plan and no upsell once Pro is owned', async () => {
+    usePro.setState({ isPro: true });
+    await render(<ProfileScreen />);
+
+    expect(screen.getByText('Pro · Data stays on this phone')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: /^Unlock Pro/ })).toBeNull();
+    usePro.setState({ isPro: false });
   });
 
   it('turns reminders on from the sheet once the phone allows them', async () => {

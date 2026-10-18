@@ -23,3 +23,20 @@ jest.mock('expo-haptics', () => ({
 }));
 // Screens are rendered without a navigator in tests; these two hooks need one.
 jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn(), useScrollToTop: jest.fn() }));
+// RevenueCat has no native module in tests; purchase.test.ts drives this mock.
+jest.mock('react-native-purchases', () => ({
+  __esModule: true,
+  PURCHASES_ERROR_CODE: {
+    PURCHASE_CANCELLED_ERROR: '1',
+    PRODUCT_ALREADY_PURCHASED_ERROR: '6',
+    PAYMENT_PENDING_ERROR: '20',
+  },
+  default: {
+    configure: jest.fn(),
+    addCustomerInfoUpdateListener: jest.fn(),
+    getCustomerInfo: jest.fn(),
+    getOfferings: jest.fn(),
+    purchasePackage: jest.fn(),
+    restorePurchases: jest.fn(),
+  },
+}));

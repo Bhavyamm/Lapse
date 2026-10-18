@@ -9,11 +9,12 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 
 import { AppLock } from '@/components/app-lock';
 import { LaunchSplash } from '@/components/launch-splash';
 import { Reminders } from '@/components/reminders';
+import { refreshPro, startPro } from '@/features/pro/purchase';
 import { useLock } from '@/stores/lock';
 import { useSettings, useSettingsHydrated } from '@/stores/settings';
 import { useSubscriptionsHydrated } from '@/stores/subscriptions';
@@ -43,6 +44,16 @@ export default function RootLayout() {
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
+  // Connects to RevenueCat in the background; Pro's state and price fill in when it answers.
+  // Asks again each time the app comes back, so an offline start or a purchase approved later
+  // (Ask to Buy) shows up.
+  useEffect(() => {
+    void startPro();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void startPro().then((on) => (on ? refreshPro() : undefined));
+    });
+    return () => sub.remove();
+  }, []);
 
   if (!ready) return null;
 
