@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved to Expo SDK 57 so the app opens in the Expo Go version on the App Store.
 
 ### Added
+- Free plan limit: without Pro, lapse. tracks up to 2 subscriptions. Add shows how many spots are left, and picking past the limit (or tapping + when full) opens Pro, which explains the limit. Subscriptions already tracked are kept. Pro is remembered on the phone, so it stays unlocked offline.
 - Privacy Policy and Terms of Use, readable in the app from Profile and from the Pro screen. Profile also has Restore purchase, for getting Pro back on a new phone or after reinstalling.
 - Pro purchases through RevenueCat: Unlock Pro buys the one-time lifetime unlock in the App Store or Google Play at the store's local price, Restore purchase brings it back, and Profile shows the Pro plan once it's owned. Expo Go and the web use RevenueCat's Test Store. Without RevenueCat keys (see `.env.example`), Pro still says it isn't on sale yet.
 - Encrypted storage: in a development or store build, your subscriptions and settings are saved in an encrypted database (SQLCipher) whose key stays in the iPhone Keychain or Android Keystore. Data saved by earlier versions moves in on first launch. Expo Go can't encrypt, so it keeps the plain storage.

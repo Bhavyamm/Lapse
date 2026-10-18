@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useId, useMemo, useRef, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -6,9 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { AppText } from '@/components/app-text';
-import { ArrowRightIcon, CheckIcon, CloseIcon, DocumentIcon, LockIcon, MailIcon, PeopleIcon } from '@/components/icons';
+import { ArrowRightIcon, CheckIcon, CloseIcon, DocumentIcon, ListIcon, MailIcon, PeopleIcon } from '@/components/icons';
 import { PressScale } from '@/components/press-scale';
 import { useToday } from '@/hooks/use-today';
+import { FREE_LIMIT } from '@/features/pro/limit';
 import { purchasePro, PRO_PRICE, restorePro, usePro, type PurchaseResult } from '@/features/pro/purchase';
 import { formatMoney } from '@/features/subscriptions/billing';
 import { buildOverview } from '@/features/subscriptions/overview';
@@ -21,7 +22,7 @@ const FEATURES = [
   { title: 'Statement import', detail: 'CSV or PDF', Icon: DocumentIcon },
   { title: 'Inbox scan', detail: 'Finds every trial', Icon: MailIcon },
   { title: 'Family sharing', detail: 'One shared list', Icon: PeopleIcon },
-  { title: 'Stays on device', detail: 'Nothing uploaded', Icon: LockIcon },
+  { title: 'Track them all', detail: `Free tracks ${FREE_LIMIT}`, Icon: ListIcon },
 ];
 
 let leaving = false;
@@ -85,9 +86,13 @@ export default function ProScreen() {
   // Whole dollars like Home's "$894 a year", unless that would round a small total away.
   const tracked =
     yearly >= 100 ? formatMoney(Math.round(yearly / 100) * 100).replace(/\.00$/, '') : formatMoney(yearly);
-  const lede = yearly
-    ? `You’re tracking ${tracked} a year. Pro pays for itself the first time it catches a forgotten charge.`
-    : 'Pro pays for itself the first time it catches a forgotten charge.';
+  const { reason } = useLocalSearchParams<{ reason?: string }>();
+  const lede =
+    reason === 'limit'
+      ? `The free plan tracks ${FREE_LIMIT} subscriptions. Unlock Pro once to track all of yours.`
+      : yearly
+        ? `You’re tracking ${tracked} a year. Pro pays for itself the first time it catches a forgotten charge.`
+        : 'Pro pays for itself the first time it catches a forgotten charge.';
 
   return (
     <View style={styles.screen}>

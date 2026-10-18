@@ -2,6 +2,9 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import Purchases, { PURCHASES_ERROR_CODE, type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { appStorage } from '@/features/storage/app-storage';
 
 /** The one-time Pro unlock's price, shown until the store gives the local one. */
 export const PRO_PRICE = '$14.99';
@@ -22,8 +25,18 @@ type ProState = {
   price: string | null;
 };
 
-/** Whether this phone has Pro, kept current from RevenueCat. */
-export const usePro = create<ProState>()(() => ({ isPro: false, price: null }));
+/**
+ * Whether this phone has Pro, kept current from RevenueCat. The last answer is saved, so Pro
+ * stays unlocked offline and in the moment before RevenueCat answers at launch.
+ */
+export const usePro = create<ProState>()(
+  persist((): ProState => ({ isPro: false, price: null }), {
+    name: 'lapse.pro',
+    version: 1,
+    storage: createJSONStorage(() => appStorage),
+    partialize: ({ isPro }) => ({ isPro }),
+  }),
+);
 
 /**
  * The RevenueCat public API key for where the app runs. Expo Go and the web can't reach the App

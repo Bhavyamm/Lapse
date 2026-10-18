@@ -23,6 +23,7 @@ import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { useToday } from '@/hooks/use-today';
 import { formatShortDate, formatToday, fromLocalDate, type LocalDate } from '@/utils/dates';
+import { openAdd } from '@/features/pro/limit';
 
 /** Home: the empty state until something is added, then spending, alerts and what's next. */
 export default function HomeScreen() {
@@ -191,7 +192,7 @@ function EmptyHome() {
       <PillButton
         label="Add your first one"
         icon={<PlusIcon color={colors.white} size={18} />}
-        onPress={() => router.push('/add')}
+        onPress={openAdd}
         style={styles.cta}
       />
     </CharcoalCard>

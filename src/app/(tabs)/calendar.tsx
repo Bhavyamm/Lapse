@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -23,6 +22,7 @@ import { openSubscription } from '@/features/subscriptions/open';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { formatMonth, formatMonthYear, formatShortDate, monthCells, type LocalDate } from '@/utils/dates';
+import { openAdd } from '@/features/pro/limit';
 
 /** Renewals on a month grid: a dot per charge, the trial's last day in orange, today outlined. */
 export default function CalendarScreen() {
@@ -197,7 +197,7 @@ function MonthList({ plan, name, empty }: { plan: MonthPlan; name: string; empty
       ) : null}
       {rows.length === 0 ? (
         empty ? (
-          <Pressable role="link" onPress={() => router.push('/add')} style={styles.emptyRow}>
+          <Pressable role="link" onPress={openAdd} style={styles.emptyRow}>
             <AppText variant="caption" muted>
               Add a subscription to see its renewals here.
             </AppText>

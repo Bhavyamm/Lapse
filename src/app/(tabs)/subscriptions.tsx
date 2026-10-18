@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -26,6 +25,7 @@ import type { BillingCycle } from '@/features/subscriptions/types';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
 import { formatMonthDay } from '@/utils/dates';
+import { openAdd } from '@/features/pro/limit';
 
 const CYCLE_WORD: Record<BillingCycle, string> = { week: 'a week', month: 'a month', year: 'a year' };
 
@@ -54,7 +54,7 @@ export default function SubscriptionsScreen() {
           <PillButton
             label="Add a subscription"
             icon={<PlusIcon color={colors.white} size={18} />}
-            onPress={() => router.push('/add')}
+            onPress={openAdd}
             style={styles.emptyButton}
           />
         </GlassCard>

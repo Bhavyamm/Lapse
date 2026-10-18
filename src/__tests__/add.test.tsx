@@ -3,12 +3,13 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
 
+import { usePro } from '@/features/pro/purchase';
 import { useSubscriptions } from '@/stores/subscriptions';
 
 import AddScreen from '@/app/add';
 
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), replace: jest.fn(), canGoBack: jest.fn(() => true) },
+  router: { back: jest.fn(), replace: jest.fn(), push: jest.fn(), canGoBack: jest.fn(() => true) },
   useNavigation: () => ({ dispatch: jest.fn() }),
 }));
 
@@ -21,6 +22,7 @@ afterAll(() => jest.useRealTimers());
 beforeEach(() => {
   jest.clearAllMocks();
   useSubscriptions.setState(initial, true);
+  usePro.setState({ isPro: false });
 });
 
 const search = (text: string) => fireEvent.changeText(screen.getByLabelText('Search services'), text);
@@ -264,5 +266,52 @@ describe('Add a subscription', () => {
 
     expect(saved()).toHaveLength(1);
     expect(router.back).toHaveBeenCalledTimes(1);
+  });
+
+  describe('free plan', () => {
+    const toPro = { pathname: '/pro', params: { reason: 'limit' } };
+
+    it('lets you pick 2, then opens Pro for a third', async () => {
+      await render(<AddScreen />);
+      expect(screen.getByText(/^Free plan: 2 of 2 spots left\./)).toBeOnTheScreen();
+
+      await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
+      expect(screen.getByText(/^Free plan: 1 of 2 spot left\./)).toBeOnTheScreen();
+      await fireEvent.press(screen.getByRole('button', { name: /^Add Spotify/ }));
+      await fireEvent.press(screen.getByRole('button', { name: /^Add Notion/ }));
+
+      expect(router.push).toHaveBeenCalledWith(toPro);
+      expect(screen.getByRole('button', { name: 'Add 2 and remind me' })).toBeOnTheScreen();
+    });
+
+    it('counts what is already tracked, including for your own', async () => {
+      useSubscriptions.getState().add([
+        { serviceId: null, name: 'Gym', priceCents: 4000, cycle: 'month', chargeOn: '2026-10-20', trial: false },
+        { serviceId: null, name: 'Rent', priceCents: 9000, cycle: 'month', chargeOn: '2026-10-21', trial: false },
+      ]);
+      await render(<AddScreen />);
+
+      expect(screen.getByText(/^Free plan: no spots left\./)).toBeOnTheScreen();
+      await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
+      await fireEvent.press(screen.getByRole('button', { name: 'Not listed? Add your own' }));
+
+      expect(router.push).toHaveBeenCalledTimes(2);
+      expect(router.push).toHaveBeenCalledWith(toPro);
+      expect(screen.queryByLabelText('Price')).toBeNull();
+    });
+
+    it('has no limit with Pro', async () => {
+      usePro.setState({ isPro: true });
+      await render(<AddScreen />);
+
+      for (const name of ['Netflix', 'Spotify', 'Notion']) {
+        await fireEvent.press(screen.getByRole('button', { name: new RegExp(`^Add ${name}`) }));
+      }
+      await fireEvent.press(screen.getByRole('button', { name: 'Add 3 and remind me' }));
+
+      expect(router.push).not.toHaveBeenCalled();
+      expect(saved()).toHaveLength(3);
+      expect(screen.queryByText(/^Free plan/)).toBeNull();
+    });
   });
 });

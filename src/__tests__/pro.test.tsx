@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
+import { useLocalSearchParams } from 'expo-router';
+
 import { purchasePro, restorePro, usePro } from '@/features/pro/purchase';
 import { useSubscriptions } from '@/stores/subscriptions';
 
@@ -8,6 +10,7 @@ import ProScreen from '@/app/pro';
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), canGoBack: () => true, replace: jest.fn(), push: jest.fn() },
+  useLocalSearchParams: jest.fn(() => ({})),
 }));
 jest.mock('@/features/pro/purchase', () => ({
   ...jest.requireActual('@/features/pro/purchase'),
@@ -40,7 +43,7 @@ describe('Pro screen', () => {
     expect(screen.getByRole('heading', { name: /Pay once\.\s+Keep it forever\./ })).toBeOnTheScreen();
     expect(screen.getByText(/^You’re tracking \$306 a year\./)).toBeOnTheScreen();
     expect(screen.getByLabelText('Statement import, CSV or PDF')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Stays on device, Nothing uploaded')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Track them all, Free tracks 2')).toBeOnTheScreen();
   });
 
   it('leaves out the yearly total with nothing tracked', async () => {
@@ -133,5 +136,14 @@ describe('Pro screen', () => {
 
     expect(push).toHaveBeenCalledWith({ pathname: '/legal/[doc]', params: { doc: 'terms' } });
     expect(push).toHaveBeenCalledWith({ pathname: '/legal/[doc]', params: { doc: 'privacy' } });
+  });
+
+  it('explains the free plan limit when opened from it', async () => {
+    jest.mocked(useLocalSearchParams).mockReturnValueOnce({ reason: 'limit' });
+    await render(<ProScreen />);
+
+    expect(
+      screen.getByText('The free plan tracks 2 subscriptions. Unlock Pro once to track all of yours.'),
+    ).toBeOnTheScreen();
   });
 });

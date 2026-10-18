@@ -1,3 +1,4 @@
+import { FREE_LIMIT } from '@/features/pro/limit';
 import { PRO_PRICE } from '@/features/pro/purchase';
 
 /** Where people can write about privacy or the terms. Empty until a support address is chosen. */
@@ -111,6 +112,7 @@ const terms: LegalDoc = {
     {
       heading: 'Pro',
       bullets: [
+        `The free version tracks up to ${FREE_LIMIT} subscriptions. Pro removes that limit.`,
         `Pro is a one-time purchase of ${PRO_PRICE} (or the local price). It is not a subscription and never renews.`,
         'It is sold through the App Store or Google Play, and their rules on payment and refunds apply. Ask Apple or Google for a refund.',
         'Use Restore purchase to get Pro back on a new phone or after reinstalling, with the same App Store or Google Play account.',

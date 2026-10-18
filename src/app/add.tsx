@@ -33,6 +33,8 @@ import {
   toNewSubscription,
   type Draft,
 } from '@/features/subscriptions/draft';
+import { FREE_LIMIT, openLimit, roomLeft } from '@/features/pro/limit';
+import { usePro } from '@/features/pro/purchase';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing, type } from '@/theme';
 import { formatShortDate, today as getToday } from '@/utils/dates';
@@ -52,6 +54,14 @@ export default function AddScreen() {
   // The draft open in the editor. A new custom one isn't in `drafts` until saved.
   const [editing, setEditing] = useState<Draft | null>(null);
   const saving = useRef(false);
+  // The free plan tracks FREE_LIMIT subscriptions; picking past that opens Pro instead.
+  const isPro = usePro((s) => s.isPro);
+  const room = roomLeft(saved.length, isPro);
+  const full = drafts.length >= room;
+  const blocked = () => {
+    AccessibilityInfo.announceForAccessibility(`The free plan tracks ${FREE_LIMIT} subscriptions.`);
+    openLimit();
+  };
 
   const picked = new Map(drafts.map((d) => [d.serviceId, d]));
   // Picked services stay in place, marked, so the list never jumps.
@@ -64,6 +74,7 @@ export default function AddScreen() {
   const toggle = (service: CatalogService) => {
     animateLayout();
     const draft = picked.get(service.id);
+    if (!draft && full) return blocked();
     const count = drafts.length + (draft ? -1 : 1);
     AccessibilityInfo.announceForAccessibility(`${service.name} ${draft ? 'removed' : 'picked'}. ${count} picked.`);
     selection();
@@ -87,6 +98,7 @@ export default function AddScreen() {
   const save = () => {
     if (saving.current || drafts.length === 0) return;
     // Catalog drafts always have a price; a broken one opens in the editor instead of saving.
+    if (drafts.length > room) return blocked();
     const broken = drafts.find((d) => draftProblem(d));
     if (broken) return setEditing(broken);
     saving.current = true;
@@ -143,6 +155,7 @@ export default function AddScreen() {
           <AppText variant="headline" style={styles.title}>
             Add a subscription
           </AppText>
+          {isPro ? null : <FreePlan left={Math.max(room - drafts.length, 0)} />}
           <View style={styles.search}>
             <SearchIcon color={colors.textSecondary} />
             <TextInput
@@ -202,7 +215,7 @@ export default function AddScreen() {
             })}
             <Pressable
               role="button"
-              onPress={() => setEditing(blankDraft(typed, today))}
+              onPress={() => (full ? blocked() : setEditing(blankDraft(typed, today)))}
               style={[styles.own, visible.length > 0 && styles.divider]}>
               <PencilIcon color={colors.inkSoft} />
               <AppText variant="link" style={styles.ownText}>
@@ -229,6 +242,22 @@ export default function AddScreen() {
 
       <SubscriptionEditor draft={editing} today={today} onSave={saveDraft} onClose={() => setEditing(null)} />
     </ScreenBackground>
+  );
+}
+
+/** How many the free plan has room for, and the way to more. */
+function FreePlan({ left }: { left: number }) {
+  return (
+    <Pressable role="button" onPress={openLimit} style={styles.freePlan}>
+      <AppText variant="caption" style={styles.freePlanText}>
+        {left === 0
+          ? 'Free plan: no spots left.'
+          : `Free plan: ${left} of ${FREE_LIMIT} spot${left === 1 ? '' : 's'} left.`}{' '}
+        <AppText variant="caption" style={styles.freePlanLink}>
+          Track more with Pro
+        </AppText>
+      </AppText>
+    </Pressable>
   );
 }
 
@@ -341,6 +370,20 @@ const styles = StyleSheet.create({
   },
   title: {
     paddingHorizontal: 4,
+  },
+  freePlan: {
+    paddingHorizontal: 4,
+    marginTop: -6,
+    minHeight: 32,
+    justifyContent: 'center',
+  },
+  freePlanText: {
+    color: colors.inkSoft,
+  },
+  freePlanLink: {
+    fontFamily: fonts.semibold,
+    color: colors.ink,
+    textDecorationLine: 'underline',
   },
   search: {
     flexDirection: 'row',
