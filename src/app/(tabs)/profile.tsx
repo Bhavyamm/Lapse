@@ -13,6 +13,7 @@ import {
   DocumentIcon,
   LockIcon,
   ProfileIcon,
+  RestoreIcon,
   ShareIcon,
   TrashIcon,
 } from '@/components/icons';
@@ -23,7 +24,7 @@ import { SettingsRow } from '@/components/settings-row';
 import { TabScreen } from '@/components/tab-screen';
 import { useToday } from '@/hooks/use-today';
 import { getBiometrics, unlock, type Biometrics } from '@/features/lock/biometrics';
-import { PRO_PRICE, usePro } from '@/features/pro/purchase';
+import { PRO_PRICE, restorePro, usePro } from '@/features/pro/purchase';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
 import { toCsv } from '@/features/subscriptions/csv';
 import { dueCount } from '@/features/subscriptions/check-in';
@@ -51,6 +52,7 @@ export default function ProfileScreen() {
       <SavingsCard />
       <SettingsCard />
       <DataCard />
+      <AboutCard />
     </TabScreen>
   );
 }
@@ -224,6 +226,58 @@ function DataCard() {
         onPress={subscriptions.length ? exportCsv : undefined}
       />
       <SettingsRow icon={<TrashIcon color={colors.danger} />} label="Clear all data" onPress={clearAll} destructive />
+    </GlassCard>
+  );
+}
+
+/** Restore purchase for a new phone or a reinstall, and the legal pages. */
+function AboutCard() {
+  const isPro = usePro((s) => s.isPro);
+  const restoring = useRef(false);
+  const restore = async () => {
+    if (restoring.current) return;
+    restoring.current = true;
+    try {
+      const result = await restorePro();
+      if (result === 'unlocked') {
+        success();
+        notify('Pro is back', 'Thanks for supporting lapse.');
+      } else if (result === 'nothing') {
+        notify(
+          'No Pro purchase found',
+          'This store account hasn’t bought Pro. Sign in with the one you used and try again.',
+        );
+      } else {
+        notify('Nothing to restore yet', `Pro opens for ${PRO_PRICE} once lapse is in the App Store and Google Play.`);
+      }
+    } catch {
+      notify('Something went wrong', 'The store didn’t answer. Try again in a moment.');
+    } finally {
+      restoring.current = false;
+    }
+  };
+
+  return (
+    <GlassCard radius={26} contentStyle={styles.card}>
+      {isPro ? null : (
+        <SettingsRow
+          icon={<RestoreIcon color={colors.ink} />}
+          label="Restore purchase"
+          onPress={restore}
+          divider={false}
+        />
+      )}
+      <SettingsRow
+        icon={<LockIcon size={18} color={colors.ink} />}
+        label="Privacy Policy"
+        onPress={() => router.push({ pathname: '/legal/[doc]', params: { doc: 'privacy' } })}
+        divider={!isPro}
+      />
+      <SettingsRow
+        icon={<DocumentIcon color={colors.ink} />}
+        label="Terms of Use"
+        onPress={() => router.push({ pathname: '/legal/[doc]', params: { doc: 'terms' } })}
+      />
     </GlassCard>
   );
 }

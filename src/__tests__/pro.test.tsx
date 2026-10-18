@@ -6,7 +6,9 @@ import { useSubscriptions } from '@/stores/subscriptions';
 
 import ProScreen from '@/app/pro';
 
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), canGoBack: () => true, replace: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), canGoBack: () => true, replace: jest.fn(), push: jest.fn() },
+}));
 jest.mock('@/features/pro/purchase', () => ({
   ...jest.requireActual('@/features/pro/purchase'),
   purchasePro: jest.fn(),
@@ -120,5 +122,16 @@ describe('Pro screen', () => {
     expect(screen.getByText('You have Pro. Thank you!')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: /^Unlock Pro/ })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Restore purchase' })).toBeNull();
+  });
+
+  it('links to the Terms of Use and Privacy Policy', async () => {
+    const push = jest.requireMock('expo-router').router.push;
+    await render(<ProScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Terms' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Privacy' }));
+
+    expect(push).toHaveBeenCalledWith({ pathname: '/legal/[doc]', params: { doc: 'terms' } });
+    expect(push).toHaveBeenCalledWith({ pathname: '/legal/[doc]', params: { doc: 'privacy' } });
   });
 });

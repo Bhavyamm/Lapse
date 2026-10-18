@@ -156,15 +156,33 @@ export default function ProScreen() {
                 <ArrowRightIcon color={colors.white} />
               </View>
             </PressScale>
-            <Pressable role="button" onPress={() => run(true)} hitSlop={12} style={styles.restore}>
-              <AppText variant="caption" onDark muted>
-                Restore purchase
-              </AppText>
-            </Pressable>
           </>
         )}
+        <View style={styles.links}>
+          {isPro ? null : <FooterLink label="Restore purchase" onPress={() => run(true)} />}
+          <FooterLink
+            label="Terms"
+            hint="Opens the Terms of Use"
+            onPress={() => router.push({ pathname: '/legal/[doc]', params: { doc: 'terms' } })}
+          />
+          <FooterLink
+            label="Privacy"
+            hint="Opens the Privacy Policy"
+            onPress={() => router.push({ pathname: '/legal/[doc]', params: { doc: 'privacy' } })}
+          />
+        </View>
       </View>
     </View>
+  );
+}
+
+function FooterLink({ label, hint, onPress }: { label: string; hint?: string; onPress: () => void }) {
+  return (
+    <Pressable role="button" accessibilityHint={hint} onPress={onPress} hitSlop={6} style={styles.link}>
+      <AppText variant="caption" onDark muted>
+        {label}
+      </AppText>
+    </Pressable>
   );
 }
 
@@ -307,8 +325,13 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.sm,
   },
-  restore: {
-    alignSelf: 'center',
+  links: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    columnGap: spacing.lg,
+  },
+  link: {
     minHeight: 44,
     justifyContent: 'center',
   },

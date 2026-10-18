@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 import { getBiometrics, unlock } from '@/features/lock/biometrics';
-import { usePro } from '@/features/pro/purchase';
+import { restorePro, usePro } from '@/features/pro/purchase';
 import { requestReminderPermission } from '@/features/reminders/permissions';
 import { shareCsv } from '@/features/subscriptions/export';
 import { useSettings } from '@/stores/settings';
@@ -13,6 +13,10 @@ import ProfileScreen from '@/app/(tabs)/profile';
 jest.mock('@/features/lock/biometrics', () => ({ getBiometrics: jest.fn(), unlock: jest.fn() }));
 jest.mock('@/features/reminders/permissions', () => ({ requestReminderPermission: jest.fn() }));
 jest.mock('@/features/subscriptions/export', () => ({ shareCsv: jest.fn() }));
+jest.mock('@/features/pro/purchase', () => ({
+  ...jest.requireActual('@/features/pro/purchase'),
+  restorePro: jest.fn(),
+}));
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), navigate: jest.fn() } }));
 
 const initialSettings = useSettings.getState();
@@ -201,5 +205,28 @@ describe('Profile screen', () => {
 
     expect(screen.queryByRole('button', { name: 'Show onboarding again' })).not.toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Send a test reminder' })).not.toBeOnTheScreen();
+  });
+
+  it('restores Pro from Profile and says what happened', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    jest.mocked(restorePro).mockResolvedValueOnce('nothing').mockResolvedValueOnce('unlocked');
+    await render(<ProfileScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Restore purchase' }));
+    expect(alert.mock.calls[0][0]).toBe('No Pro purchase found');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Restore purchase' }));
+    expect(alert.mock.calls[1][0]).toBe('Pro is back');
+  });
+
+  it('opens the Privacy Policy and Terms of Use', async () => {
+    const push = jest.requireMock('expo-router').router.push;
+    await render(<ProfileScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Privacy Policy' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Terms of Use' }));
+
+    expect(push).toHaveBeenNthCalledWith(1, { pathname: '/legal/[doc]', params: { doc: 'privacy' } });
+    expect(push).toHaveBeenNthCalledWith(2, { pathname: '/legal/[doc]', params: { doc: 'terms' } });
   });
 });

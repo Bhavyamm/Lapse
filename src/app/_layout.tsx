@@ -77,6 +77,8 @@ export default function RootLayout() {
             <Stack.Screen name="check-in" />
             <Stack.Screen name="pro" options={{ presentation: 'modal' }} />
           </Stack.Protected>
+          {/* Readable from anywhere. A sheet, so it also opens above the Pro sheet on iOS. */}
+          <Stack.Screen name="legal/[doc]" options={{ presentation: 'modal' }} />
         </Stack>
       </View>
       {/* Under the splash, so a locked app shows the lock as the splash fades. */}
