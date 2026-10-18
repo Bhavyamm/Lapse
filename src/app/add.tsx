@@ -37,7 +37,7 @@ import { FREE_LIMIT, openLimit, roomLeft } from '@/features/pro/limit';
 import { usePro } from '@/features/pro/purchase';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing, type } from '@/theme';
-import { formatShortDate, today as getToday } from '@/utils/dates';
+import { today as getToday } from '@/utils/dates';
 import { selection, success } from '@/utils/haptics';
 import { animateLayout } from '@/utils/motion';
 import { confirm } from '@/utils/notify';
@@ -186,14 +186,39 @@ export default function AddScreen() {
             {visible.map((service, i) => {
               const draft = picked.get(service.id);
               const price = draft ? describeDraft(draft) : describePrice(service.price, service.cycle, service.from);
-              const already = savedIds.has(service.id) ? 'already added, ' : '';
+              // Already tracked: shown so the list doesn't change shape, but it can't be picked again.
+              if (savedIds.has(service.id))
+                return (
+                  <View
+                    key={service.id}
+                    accessible
+                    aria-disabled
+                    aria-label={`${service.name}, already added`}
+                    style={[styles.row, i > 0 && styles.divider]}>
+                    <View style={styles.addedLogo}>
+                      <ServiceLogo serviceId={service.id} name={service.name} />
+                    </View>
+                    <View style={styles.rowText}>
+                      <AppText variant="bodyStrong" numberOfLines={1}>
+                        {service.name}
+                      </AppText>
+                      <AppText variant="caption" muted>
+                        Already in your list
+                      </AppText>
+                    </View>
+                    <View style={styles.added}>
+                      <CheckIcon size={12} color={colors.textSecondary} />
+                      <AppText variant="caption" muted style={styles.addedText}>
+                        Added
+                      </AppText>
+                    </View>
+                  </View>
+                );
               return (
                 <PressScale
                   key={service.id}
                   role="button"
-                  aria-label={
-                    draft ? `Remove ${service.name}, picked, ${price}` : `Add ${service.name}, ${already}${price}`
-                  }
+                  aria-label={draft ? `Remove ${service.name}, picked, ${price}` : `Add ${service.name}, ${price}`}
                   scale={0.98}
                   onPress={() => toggle(service)}
                   style={[styles.row, i > 0 && styles.divider]}>
@@ -203,7 +228,6 @@ export default function AddScreen() {
                       {service.name}
                     </AppText>
                     <AppText variant="caption" muted>
-                      {savedIds.has(service.id) ? 'Already added · ' : ''}
                       {price}
                     </AppText>
                   </View>
@@ -283,8 +307,8 @@ function useKeyboardUp(): boolean {
 }
 
 /**
- * What's picked so far, in one row above the save button: a running monthly total and a chip
- * per pick to change or remove it. It scrolls sideways, so picking more never pushes the list.
+ * What's picked so far, above the save button: a running monthly total and a logo per pick. Tap
+ * a logo to change that pick, or its × to remove it. Logos wrap, so a dozen picks fit in two rows.
  */
 function Picks({
   drafts,
@@ -301,40 +325,31 @@ function Picks({
     .reduce((sum, d) => sum + monthlyCents(parsePrice(d.priceText) ?? 0, d.cycle), 0);
   return (
     <View style={styles.picks}>
-      <AppText variant="caption" onDark style={styles.picksTitle}>
-        {drafts.length} picked · {formatMoney(monthly)} a month
-      </AppText>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chips}
-        keyboardShouldPersistTaps="handled">
+      <View style={styles.picksHead}>
+        <AppText variant="caption" onDark style={styles.picksTitle}>
+          {drafts.length} picked · {formatMoney(monthly)} a month
+        </AppText>
+        <AppText variant="caption" onDark muted>
+          Tap to change
+        </AppText>
+      </View>
+      <ScrollView style={styles.chipsBox} contentContainerStyle={styles.chips} keyboardShouldPersistTaps="handled">
         {drafts.map((draft) => (
           <View key={draft.key} style={styles.pick}>
-            <Pressable
+            <PressScale
               role="button"
-              aria-label={`Change ${draft.name}`}
+              aria-label={`Change ${draft.name}, ${describeDraft(draft)}`}
               onPress={() => onEdit(draft)}
               style={styles.pickMain}>
-              <ServiceLogo serviceId={draft.serviceId} name={draft.name} size={30} />
-              <View>
-                <AppText variant="label" style={styles.bold} numberOfLines={1}>
-                  {draft.name}
-                </AppText>
-                <AppText variant="caption" style={styles.pickDetail} numberOfLines={1}>
-                  {draft.trial
-                    ? `Trial ends ${formatShortDate(draft.chargeOn)}`
-                    : `${describeDraft(draft)} · ${formatShortDate(draft.chargeOn)}`}
-                </AppText>
-              </View>
-            </Pressable>
+              <ServiceLogo serviceId={draft.serviceId} name={draft.name} size={44} />
+            </PressScale>
             <Pressable
               role="button"
               aria-label={`Remove ${draft.name}`}
               onPress={() => onRemove(draft.key)}
-              hitSlop={8}
+              hitSlop={4}
               style={styles.pickRemove}>
-              <CloseIcon size={10} color={colors.ink} />
+              <CloseIcon size={8} color={colors.white} />
             </Pressable>
           </View>
         ))}
@@ -342,6 +357,10 @@ function Picks({
     </View>
   );
 }
+
+// A picked logo plus room for its × badge.
+const PICK = 50;
+const PICK_GAP = 8;
 
 const styles = StyleSheet.create({
   flex: {
@@ -448,6 +467,21 @@ const styles = StyleSheet.create({
   bold: {
     fontFamily: fonts.bold,
   },
+  addedLogo: {
+    opacity: 0.5,
+  },
+  added: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    minHeight: 28,
+    borderRadius: radii.pill,
+    backgroundColor: colors.canvas,
+  },
+  addedText: {
+    fontFamily: fonts.semibold,
+  },
   pickedMark: {
     backgroundColor: colors.accent,
   },
@@ -462,38 +496,46 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     gap: 10,
   },
-  picksTitle: {
-    fontFamily: fonts.semibold,
+  picksHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
     paddingHorizontal: spacing.lg,
   },
+  picksTitle: {
+    fontFamily: fonts.semibold,
+  },
+  chipsBox: {
+    // Two rows of logos, then they scroll.
+    maxHeight: 6 + 2 * PICK + PICK_GAP,
+    flexGrow: 0,
+  },
   chips: {
-    paddingHorizontal: 10,
-    gap: spacing.sm,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: spacing.md,
+    paddingTop: 6,
+    gap: PICK_GAP,
   },
   pick: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: radii.pill,
-    paddingLeft: 6,
-    paddingRight: 8,
-    gap: 6,
+    width: PICK,
+    height: PICK,
+    justifyContent: 'flex-end',
   },
   pickMain: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: 6,
-    maxWidth: 220,
-  },
-  pickDetail: {
-    color: colors.ink,
+    width: 44,
+    height: 44,
   },
   pickRemove: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.onAccentPanel,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.ink,
+    borderWidth: 2,
+    borderColor: colors.charcoal,
     alignItems: 'center',
     justifyContent: 'center',
   },

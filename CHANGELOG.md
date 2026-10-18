@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+
+- Add a subscription with many picks: services you already track show an Added pill and can't be picked twice, and the picks tray shows a logo per pick that wraps into rows (six per row; tap a logo to change it, its × to remove it) instead of wide name chips that scrolled sideways.
 - Profile: Clear all data deletes every subscription, saving and setting on this phone after asking, cancels scheduled reminders, and returns to the first-run screen. The development-only Send a test reminder and Show onboarding again buttons are gone.
 - Follows Apple's Human Interface Guidelines more closely (audited with the Apple HIG skills now in `.claude/skills`):
   - Larger text no longer clips. Buttons, list rows, search and price fields, chips and calendar days grow with the text; the cancel button on a subscription wraps to two lines; the three facts on a subscription stack at large sizes; the check-in card scrolls when its text outgrows it; and the big amounts, countdown and wordmark grow only a little.
@@ -33,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved to Expo SDK 57 so the app opens in the Expo Go version on the App Store.
 
 ### Added
+
 - Free plan limit: without Pro, lapse. tracks up to 2 subscriptions. Add shows how many spots are left, and picking past the limit (or tapping + when full) opens Pro, which explains the limit. Subscriptions already tracked are kept. Pro is remembered on the phone, so it stays unlocked offline.
 - Privacy Policy and Terms of Use, readable in the app from Profile and from the Pro screen. Profile also has Restore purchase, for getting Pro back on a new phone or after reinstalling.
 - Pro purchases through RevenueCat: Unlock Pro buys the one-time lifetime unlock in the App Store or Google Play at the store's local price, Restore purchase brings it back, and Profile shows the Pro plan once it's owned. Expo Go and the web use RevenueCat's Test Store. Without RevenueCat keys (see `.env.example`), Pro still says it isn't on sale yet.

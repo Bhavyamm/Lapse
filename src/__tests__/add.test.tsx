@@ -61,7 +61,9 @@ describe('Add a subscription', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: /^Add Spotify/ }));
     await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
-    expect(screen.getAllByText(/· Tue, Nov 17$/)).toHaveLength(2);
+    expect(screen.getByRole('button', { name: /^Change Spotify,/ })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^Change Netflix,/ })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Change Spotify, $11.99 a month' })).toBeOnTheScreen();
     expect(screen.getByText('2 picked · $19.98 a month')).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Add 2 and remind me' }));
 
@@ -108,7 +110,7 @@ describe('Add a subscription', () => {
     const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[1].onPress?.());
     await render(<AddScreen />);
     await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Change Netflix,/ }));
     await fireEvent.changeText(screen.getByLabelText('Price'), '99');
     await fireEvent.press(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
 
@@ -121,7 +123,7 @@ describe('Add a subscription', () => {
       ],
       expect.anything(),
     );
-    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Change Netflix,/ }));
     expect(screen.getAllByLabelText('Price').at(-1)).toHaveDisplayValue('7.99');
     alert.mockRestore();
   });
@@ -130,7 +132,7 @@ describe('Add a subscription', () => {
     const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[0].onPress?.());
     await render(<AddScreen />);
     await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Change Netflix,/ }));
     await fireEvent.changeText(screen.getByLabelText('Price'), '99');
     await fireEvent.press(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
 
@@ -142,7 +144,7 @@ describe('Add a subscription', () => {
     const alert = jest.spyOn(Alert, 'alert');
     await render(<AddScreen />);
     await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Change Netflix,/ }));
     await fireEvent.press(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
 
     expect(alert).not.toHaveBeenCalled();
@@ -179,7 +181,7 @@ describe('Add a subscription', () => {
     await render(<AddScreen />);
     await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Change Netflix,/ }));
     await fireEvent.changeText(screen.getByLabelText('Price'), '15.49');
     await fireEvent.press(screen.getByRole('switch', { name: 'Free trial' }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Yearly' }));
@@ -195,7 +197,7 @@ describe('Add a subscription', () => {
   it('does not allow a date before today', async () => {
     await render(<AddScreen />);
     await fireEvent.press(screen.getByRole('button', { name: /^Add Netflix/ }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Change Netflix' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Change Netflix,/ }));
     await fireEvent.press(screen.getByRole('button', { name: 'Previous month' }));
 
     expect(screen.getByRole('radio', { name: 'Fri, Oct 16' })).toBeDisabled();
@@ -223,7 +225,7 @@ describe('Add a subscription', () => {
   it('moves the default date with the cycle until a date is picked', async () => {
     await render(<AddScreen />);
     await fireEvent.press(screen.getByRole('button', { name: /^Add Spotify/ }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Change Spotify' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Change Spotify,/ }));
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Weekly' }));
     expect(screen.getByRole('radio', { name: 'Sat, Oct 24' })).toBeChecked();
@@ -232,7 +234,7 @@ describe('Add a subscription', () => {
     expect(screen.getByRole('radio', { name: 'Thu, Oct 29' })).toBeChecked();
   });
 
-  it('marks services that are already saved', async () => {
+  it('shows services already saved as added, and they can’t be picked again', async () => {
     useSubscriptions.getState().add([
       {
         serviceId: 'netflix',
@@ -245,7 +247,11 @@ describe('Add a subscription', () => {
     ]);
     await render(<AddScreen />);
 
-    expect(screen.getByRole('button', { name: /^Add Netflix, already added/ })).toBeOnTheScreen();
+    expect(screen.getByLabelText('Netflix, already added')).toBeDisabled();
+    expect(screen.getByText('Added')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: /^Add Netflix/ })).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Netflix, already added'));
+    expect(screen.queryByText(/picked ·/)).toBeNull();
   });
 
   it('shows Popular, not Results, for a query of only symbols', async () => {
