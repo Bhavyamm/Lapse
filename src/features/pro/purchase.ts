@@ -37,7 +37,19 @@ function apiKey(): string | undefined {
     : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 }
 
-const ownsPro = (info: CustomerInfo) => PRO_ENTITLEMENT in info.entitlements.active;
+// The store product sold as Pro, once the offering has been read.
+let proProductId: string | null = null;
+
+/**
+ * True when this account owns Pro. Pro is the app's only purchase, so any active entitlement
+ * counts, and so does owning the Pro product itself: a dashboard entitlement named differently,
+ * or a product not attached to one, still unlocks what was paid for.
+ */
+function ownsPro(info: CustomerInfo): boolean {
+  if (PRO_ENTITLEMENT in info.entitlements.active) return true;
+  if (Object.keys(info.entitlements.active).length > 0) return true;
+  return !!proProductId && info.allPurchasedProductIdentifiers.includes(proProductId);
+}
 const showOwned = (info: CustomerInfo) => {
   const isPro = ownsPro(info);
   usePro.setState({ isPro });
@@ -47,7 +59,10 @@ const showOwned = (info: CustomerInfo) => {
 /** The one-time Pro package: the current offering's lifetime one. Anything else isn't "once". */
 async function proPackage(): Promise<PurchasesPackage | null> {
   const pkg = (await Purchases.getOfferings()).current?.lifetime ?? null;
-  if (pkg) usePro.setState({ price: pkg.product.priceString });
+  if (pkg) {
+    proProductId = pkg.product.identifier;
+    usePro.setState({ price: pkg.product.priceString });
+  }
   return pkg;
 }
 
@@ -96,7 +111,14 @@ export async function purchasePro(): Promise<PurchaseResult> {
     const { customerInfo } = await Purchases.purchasePackage(pkg);
     if (showOwned(customerInfo)) return 'unlocked';
     // The store took the payment; RevenueCat can take a moment to grant Pro.
-    return showOwned(await Purchases.getCustomerInfo()) ? 'unlocked' : 'pending';
+    const latest = await Purchases.getCustomerInfo();
+    if (showOwned(latest)) return 'unlocked';
+    console.warn('[Pro] Paid, but no entitlement or product found', {
+      product: pkg.product.identifier,
+      entitlements: Object.keys(latest.entitlements.active),
+      purchased: latest.allPurchasedProductIdentifiers,
+    });
+    return 'pending';
   } catch (error) {
     const code = errorCode(error);
     if (code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR || (error as { userCancelled?: boolean }).userCancelled)

@@ -2,8 +2,11 @@ import Purchases from 'react-native-purchases';
 
 type Module = typeof import('./purchase');
 
-const info = (pro: boolean) => ({ entitlements: { active: pro ? { pro: {} } : {} } });
-const lifetime = { identifier: '$rc_lifetime', product: { priceString: '₹1,299.00' } };
+const info = (pro: boolean, purchased: string[] = []) => ({
+  entitlements: { active: pro ? { pro: {} } : {} },
+  allPurchasedProductIdentifiers: purchased,
+});
+const lifetime = { identifier: '$rc_lifetime', product: { identifier: 'lapse_pro', priceString: '₹1,299.00' } };
 
 /** A fresh copy of the module, so each test connects anew with its own keys and platform. */
 function load(env: Record<string, string | undefined>, where: { os?: string; expoGo?: boolean } = {}): Module {
@@ -125,14 +128,28 @@ describe('Pro purchases', () => {
     expect(Purchases.configure).toHaveBeenCalledTimes(2);
   });
 
+  it('unlocks Pro from the product bought, or any entitlement, when the entitlement isn’t named pro', async () => {
+    const { purchasePro } = load(keys);
+
+    jest.mocked(Purchases.purchasePackage).mockResolvedValueOnce({ customerInfo: info(false, ['lapse_pro']) } as never);
+    await expect(purchasePro()).resolves.toBe('unlocked');
+
+    jest.mocked(Purchases.purchasePackage).mockResolvedValueOnce({
+      customerInfo: { entitlements: { active: { 'lapse Pro': {} } }, allPurchasedProductIdentifiers: [] },
+    } as never);
+    await expect(purchasePro()).resolves.toBe('unlocked');
+  });
+
   it('says a paid purchase is pending until Pro is granted, rather than cancelled', async () => {
     jest.mocked(Purchases.purchasePackage).mockResolvedValue({ customerInfo: info(false) } as never);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const { purchasePro } = load(keys);
 
     await expect(purchasePro()).resolves.toBe('pending');
 
     jest.mocked(Purchases.getCustomerInfo).mockResolvedValue(info(true) as never);
     await expect(purchasePro()).resolves.toBe('unlocked');
+    warn.mockRestore();
   });
 
   it('handles Ask to Buy, and Pro already owned by this store account', async () => {
