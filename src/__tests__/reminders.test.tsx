@@ -104,12 +104,6 @@ describe('Reminder taps and buttons', () => {
     expect(useSubscriptions.getState().subscriptions[0].snoozeUntil).toBeUndefined();
     expect(router().push).toHaveBeenCalledWith({ pathname: '/subscription/[id]', params: { id: 'd' } });
   });
-
-  it('leaves the real subscription alone for a test reminder', () => {
-    handleResponse({ ...data, test: true }, 'keep');
-    expect(useSubscriptions.getState().subscriptions[0].trialKept).toBeUndefined();
-    expect(Alert.alert).toHaveBeenCalled();
-  });
 });
 
 describe('Reminders', () => {

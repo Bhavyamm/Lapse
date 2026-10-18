@@ -22,8 +22,8 @@ export type SettingsState = {
   appLock: boolean;
   setAppLock: (on: boolean) => void;
   completeOnboarding: (remindersEnabled: boolean) => void;
-  /** Puts onboarding back to a fresh-install state. Development builds only. */
-  resetOnboarding: () => void;
+  /** Back to a fresh install: onboarding comes back, reminders and the Face ID lock are off. */
+  reset: () => void;
 };
 
 export const useSettings = create<SettingsState>()(
@@ -38,7 +38,8 @@ export const useSettings = create<SettingsState>()(
       appLock: false,
       setAppLock: (appLock) => set({ appLock }),
       completeOnboarding: (remindersEnabled) => set({ hasOnboarded: true, remindersEnabled }),
-      resetOnboarding: () => set({ hasOnboarded: false, remindersEnabled: false, reminderLead: DEFAULT_REMINDER_LEAD }),
+      reset: () =>
+        set({ hasOnboarded: false, remindersEnabled: false, reminderLead: DEFAULT_REMINDER_LEAD, appLock: false }),
     }),
     {
       name: 'lapse.settings',

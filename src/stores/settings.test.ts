@@ -40,16 +40,18 @@ describe('settings store', () => {
     expect(useSettings.getState()).toMatchObject({ hasOnboarded: true, remindersEnabled: false });
   });
 
-  it('resetOnboarding puts onboarding back to a fresh install', () => {
+  it('reset puts settings back to a fresh install', () => {
     useSettings.getState().setReminderLead('threeDays');
     useSettings.getState().completeOnboarding(true);
+    useSettings.getState().setAppLock(true);
 
-    useSettings.getState().resetOnboarding();
+    useSettings.getState().reset();
 
     expect(useSettings.getState()).toMatchObject({
       hasOnboarded: false,
       remindersEnabled: false,
       reminderLead: DEFAULT_REMINDER_LEAD,
+      appLock: false,
     });
   });
 

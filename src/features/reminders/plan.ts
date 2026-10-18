@@ -28,8 +28,6 @@ export type ReminderData = {
   subscriptionId: string;
   kind: ReminderKind;
   chargeOn: LocalDate;
-  /** Set on the development "Send a test reminder" one. */
-  test?: boolean;
 };
 
 export type PlannedReminder = {

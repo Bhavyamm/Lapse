@@ -9,14 +9,13 @@ import {
   ArrowRightIcon,
   BellIcon,
   CalendarIcon,
-  ChevronIcon,
   CurrencyIcon,
   DocumentIcon,
   LockIcon,
   ProfileIcon,
   ShareIcon,
+  TrashIcon,
 } from '@/components/icons';
-import { PillButton } from '@/components/pill-button';
 import { PressScale } from '@/components/press-scale';
 import { ReminderSheet } from '@/components/reminder-sheet';
 import { ScreenHeader } from '@/components/screen-header';
@@ -26,7 +25,6 @@ import { useToday } from '@/hooks/use-today';
 import { getBiometrics, unlock, type Biometrics } from '@/features/lock/biometrics';
 import { PRO_PRICE } from '@/features/pro/purchase';
 import { REMINDER_LEADS } from '@/features/reminders/lead-time';
-import { sendTestReminder } from '@/features/reminders/sync';
 import { toCsv } from '@/features/subscriptions/csv';
 import { dueCount } from '@/features/subscriptions/check-in';
 import { shareCsv } from '@/features/subscriptions/export';
@@ -34,11 +32,11 @@ import { summarizeSavings } from '@/features/subscriptions/savings';
 import { useSettings } from '@/stores/settings';
 import { useSubscriptions } from '@/stores/subscriptions';
 import { colors, fonts, radii, spacing } from '@/theme';
-import { notify } from '@/utils/notify';
+import { success } from '@/utils/haptics';
+import { confirm, notify } from '@/utils/notify';
 
 /** Money saved, settings, and data import and export. */
 export default function ProfileScreen() {
-  const resetOnboarding = useSettings((s) => s.resetOnboarding);
   return (
     <TabScreen>
       <View style={styles.header}>
@@ -52,48 +50,8 @@ export default function ProfileScreen() {
       <SavingsCard />
       <SettingsCard />
       <DataCard />
-      {__DEV__ && (
-        <>
-          {Platform.OS === 'web' ? null : (
-            // Development builds only: shows the next reminder in 5 seconds, to try it on the lock screen.
-            <PillButton
-              label="Send a test reminder"
-              tone="dark"
-              icon={<BellIcon size={18} color={colors.ink} />}
-              onPress={testReminder}
-              style={{ marginTop: spacing.md }}
-            />
-          )}
-          {/* Development builds only: onboarding shows once, so this brings it back for testing.
-              Clearing hasOnboarded flips the Stack.Protected guards and the root layout opens reminders. */}
-          <PillButton
-            label="Show onboarding again"
-            tone="dark"
-            icon={<ChevronIcon color={colors.ink} />}
-            onPress={resetOnboarding}
-            style={{ marginTop: spacing.md }}
-          />
-        </>
-      )}
     </TabScreen>
   );
-}
-
-const TEST_REMINDER_MESSAGES = {
-  sent: ['Test reminder in 5 seconds', 'Lock your phone now to see it on the lock screen.'],
-  nothing: ['Nothing to remind about', 'Add a subscription first.'],
-  blocked: ['Notifications are off', 'Allow notifications for Expo Go (or lapse) in Settings, then try again.'],
-} as const;
-
-async function testReminder() {
-  const { subscriptions } = useSubscriptions.getState();
-  try {
-    const result = await sendTestReminder(subscriptions, useSettings.getState().reminderLead);
-    const [title, message] = TEST_REMINDER_MESSAGES[result];
-    notify(title, message);
-  } catch (error) {
-    notify('Couldn’t send a test reminder', error instanceof Error ? error.message : String(error));
-  }
 }
 
 // Navigate, not push, so a double tap can't stack two Pro screens.
@@ -207,6 +165,25 @@ function DataCard() {
   const today = useToday();
   const exporting = useRef(false);
 
+  // Clearing everything can't be undone, so it asks first. With onboarding reset, the app goes
+  // back to its first-run screen, and the reminder sync cancels every scheduled reminder.
+  const clearing = useRef(false);
+  const clearAll = async () => {
+    if (clearing.current) return;
+    clearing.current = true;
+    const yes = await confirm(
+      'Clear all your data?',
+      'Your subscriptions, savings and settings are removed from this phone. This can’t be undone.',
+      'Clear everything',
+      { cancel: 'Keep my data', destructive: true },
+    );
+    clearing.current = false;
+    if (!yes) return;
+    useSubscriptions.getState().clear();
+    useSettings.getState().reset();
+    success();
+  };
+
   const exportCsv = async () => {
     if (exporting.current) return;
     exporting.current = true;
@@ -241,6 +218,7 @@ function DataCard() {
         detail={subscriptions.length ? undefined : 'Nothing yet'}
         onPress={subscriptions.length ? exportCsv : undefined}
       />
+      <SettingsRow icon={<TrashIcon color={colors.danger} />} label="Clear all data" onPress={clearAll} destructive />
     </GlassCard>
   );
 }

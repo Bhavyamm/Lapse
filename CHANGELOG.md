@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Profile: Clear all data deletes every subscription, saving and setting on this phone after asking, cancels scheduled reminders, and returns to the first-run screen. The development-only Send a test reminder and Show onboarding again buttons are gone.
 - Follows Apple's Human Interface Guidelines more closely (audited with the Apple HIG skills now in `.claude/skills`):
   - Larger text no longer clips. Buttons, list rows, search and price fields, chips and calendar days grow with the text; the cancel button on a subscription wraps to two lines; the three facts on a subscription stack at large sizes; the check-in card scrolls when its text outgrows it; and the big amounts, countdown and wordmark grow only a little.
   - Closing the subscription editor after changing something, or leaving Add with picks, asks "Discard changes?" or "Discard 2 picks?" first. This covers the Close button, the backdrop, swiping the sheet down, Back and the iOS edge swipe.

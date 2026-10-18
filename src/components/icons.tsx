@@ -161,6 +161,15 @@ export function ShareIcon({ size = 18, color }: IconProps) {
   );
 }
 
+export function TrashIcon({ size = 18, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)}>
+      <Path d="M4 7h16M10 11v6M14 11v6M9 7V4h6v3" />
+      <Path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" />
+    </Svg>
+  );
+}
+
 export function ArrowUpRightIcon({ size = 18, color }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" {...stroke(color)} strokeWidth={2.4}>

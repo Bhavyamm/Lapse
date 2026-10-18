@@ -86,14 +86,14 @@ export function handleResponse(data: Partial<ReminderData> | undefined, action: 
       router.push({ pathname: '/subscription/[id]', params: { id } });
       return;
     }
-    if (!data?.test) store.update(id, { snoozeUntil: at.getTime() });
+    store.update(id, { snoozeUntil: at.getTime() });
     const time = at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
     notify('Okay', `We’ll remind you about ${sub.name} at ${time}.`);
     return;
   }
   if (action === TRIAL_ACTIONS.keep) {
     if (!sub) return;
-    if (!data?.test) store.update(id, { trialKept: true, snoozeUntil: undefined });
+    store.update(id, { trialKept: true, snoozeUntil: undefined });
     notify('Got it', `No more reminders about the ${sub.name} trial.`);
     return;
   }

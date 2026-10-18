@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import type { Subscription } from '@/features/subscriptions/types';
 
 import type { ReminderLead } from './lead-time';
-import { REMINDER_CHANNEL_ID, requestReminderPermission } from './permissions';
+import { REMINDER_CHANNEL_ID } from './permissions';
 import { planReminders, TRIAL_CATEGORY } from './plan';
 
 /** Buttons on a trial reminder. */
@@ -76,7 +76,7 @@ export function syncReminders(
       const wanted = new Set(planned.map((r) => r.id));
       const scheduled = await Notifications.getAllScheduledNotificationsAsync();
       for (const old of scheduled) {
-        if (!wanted.has(old.identifier) && !old.content.data?.test) {
+        if (!wanted.has(old.identifier)) {
           await Notifications.cancelScheduledNotificationAsync(old.identifier);
         }
       }
@@ -98,38 +98,4 @@ export function syncReminders(
   const next = queue.then(run);
   queue = next;
   return next;
-}
-
-export type TestReminderResult = 'sent' | 'nothing' | 'blocked';
-
-/**
- * Development builds only: shows the next real reminder (a trial's first) a few seconds from now,
- * so the lock-screen reminder and its buttons can be tried without waiting. Asks for permission
- * if it hasn't been given. Throws if the phone refuses to schedule it.
- */
-export async function sendTestReminder(
-  subscriptions: Subscription[],
-  reminderLead: ReminderLead,
-): Promise<TestReminderResult> {
-  if (Platform.OS === 'web') return 'blocked';
-  if (!(await requestReminderPermission())) return 'blocked';
-  await prepare();
-  const planned = planReminders(subscriptions, { remindersEnabled: true, reminderLead }, new Date());
-  const pick = planned.find((r) => r.data.kind === 'trial') ?? planned[0];
-  if (!pick) return 'nothing';
-  await Notifications.scheduleNotificationAsync({
-    // Marked as a test, so its buttons don't change the real subscription.
-    content: {
-      title: pick.title,
-      body: pick.body,
-      data: { ...pick.data, test: true },
-      categoryIdentifier: pick.category,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds: 5,
-      channelId: REMINDER_CHANNEL_ID,
-    },
-  });
-  return 'sent';
 }

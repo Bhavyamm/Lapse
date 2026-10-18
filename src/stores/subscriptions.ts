@@ -23,6 +23,8 @@ export type SubscriptionsState = {
   cancelled: CancelledSubscription[];
   /** Stops tracking a subscription and remembers it as cancelled on `today`. */
   cancel: (id: string, today: LocalDate) => void;
+  /** Forgets every subscription and every saving. */
+  clear: () => void;
 };
 
 let counter = 0;
@@ -70,6 +72,7 @@ export const useSubscriptions = create<SubscriptionsState>()(
             cancelled: [...s.cancelled, toCancelled(sub, today)],
           };
         }),
+      clear: () => set({ subscriptions: [], cancelled: [] }),
     }),
     {
       name: 'lapse.subscriptions',

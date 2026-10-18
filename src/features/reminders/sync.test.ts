@@ -2,8 +2,7 @@ import * as Notifications from 'expo-notifications';
 
 import type { Subscription } from '@/features/subscriptions/types';
 
-import { requestReminderPermission } from './permissions';
-import { sendTestReminder, syncReminders } from './sync';
+import { syncReminders } from './sync';
 
 jest.mock('expo-notifications', () => ({
   AndroidImportance: { HIGH: 4 },
@@ -15,7 +14,7 @@ jest.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: jest.fn(),
   scheduleNotificationAsync: jest.fn(),
 }));
-jest.mock('./permissions', () => ({ REMINDER_CHANNEL_ID: 'reminders', requestReminderPermission: jest.fn() }));
+jest.mock('./permissions', () => ({ REMINDER_CHANNEL_ID: 'reminders' }));
 
 const spotify: Subscription = {
   id: 's',
@@ -60,14 +59,10 @@ describe('syncReminders', () => {
     });
   });
 
-  it('cancels only the reminders no longer wanted, and leaves a test reminder', async () => {
+  it('cancels only the reminders no longer wanted', async () => {
     jest
       .mocked(Notifications.getAllScheduledNotificationsAsync)
-      .mockResolvedValue([
-        scheduled('s:2026-10-19'),
-        scheduled('gone:2026-10-20'),
-        scheduled('x', { test: true }),
-      ] as never);
+      .mockResolvedValue([scheduled('s:2026-10-19'), scheduled('gone:2026-10-20')] as never);
 
     await syncReminders([spotify], on);
 
@@ -130,33 +125,5 @@ describe('syncReminders', () => {
 
     await fresh([spotify], on);
     expect(api.setNotificationCategoryAsync).toHaveBeenCalledTimes(2);
-  });
-});
-
-describe('sendTestReminder', () => {
-  const duo = { ...spotify, id: 'd', name: 'Duolingo Max', trial: true, chargeOn: '2026-10-18' };
-
-  it('shows the next trial reminder in 5 seconds, marked as a test', async () => {
-    jest.mocked(requestReminderPermission).mockResolvedValue(true);
-
-    await expect(sendTestReminder([spotify, duo], 'oneDay')).resolves.toBe('sent');
-
-    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith({
-      content: expect.objectContaining({
-        title: 'Duolingo Max trial ends tomorrow',
-        categoryIdentifier: 'trial',
-        data: expect.objectContaining({ subscriptionId: 'd', test: true }),
-      }),
-      trigger: { type: 'timeInterval', seconds: 5, channelId: 'reminders' },
-    });
-  });
-
-  it('says when notifications aren’t allowed or there’s nothing to remind about', async () => {
-    jest.mocked(requestReminderPermission).mockResolvedValue(false);
-    await expect(sendTestReminder([spotify], 'oneDay')).resolves.toBe('blocked');
-
-    jest.mocked(requestReminderPermission).mockResolvedValue(true);
-    await expect(sendTestReminder([], 'oneDay')).resolves.toBe('nothing');
-    expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
   });
 });

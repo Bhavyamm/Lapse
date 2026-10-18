@@ -19,14 +19,16 @@ type Props = {
   onPress?: () => void;
   /** Draws the divider above; off for the first row of a card. */
   divider?: boolean;
+  /** Red label and no chevron, for a row that deletes something. */
+  destructive?: boolean;
 };
 
 /** One line of a settings card: icon tile, label, value, then a chevron or a switch. */
-export function SettingsRow({ icon, label, detail, badge, toggle, onPress, divider = true }: Props) {
+export function SettingsRow({ icon, label, detail, badge, toggle, onPress, divider = true, destructive }: Props) {
   const body = (
     <>
       <View style={styles.icon}>{icon}</View>
-      <AppText variant="link" style={styles.label}>
+      <AppText variant="link" style={[styles.label, destructive && styles.destructive]}>
         {label}
       </AppText>
       {detail ? (
@@ -36,7 +38,7 @@ export function SettingsRow({ icon, label, detail, badge, toggle, onPress, divid
       ) : null}
       {badge}
       {toggle ? <Toggle on={toggle.on} disabled={toggle.disabled} /> : null}
-      {onPress && !toggle ? <ChevronIcon color={colors.textSecondary} /> : null}
+      {onPress && !toggle && !destructive ? <ChevronIcon color={colors.textSecondary} /> : null}
     </>
   );
   const style = [styles.row, divider && styles.divider];
@@ -91,5 +93,8 @@ const styles = StyleSheet.create({
   },
   label: {
     flex: 1,
+  },
+  destructive: {
+    color: colors.danger,
   },
 });

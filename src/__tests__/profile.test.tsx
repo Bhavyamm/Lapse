@@ -3,7 +3,6 @@ import { Alert } from 'react-native';
 
 import { getBiometrics, unlock } from '@/features/lock/biometrics';
 import { requestReminderPermission } from '@/features/reminders/permissions';
-import { sendTestReminder } from '@/features/reminders/sync';
 import { shareCsv } from '@/features/subscriptions/export';
 import { useSettings } from '@/stores/settings';
 import { useSubscriptions } from '@/stores/subscriptions';
@@ -13,7 +12,6 @@ import ProfileScreen from '@/app/(tabs)/profile';
 jest.mock('@/features/lock/biometrics', () => ({ getBiometrics: jest.fn(), unlock: jest.fn() }));
 jest.mock('@/features/reminders/permissions', () => ({ requestReminderPermission: jest.fn() }));
 jest.mock('@/features/subscriptions/export', () => ({ shareCsv: jest.fn() }));
-jest.mock('@/features/reminders/sync', () => ({ sendTestReminder: jest.fn() }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), navigate: jest.fn() } }));
 
 const initialSettings = useSettings.getState();
@@ -151,30 +149,43 @@ describe('Profile screen', () => {
     expect(screen.getByLabelText('Export as CSV, Nothing yet')).toBeOnTheScreen();
   });
 
-  it('in development, "Show onboarding again" clears onboarding so onboarding comes back', async () => {
-    setDev(true);
+  it('clears all data after asking, and goes back to a fresh start', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[1].onPress?.());
     useSettings.getState().completeOnboarding(true);
+    useSettings.getState().setAppLock(true);
+    useSubscriptions.getState().add([{ ...base, name: 'Gym', priceCents: 4000, chargeOn: '2026-10-20' }]);
+    useSubscriptions.getState().cancel(useSubscriptions.getState().subscriptions[0].id, '2026-10-16');
     await render(<ProfileScreen />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Show onboarding again' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Clear all data' }));
 
-    expect(useSettings.getState()).toMatchObject({ hasOnboarded: false, remindersEnabled: false });
+    expect(alert).toHaveBeenCalledWith(
+      'Clear all your data?',
+      expect.any(String),
+      [
+        expect.objectContaining({ text: 'Keep my data', style: 'cancel' }),
+        expect.objectContaining({ text: 'Clear everything', style: 'destructive' }),
+      ],
+      expect.anything(),
+    );
+    expect(useSubscriptions.getState()).toMatchObject({ subscriptions: [], cancelled: [] });
+    expect(useSettings.getState()).toMatchObject({ hasOnboarded: false, remindersEnabled: false, appLock: false });
   });
 
-  it('in development, sends a test reminder', async () => {
+  it('keeps everything when the person backs out of clearing', async () => {
+    jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[0].onPress?.());
+    useSettings.getState().completeOnboarding(true);
+    useSubscriptions.getState().add([{ ...base, name: 'Gym', priceCents: 4000, chargeOn: '2026-10-20' }]);
+    await render(<ProfileScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Clear all data' }));
+
+    expect(useSubscriptions.getState().subscriptions).toHaveLength(1);
+    expect(useSettings.getState().hasOnboarded).toBe(true);
+  });
+
+  it('has no developer buttons, even in development', async () => {
     setDev(true);
-    jest.mocked(sendTestReminder).mockResolvedValue('sent');
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    await render(<ProfileScreen />);
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Send a test reminder' }));
-
-    expect(sendTestReminder).toHaveBeenCalledWith([], 'oneDay');
-    expect(alert.mock.calls[0][0]).toBe('Test reminder in 5 seconds');
-  });
-
-  it('hides "Show onboarding again" in release builds', async () => {
-    setDev(false);
     await render(<ProfileScreen />);
     await act(async () => {});
 
